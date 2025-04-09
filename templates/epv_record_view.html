@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPV Record: {{ epv.epv_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #f50057;
+            --success-color: #4caf50;
+            --danger-color: #f44336;
+            --warning-color: #ff9800;
+            --info-color: #2196f3;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #303f9f;
+            border-color: #303f9f;
+        }
+
+        .expense-details {
+            margin-top: 1.5rem;
+        }
+
+        .expense-details dt {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .expense-details dd {
+            margin-bottom: 0.75rem;
+        }
+
+        .status-badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .expense-items {
+            margin-top: 2rem;
+        }
+
+        .expense-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .expense-items th {
+            background-color: #f0f0f0;
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .expense-items td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .expense-items tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .file-link {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .file-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>EPV Record: {{ epv.epv_id }}</h2>
+                <div>
+                    {% if epv.status == 'pending_approval' %}
+                        <span class="badge bg-warning status-badge">Pending Approval</span>
+                    {% elif epv.status == 'approved' %}
+                        <span class="badge bg-success status-badge">Approved</span>
+                    {% elif epv.status == 'rejected' %}
+                        <span class="badge bg-danger status-badge">Rejected</span>
+                    {% else %}
+                        <span class="badge bg-secondary status-badge">{{ epv.status|capitalize }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="expense-details">
+                    <h4>Employee Information</h4>
+                    <dl class="row">
+                        <dt class="col-sm-3">Name:</dt>
+                        <dd class="col-sm-9">{{ epv.employee_name }}</dd>
+
+                        <dt class="col-sm-3">Employee ID:</dt>
+                        <dd class="col-sm-9">{{ epv.employee_id }}</dd>
+
+                        <dt class="col-sm-3">Email:</dt>
+                        <dd class="col-sm-9">{{ epv.email }}</dd>
+                    </dl>
+
+                    <h4 class="mt-4">Expense Information</h4>
+                    <dl class="row">
+                        <dt class="col-sm-3">Date Range:</dt>
+                        <dd class="col-sm-9">
+                            {% if epv.from_date and epv.to_date %}
+                                {{ epv.from_date }} to {{ epv.to_date }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Payment To:</dt>
+                        <dd class="col-sm-9">{{ epv.payment_to }}</dd>
+
+                        <dt class="col-sm-3">Total Amount:</dt>
+                        <dd class="col-sm-9">₹{{ epv.total_amount|float|round(2) }}</dd>
+
+                        <dt class="col-sm-3">Amount in Words:</dt>
+                        <dd class="col-sm-9">{{ epv.amount_in_words }}</dd>
+
+                        <dt class="col-sm-3">Cost Center:</dt>
+                        <dd class="col-sm-9">{{ epv.cost_center }}</dd>
+
+                        <dt class="col-sm-3">Academic Year:</dt>
+                        <dd class="col-sm-9">{{ epv.academic_year }}</dd>
+                    </dl>
+
+                    <h4 class="mt-4">Status Information</h4>
+                    <dl class="row">
+                        <dt class="col-sm-3">Submission Date:</dt>
+                        <dd class="col-sm-9">{{ epv.submission_date.strftime('%Y-%m-%d %H:%M:%S') if epv.submission_date else 'N/A' }}</dd>
+
+                        <dt class="col-sm-3">Status:</dt>
+                        <dd class="col-sm-9">
+                            {% if epv.status == 'pending_approval' %}
+                                <span class="badge bg-warning">Pending Approval</span>
+                            {% elif epv.status == 'approved' %}
+                                <span class="badge bg-success">Approved</span>
+                            {% elif epv.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ epv.status|capitalize }}</span>
+                            {% endif %}
+                        </dd>
+
+                        {% if epv.status == 'approved' %}
+                            <dt class="col-sm-3">Approved By:</dt>
+                            <dd class="col-sm-9">{{ epv.approved_by }}</dd>
+
+                            <dt class="col-sm-3">Approved On:</dt>
+                            <dd class="col-sm-9">{{ epv.approved_on.strftime('%Y-%m-%d %H:%M:%S') if epv.approved_on else 'N/A' }}</dd>
+                        {% elif epv.status == 'rejected' %}
+                            <dt class="col-sm-3">Rejected By:</dt>
+                            <dd class="col-sm-9">{{ epv.rejected_by }}</dd>
+
+                            <dt class="col-sm-3">Rejected On:</dt>
+                            <dd class="col-sm-9">{{ epv.rejected_on.strftime('%Y-%m-%d %H:%M:%S') if epv.rejected_on else 'N/A' }}</dd>
+
+                            <dt class="col-sm-3">Rejection Reason:</dt>
+                            <dd class="col-sm-9">{{ epv.rejection_reason }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-3">File:</dt>
+                        <dd class="col-sm-9">
+                            {% if epv.file_url %}
+                                <a href="{{ epv.file_url }}" target="_blank" class="file-link">
+                                    <i class="fas fa-file-pdf me-2"></i> View PDF
+                                </a>
+                            {% else %}
+                                <span class="text-muted">No file available</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="expense-items">
+                    <h4>Expense Items</h4>
+                    {% if epv_items %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice Date</th>
+                                        <th>Expense Head</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>GST</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in epv_items %}
+                                        <tr>
+                                            <td>{{ item.invoice_date }}</td>
+                                            <td>{{ item.expense_head }}</td>
+                                            <td>{{ item.description }}</td>
+                                            <td>₹{{ item.amount|float|round(2) }}</td>
+                                            <td>{{ item.gst|float|round(2) }}%</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td colspan="2"><strong>₹{{ epv.total_amount|float|round(2) }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No expense items found.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Approvals Section -->
+                {% if approvals %}
+                <div class="approval-status mt-4">
+                    <h4>Approval Status</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Approver</th>
+                                    <th>Status</th>
+                                    <th>Action Date</th>
+                                    <th>Comments</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for approval in approvals %}
+                                    <tr>
+                                        <td>{{ approval.approver_email }}</td>
+                                        <td>
+                                            {% if approval.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif approval.status == 'approved' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif approval.status == 'rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ approval.status|capitalize }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ approval.action_date.strftime('%Y-%m-%d %H:%M:%S') if approval.action_date else 'N/A' }}</td>
+                                        <td>{{ approval.comments or 'No comments' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('epv_records') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to EPV Records
+                    </a>
+
+                    {% if epv.status == 'pending_approval' %}
+                        {% if is_approver and current_approval %}
+                            {% if current_approval.status == 'pending' %}
+                                <!-- Show approval/rejection buttons for the current approver with token -->
+                                <a href="{{ url_for('approve_expense', epv_id=epv.epv_id, email=current_approval.approver_email, token=token) }}" class="btn btn-success ms-2">
+                                    <i class="fas fa-check me-2"></i> Approve
+                                </a>
+                                <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                    <i class="fas fa-times me-2"></i> Reject
+                                </button>
+                            {% else %}
+                                <!-- Show message for approvers who have already taken action -->
+                                <div class="alert alert-info ms-2 d-inline-block">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    You have already {{ current_approval.status }} this expense on
+                                    {{ current_approval.action_date.strftime('%Y-%m-%d %H:%M:%S') if current_approval.action_date else 'N/A' }}.
+                                </div>
+                            {% endif %}
+                        {% elif session.get('email') %}
+                            <!-- Show regular approval/rejection buttons for logged-in users -->
+                            <a href="{{ url_for('approve_expense', epv_id=epv.epv_id, email=session.get('email', '')) }}" class="btn btn-success ms-2">
+                                <i class="fas fa-check me-2"></i> Approve
+                            </a>
+                            <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                <i class="fas fa-times me-2"></i> Reject
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    {% if epv.status == 'pending_approval' %}
+        <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="rejectModalLabel">Reject Expense</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="rejectForm" action="{{ url_for('reject_expense', epv_id=epv.epv_id) }}" method="GET">
+                            {% if is_approver and current_approval %}
+                                <input type="hidden" name="email" value="{{ current_approval.approver_email }}">
+                                <input type="hidden" name="token" value="{{ token }}">
+                            {% else %}
+                                <input type="hidden" name="email" value="{{ session.get('email', '') }}">
+                            {% endif %}
+                            <div class="mb-3">
+                                <label for="reason" class="form-label">Reason for Rejection:</label>
+                                <textarea class="form-control" id="reason" name="reason" rows="4" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="submitRejectForm();">Reject</button>
+
+                        <script>
+                            function submitRejectForm() {
+                                // Get the reason
+                                const reason = document.getElementById('reason').value.trim();
+
+                                // Validate reason
+                                if (!reason) {
+                                    alert('Please provide a reason for rejection');
+                                    return;
+                                }
+
+                                // Submit the form
+                                document.getElementById('rejectForm').submit();
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

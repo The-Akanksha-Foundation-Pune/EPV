@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Expense - Expense Management Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --primary-light: #e8eaf6;
+            --primary-dark: #303f9f;
+            --secondary-color: #ff4081;
+            --text-color: #333;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        body {
+            padding-top: 56px;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 15px 20px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .form-section {
+            border-left: 4px solid var(--primary-color);
+            padding: 20px 20px 20px 25px;
+            margin-bottom: 30px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .form-section h5 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-section h5 i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+
+        .form-control, .form-select {
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--medium-gray);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(63, 81, 181, 0.25);
+        }
+
+        .form-control:disabled {
+            background-color: var(--medium-gray);
+            cursor: not-allowed;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .alert {
+            border-radius: var(--border-radius);
+            padding: 12px 15px;
+        }
+
+        .alert-info {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 9999 !important;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--medium-gray);
+        }
+
+        .ui-menu-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .ui-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .ui-state-active, .ui-widget-content .ui-state-active {
+            background-color: var(--primary-light) !important;
+            border-color: var(--primary-light) !important;
+            color: var(--primary-dark) !important;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 15px;
+            }
+
+            .form-section {
+                padding: 15px 15px 15px 20px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .d-flex.justify-content-between {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <!-- Add Roboto font for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-receipt"></i> ExpensePortal
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-th-large"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cost_centers') }}">
+                            <i class="fas fa-building"></i> Cost Centers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employees') }}">
+                            <i class="fas fa-users"></i> Employees
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('new_expense') }}">
+                            <i class="fas fa-file-invoice-dollar"></i> New Expense
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if user.picture %}
+                            <img src="{{ user.picture }}" alt="{{ user.name }}" class="user-avatar">
+                            {% else %}
+                            <i class="fas fa-user-circle me-2"></i>
+                            {% endif %}
+                            <span>{{ user.name }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-id-card"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mt-4">
+        <div class="mb-3">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i> New Expense Claim</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="expenseForm" method="POST" action="{{ url_for('new_expense') }}" enctype="multipart/form-data">
+                            <!-- Employee Information Section -->
+                            <div class="form-section">
+                                <h5 class="mb-3"><i class="fas fa-user"></i> Employee Information</h5>
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="employeeName" class="form-label required-field">Employee Name</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            <input type="text" class="form-control" id="employeeName" name="employee_name" placeholder="Type to search..." required>
+                                        </div>
+                                        <div id="employeeNameHelp" class="form-text">Start typing to search for employees</div>
+                                        <input type="hidden" id="employeeId" name="employee_id" value="">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="employeeIdDisplay" class="form-label required-field">Employee ID</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                            <input type="text" class="form-control" id="employeeIdDisplay" placeholder="Auto-filled when employee is selected" disabled>
+                                        </div>
+                                        <div class="form-text">This field is automatically filled</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-4">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="costCenter" class="form-label required-field">Cost Center</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                            <select class="form-select" id="costCenter" name="cost_center" required>
+                                                <option value="">Select Cost Center</option>
+                                                {% for cc in cost_centers %}
+                                                <option value="{{ cc.id }}">{{ cc.costcenter }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="paymentTo" class="form-label required-field">Payment To</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-money-bill"></i></span>
+                                            <select class="form-select" id="paymentTo" name="payment_to" required>
+                                                <option value="">Select Payment Recipient</option>
+                                                <option value="employee">Employee</option>
+                                                <option value="vendor">Vendor</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label for="fromDate" class="form-label required-field">From Date</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="date" class="form-control" id="fromDate" name="from_date" required>
+                                        </div>
+                                        <div id="fromDateHelp" class="form-text">Select the start date of the expense period</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="toDate" class="form-label required-field">To Date</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="date" class="form-control" id="toDate" name="to_date" required disabled>
+                                        </div>
+                                        <div id="toDateHelp" class="form-text">Select the end date of the expense period</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Expense Details Section -->
+                            <div class="form-section">
+                                <h5 class="mb-3"><i class="fas fa-file-invoice-dollar"></i> Expense Details</h5>
+
+                                <!-- Expense entries container -->
+                                <div id="expenseEntriesContainer">
+                                    <!-- First expense entry (always visible) -->
+                                    <div class="expense-entry" data-entry-index="0">
+                                        <div class="card mb-4">
+                                            <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+                                                <h6 class="mb-0 fw-bold">
+                                                    <i class="fas fa-receipt me-2"></i>
+                                                    <span class="expense-title">Expense #1</span>
+                                                </h6>
+                                                <div class="d-flex">
+                                                    <button type="button" class="btn btn-light btn-toggle-expense" data-bs-toggle="collapse" data-bs-target="#expense-collapse-0" title="Expand/Collapse">
+                                                        <i class="fas fa-chevron-down text-primary fa-lg"></i>
+                                                    </button>
+                                                    <!-- Remove button will be added here for additional entries -->
+                                                </div>
+                                            </div>
+                                            <div id="expense-collapse-0" class="collapse show">
+                                                <div class="card-body">
+                                                    <div class="row mb-4">
+                                                        <div class="col-md-6 mb-3 mb-md-0">
+                                                            <label for="invoiceDate-0" class="form-label required-field">Invoice Date</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                                                <input type="date" class="form-control invoice-date" id="invoiceDate-0" name="expenses[0][invoice_date]" required>
+                                                            </div>
+                                                            <div class="form-text invoice-date-help">Date on the invoice/receipt</div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label for="expenseHead-0" class="form-label required-field">Expense Head</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text"><i class="fas fa-list-alt"></i></span>
+                                                                <select class="form-select expense-head" id="expenseHead-0" name="expenses[0][expense_head]" required>
+                                                                    <option value="">Select Expense Head</option>
+                                                                    {% for head in expense_heads %}
+                                                                    <option value="{{ head.id }}" data-code="{{ head.head_code }}">{{ head.head_name }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-text expense-head-help">Select the category of expense</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-4">
+                                                        <div class="col-md-4 mb-3 mb-md-0">
+                                                            <label for="expenseAmount-0" class="form-label required-field">Amount</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                                                                <input type="number" class="form-control expense-amount" id="expenseAmount-0" name="expenses[0][amount]" placeholder="0.00" step="0.01" min="0" required>
+                                                            </div>
+                                                            <div class="form-text expense-amount-help">Enter the amount (e.g., 123.50)</div>
+                                                            <div class="amount-in-words mt-2 text-primary fst-italic"></div>
+                                                        </div>
+                                                        <div class="col-md-8">
+                                                            <label for="expenseDescription-0" class="form-label required-field">Description</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text"><i class="fas fa-align-left"></i></span>
+                                                                <textarea class="form-control expense-description" id="expenseDescription-0" name="expenses[0][description]" rows="3" placeholder="Provide details about this expense..." required></textarea>
+                                                            </div>
+                                                            <div class="form-text expense-description-help">Provide a detailed description of the expense</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-12">
+                                                            <label for="receiptUpload-0" class="form-label required-field">Receipt</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text"><i class="fas fa-receipt"></i></span>
+                                                                <input type="file" class="form-control receipt-upload" id="receiptUpload-0" name="expenses[0][receipt]" accept="image/*,.pdf" required>
+                                                            </div>
+                                                            <div class="form-text receipt-upload-help">Upload a scanned copy or photo of the receipt (JPG, PNG, PDF)</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Additional expense entries will be added here -->
+                                </div>
+
+                                <!-- Add expense button -->
+                                <div class="d-flex justify-content-center mb-4">
+                                    <button type="button" id="addExpenseBtn" class="btn btn-success btn-lg">
+                                        <i class="fas fa-plus-circle me-2"></i> Add Another Expense
+                                    </button>
+                                </div>
+
+                                <!-- Total amount display -->
+                                <div class="card bg-light mt-4">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Total Amount:</h5>
+                                            <h5 class="mb-0" id="totalAmount">₹ 0.00</h5>
+                                        </div>
+                                        <div class="text-muted mt-2" id="totalAmountWords">Zero Rupees Only</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i> Submit Expense
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Get finance settings
+            let maxDaysPast = 30; // Default value
+            let driveSettings = {}; // Store drive folder settings
+
+            $.ajax({
+                url: "{{ url_for('get_finance_settings') }}",
+                dataType: "json",
+                async: false,
+                success: function(data) {
+                    if (data.max_days_past) {
+                        maxDaysPast = parseInt(data.max_days_past.value);
+                        console.log("Max days past:", maxDaysPast);
+                    }
+
+                    // Store drive folder settings
+                    Object.keys(data).forEach(function(key) {
+                        if (data[key].parent_drive_folder && data[key].parent_drive_id) {
+                            driveSettings[data[key].parent_drive_folder] = data[key].parent_drive_id;
+                            console.log("Drive folder:", data[key].parent_drive_folder, "ID:", data[key].parent_drive_id);
+                        }
+                    });
+                }
+            });
+
+            // Calculate the minimum allowed date (today - maxDaysPast)
+            const today = new Date();
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() - maxDaysPast);
+
+            // Format dates for input fields
+            const todayStr = today.toISOString().split('T')[0];
+            const minDateStr = minDate.toISOString().split('T')[0];
+
+            // Set date constraints
+            $('#fromDate').attr('max', todayStr);
+            $('#fromDate').attr('min', minDateStr);
+            $('#toDate').attr('max', todayStr);
+            $('#toDate').attr('min', minDateStr);
+
+            // Set today's date as default for from date
+            $('#fromDate').val(todayStr);
+
+            // Initialize invoice date fields
+            $('.invoice-date').each(function() {
+                $(this).attr('min', minDateStr);
+                $(this).attr('max', todayStr);
+                $(this).val(todayStr);
+            });
+
+            // Add a message about date restrictions
+            const dateMessage = $('<div class="alert alert-info mt-2"><i class="fas fa-info-circle me-2"></i> Expenses can only be claimed for dates between <strong>' +
+                                minDateStr + '</strong> and <strong>' + todayStr + '</strong> (' + maxDaysPast + ' days in the past).</div>');
+            $('#fromDateHelp').after(dateMessage);
+
+            // Initialize autocomplete for employee name with better styling
+            $('#employeeName').autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "{{ url_for('get_employees') }}",
+                        dataType: "json",
+                        success: function(data) {
+                            // Filter the data based on the search term
+                            var filteredData = data.filter(function(item) {
+                                return item.name && item.name.toLowerCase().indexOf(request.term.toLowerCase()) !== -1;
+                            });
+
+                            response($.map(filteredData, function(item) {
+                                return {
+                                    label: item.name,
+                                    value: item.name,
+                                    id: item.id,
+                                    employee_id: item.employee_id
+                                };
+                            }));
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    // Set the employee ID when an employee is selected
+                    $('#employeeId').val(ui.item.id);
+                    $('#employeeIdDisplay').val(ui.item.employee_id || 'Not set');
+
+                    // Show success message
+                    const successMessage = $('<div class="alert alert-success mt-2 employee-selected-message"><i class="fas fa-check-circle me-2"></i> Employee selected successfully!</div>');
+                    $('.employee-selected-message').remove(); // Remove any existing message
+                    $('#employeeNameHelp').after(successMessage);
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        successMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                // Custom rendering of autocomplete items
+                return $('<li class="ui-menu-item-wrapper">')
+                    .append('<div class="d-flex align-items-center p-2">' +
+                            '<i class="fas fa-user me-2 text-primary"></i>' +
+                            '<div><strong>' + item.label + '</strong><br>' +
+                            '<small class="text-muted">ID: ' + (item.employee_id || 'Not set') + '</small></div>' +
+                            '</div>')
+                    .appendTo(ul);
+            };
+
+            // Date field behavior
+            $('#fromDate').on('change', function() {
+                const fromDate = $(this).val();
+
+                // Validate against min date
+                if (new Date(fromDate) < new Date(minDateStr)) {
+                    // Show error message
+                    const errorMessage = $('<div class="alert alert-danger mt-2 date-error-message"><i class="fas fa-exclamation-circle me-2"></i> From Date cannot be earlier than ' + minDateStr + '.</div>');
+                    $('.date-error-message').remove(); // Remove any existing message
+                    $('#fromDateHelp').after(errorMessage);
+
+                    // Reset to minimum date
+                    $(this).val(minDateStr);
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        errorMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                } else {
+                    // Remove any error messages
+                    $('.date-error-message').remove();
+
+                    // Enable the To Date field and set its minimum value to the From Date
+                    $('#toDate').prop('disabled', false);
+                    $('#toDate').attr('min', fromDate);
+
+                    // Set the To Date to the From Date if it's empty or less than From Date
+                    if (!$('#toDate').val() || new Date($('#toDate').val()) < new Date(fromDate)) {
+                        $('#toDate').val(fromDate);
+                    }
+                }
+            });
+
+            $('#toDate').on('change', function() {
+                const toDate = $(this).val();
+                const fromDate = $('#fromDate').val();
+
+                // Validate against today
+                if (new Date(toDate) > today) {
+                    // Show error message
+                    const errorMessage = $('<div class="alert alert-danger mt-2 date-error-message"><i class="fas fa-exclamation-circle me-2"></i> To Date cannot be in the future.</div>');
+                    $('.date-error-message').remove(); // Remove any existing message
+                    $('#toDateHelp').after(errorMessage);
+
+                    // Reset to today
+                    $(this).val(todayStr);
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        errorMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                } else if (new Date(toDate) < new Date(fromDate)) {
+                    // Show error message
+                    const errorMessage = $('<div class="alert alert-danger mt-2 date-error-message"><i class="fas fa-exclamation-circle me-2"></i> To Date cannot be earlier than From Date.</div>');
+                    $('.date-error-message').remove(); // Remove any existing message
+                    $('#toDateHelp').after(errorMessage);
+
+                    // Reset to from date
+                    $(this).val(fromDate);
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        errorMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                } else {
+                    // Remove any error messages
+                    $('.date-error-message').remove();
+                }
+            });
+
+            // Function to convert number to words in Indian Rupees format
+            function numberToWords(num) {
+                const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+                const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+                const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+                const formatTens = (num) => {
+                    if (num < 10) return single[num];
+                    if (num < 20) return double[num - 10];
+                    return tens[Math.floor(num / 10)] + (num % 10 !== 0 ? ' ' + single[num % 10] : '');
+                };
+
+                if (num === 0) return 'Zero Rupees Only';
+
+                // Ensure we handle the number correctly by rounding to 2 decimal places
+                num = parseFloat(num.toFixed(2));
+
+                // Split into rupees and paise
+                const rupees = Math.floor(num);
+                const paise = Math.round((num - rupees) * 100);
+
+                let words = '';
+                let rupeesInWords = '';
+
+                // Convert rupees to words
+                if (rupees > 0) {
+                    // Make a copy of rupees for manipulation
+                    let rupeesValue = rupees;
+
+                    // Handle crores (10 million)
+                    if (rupeesValue >= 10000000) {
+                        rupeesInWords += formatTens(Math.floor(rupeesValue / 10000000)) + ' Crore ';
+                        rupeesValue %= 10000000;
+                    }
+
+                    // Handle lakhs (100 thousand)
+                    if (rupeesValue >= 100000) {
+                        rupeesInWords += formatTens(Math.floor(rupeesValue / 100000)) + ' Lakh ';
+                        rupeesValue %= 100000;
+                    }
+
+                    // Handle thousands
+                    if (rupeesValue >= 1000) {
+                        rupeesInWords += formatTens(Math.floor(rupeesValue / 1000)) + ' Thousand ';
+                        rupeesValue %= 1000;
+                    }
+
+                    // Handle hundreds
+                    if (rupeesValue >= 100) {
+                        rupeesInWords += single[Math.floor(rupeesValue / 100)] + ' Hundred ';
+                        rupeesValue %= 100;
+                    }
+
+                    // Handle remaining tens and units
+                    if (rupeesValue > 0) {
+                        rupeesInWords += formatTens(rupeesValue);
+                    }
+
+                    words = rupeesInWords.trim() + ' Rupees';
+                } else {
+                    words = 'Zero Rupees';
+                }
+
+                // Convert paise to words
+                if (paise > 0) {
+                    words += ' and ' + formatTens(paise) + ' Paise';
+                }
+
+                return words + ' Only';
+            }
+
+            // Function to update total amount
+            function updateTotalAmount() {
+                let total = 0;
+                $('.expense-amount').each(function() {
+                    const amount = parseFloat($(this).val()) || 0;
+                    total += amount;
+                });
+
+                // Update total display
+                $('#totalAmount').text('₹ ' + total.toFixed(2));
+                $('#totalAmountWords').text(numberToWords(total));
+
+                return total;
+            }
+
+            // Function to create a new expense entry
+            function createExpenseEntry(index) {
+                // Clone the first expense entry
+                const newEntry = $('.expense-entry').first().clone();
+
+                // Update the entry index
+                newEntry.attr('data-entry-index', index);
+
+                // Update IDs and names
+                newEntry.find('.expense-title').text('Expense #' + (index + 1));
+                newEntry.find('.btn-toggle-expense').attr('data-bs-target', '#expense-collapse-' + index);
+                newEntry.find('.collapse').attr('id', 'expense-collapse-' + index).addClass('show');
+
+                // Add remove button for additional entries
+                if (index > 0) {
+                    const removeBtn = $('<button type="button" class="btn btn-danger btn-remove-expense me-2" title="Remove this expense"><i class="fas fa-trash me-1"></i> Remove</button>');
+                    newEntry.find('.card-header div').prepend(removeBtn);
+                }
+
+                // Update form element IDs and names
+                newEntry.find('input, select, textarea').each(function() {
+                    const oldId = $(this).attr('id');
+                    const newId = oldId.replace(/-\d+$/, '-' + index);
+                    $(this).attr('id', newId);
+
+                    const oldName = $(this).attr('name');
+                    if (oldName) {
+                        const newName = oldName.replace(/\[\d+\]/, '[' + index + ']');
+                        $(this).attr('name', newName);
+                    }
+
+                    // Clear values
+                    if ($(this).hasClass('expense-amount')) {
+                        $(this).val('');
+                    } else if ($(this).hasClass('expense-description')) {
+                        $(this).val('');
+                    } else if ($(this).hasClass('receipt-upload')) {
+                        $(this).val('');
+                    } else if ($(this).hasClass('invoice-date')) {
+                        $(this).val($('#fromDate').val());
+                    } else if ($(this).hasClass('expense-head')) {
+                        $(this).val('');
+                    }
+                });
+
+                // Update label for attributes
+                newEntry.find('label').each(function() {
+                    const oldFor = $(this).attr('for');
+                    const newFor = oldFor.replace(/-\d+$/, '-' + index);
+                    $(this).attr('for', newFor);
+                });
+
+                // Clear any previous values and badges
+                newEntry.find('.amount-in-words').empty();
+                newEntry.find('.head-code-badge').remove();
+
+                return newEntry;
+            }
+
+            // Add expense button click handler
+            $('#addExpenseBtn').on('click', function() {
+                // Get the current number of expense entries
+                const entryCount = $('.expense-entry').length;
+
+                // Create a new expense entry
+                const newEntry = createExpenseEntry(entryCount);
+
+                // Collapse all other entries
+                $('.expense-entry .collapse').collapse('hide');
+
+                // Append the new entry to the container
+                $('#expenseEntriesContainer').append(newEntry);
+
+                // Scroll to the new entry
+                $('html, body').animate({
+                    scrollTop: newEntry.offset().top - 100
+                }, 500);
+            });
+
+            // Remove expense button click handler (using event delegation)
+            $('#expenseEntriesContainer').on('click', '.btn-remove-expense', function() {
+                const entry = $(this).closest('.expense-entry');
+
+                // Show confirmation dialog
+                if (confirm('Are you sure you want to remove this expense?')) {
+                    // Remove the entry
+                    entry.remove();
+
+                    // Renumber the remaining entries
+                    $('.expense-entry').each(function(idx) {
+                        const entryIndex = idx;
+                        $(this).attr('data-entry-index', entryIndex);
+                        $(this).find('.expense-title').text('Expense #' + (entryIndex + 1));
+                    });
+
+                    // Update total amount
+                    updateTotalAmount();
+                }
+            });
+
+            // Toggle button icon change
+            $('#expenseEntriesContainer').on('click', '.btn-toggle-expense', function() {
+                const icon = $(this).find('i');
+                if (icon.hasClass('fa-chevron-down')) {
+                    icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    $(this).attr('title', 'Collapse');
+                } else {
+                    icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    $(this).attr('title', 'Expand');
+                }
+            });
+
+            // Expense head selection (using event delegation)
+            $('#expenseEntriesContainer').on('change', '.expense-head', function() {
+                const selectedOption = $(this).find('option:selected');
+                const headCode = selectedOption.data('code');
+                const entryIndex = $(this).closest('.expense-entry').data('entry-index');
+                const helpText = $(this).closest('.col-md-6').find('.expense-head-help');
+                const descriptionField = $(this).closest('.expense-entry').find('.expense-description');
+
+                if (headCode) {
+                    // Show the head code in a badge
+                    const headCodeBadge = $('<span class="badge bg-primary ms-2">' + headCode + '</span>');
+                    $(this).closest('.col-md-6').find('.head-code-badge').remove(); // Remove any existing badge
+                    helpText.prepend(headCodeBadge.addClass('head-code-badge'));
+
+                    // Update the description placeholder based on the selected head
+                    const headName = selectedOption.text();
+                    descriptionField.attr('placeholder', 'Provide details about this ' + headName.toLowerCase() + ' expense...');
+                } else {
+                    $(this).closest('.col-md-6').find('.head-code-badge').remove();
+                    descriptionField.attr('placeholder', 'Provide details about this expense...');
+                }
+            });
+
+            // Amount input handler (using event delegation)
+            $('#expenseEntriesContainer').on('input', '.expense-amount', function() {
+                const amount = parseFloat($(this).val()) || 0;
+                const wordsElement = $(this).closest('.col-md-4').find('.amount-in-words');
+
+                // Convert amount to words
+                if (amount > 0) {
+                    // Format the amount to 2 decimal places for display
+                    const formattedAmount = amount.toFixed(2);
+                    const amountWords = numberToWords(amount);
+
+                    // Display the amount in words with a more visible style
+                    wordsElement.html('<strong>In words:</strong> ' + amountWords);
+                } else {
+                    wordsElement.empty();
+                }
+
+                // Update total amount
+                updateTotalAmount();
+            });
+
+            // Invoice date validation (using event delegation)
+            $('#expenseEntriesContainer').on('change', '.invoice-date', function() {
+                const invoiceDate = new Date($(this).val());
+                const fromDate = new Date($('#fromDate').val());
+                const toDate = new Date($('#toDate').val());
+                const helpText = $(this).closest('.col-md-6').find('.invoice-date-help');
+
+                // Remove any existing error messages
+                $(this).closest('.col-md-6').find('.date-error-message').remove();
+
+                // Validate invoice date is between from date and to date
+                if (invoiceDate < fromDate) {
+                    // Show error message
+                    const errorMessage = $('<div class="alert alert-danger mt-2 date-error-message"><i class="fas fa-exclamation-circle me-2"></i> Invoice Date cannot be earlier than From Date.</div>');
+                    helpText.after(errorMessage);
+
+                    // Reset to from date
+                    $(this).val($('#fromDate').val());
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        errorMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                } else if (invoiceDate > toDate) {
+                    // Show error message
+                    const errorMessage = $('<div class="alert alert-danger mt-2 date-error-message"><i class="fas fa-exclamation-circle me-2"></i> Invoice Date cannot be later than To Date.</div>');
+                    helpText.after(errorMessage);
+
+                    // Reset to to date
+                    $(this).val($('#toDate').val());
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        errorMessage.fadeOut('slow', function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                }
+            });
+
+            // Update invoice date constraints when from/to dates change
+            $('#fromDate').on('change', function() {
+                const fromDate = $(this).val();
+                $('.invoice-date').each(function() {
+                    $(this).attr('min', fromDate);
+
+                    // If current invoice date is before new from date, update it
+                    if (new Date($(this).val()) < new Date(fromDate)) {
+                        $(this).val(fromDate);
+                    }
+                });
+            });
+
+            $('#toDate').on('change', function() {
+                const toDate = $(this).val();
+                $('.invoice-date').each(function() {
+                    $(this).attr('max', toDate);
+
+                    // If current invoice date is after new to date, update it
+                    if (new Date($(this).val()) > new Date(toDate)) {
+                        $(this).val(toDate);
+                    }
+                });
+            });
+
+            // Form validation with better user feedback
+            $('#expenseForm').on('submit', function(e) {
+                let isValid = true;
+                let firstError = null;
+
+                // Clear all previous error messages
+                $('.validation-error').remove();
+
+                // Validate employee selection
+                if (!$('#employeeId').val()) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please select a valid employee from the dropdown.</div>');
+                    $('#employeeNameHelp').after(errorMessage);
+                    firstError = firstError || $('#employeeName');
+                }
+
+                // Validate cost center
+                if (!$('#costCenter').val()) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please select a cost center.</div>');
+                    $('#costCenter').closest('.col-md-6').append(errorMessage);
+                    firstError = firstError || $('#costCenter');
+                }
+
+                // Validate payment recipient
+                if (!$('#paymentTo').val()) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please select a payment recipient.</div>');
+                    $('#paymentTo').closest('.col-md-6').append(errorMessage);
+                    firstError = firstError || $('#paymentTo');
+                }
+
+                // Validate from date
+                const fromDate = new Date($('#fromDate').val());
+                if (fromDate < new Date(minDateStr)) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> From Date cannot be earlier than ' + minDateStr + '.</div>');
+                    $('#fromDateHelp').after(errorMessage);
+                    firstError = firstError || $('#fromDate');
+                }
+
+                // Validate to date
+                const toDate = new Date($('#toDate').val());
+                if (toDate > today) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> To Date cannot be in the future.</div>');
+                    $('#toDateHelp').after(errorMessage);
+                    firstError = firstError || $('#toDate');
+                } else if (toDate < fromDate) {
+                    isValid = false;
+                    const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> To Date cannot be earlier than From Date.</div>');
+                    $('#toDateHelp').after(errorMessage);
+                    firstError = firstError || $('#toDate');
+                }
+
+                // Validate each expense entry
+                $('.expense-entry').each(function() {
+                    const entryIndex = $(this).data('entry-index');
+                    const entryTitle = $(this).find('.expense-title').text();
+
+                    // Validate invoice date
+                    const invoiceDateField = $(this).find('.invoice-date');
+                    const invoiceDate = new Date(invoiceDateField.val());
+                    if (!invoiceDateField.val()) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please select an invoice date.</div>');
+                        invoiceDateField.closest('.col-md-6').find('.form-text').after(errorMessage);
+                        firstError = firstError || invoiceDateField;
+                    } else if (invoiceDate < fromDate) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Invoice Date cannot be earlier than From Date.</div>');
+                        invoiceDateField.closest('.col-md-6').find('.form-text').after(errorMessage);
+                        firstError = firstError || invoiceDateField;
+                    } else if (invoiceDate > toDate) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Invoice Date cannot be later than To Date.</div>');
+                        invoiceDateField.closest('.col-md-6').find('.form-text').after(errorMessage);
+                        firstError = firstError || invoiceDateField;
+                    }
+
+                    // Validate expense head
+                    const expenseHeadField = $(this).find('.expense-head');
+                    if (!expenseHeadField.val()) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please select an expense head.</div>');
+                        expenseHeadField.closest('.col-md-6').find('.form-text').after(errorMessage);
+                        firstError = firstError || expenseHeadField;
+                    }
+
+                    // Validate amount
+                    const amountField = $(this).find('.expense-amount');
+                    if (!amountField.val() || parseFloat(amountField.val()) <= 0) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please enter a valid amount greater than zero.</div>');
+                        amountField.closest('.col-md-6').find('.form-text').after(errorMessage);
+                        firstError = firstError || amountField;
+                    }
+
+                    // Validate description
+                    const descriptionField = $(this).find('.expense-description');
+                    if (!descriptionField.val().trim()) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please provide a description for the expense.</div>');
+                        descriptionField.closest('.col-12').find('.form-text').after(errorMessage);
+                        firstError = firstError || descriptionField;
+                    }
+
+                    // Validate receipt upload
+                    const receiptField = $(this).find('.receipt-upload');
+                    if (!receiptField.val()) {
+                        isValid = false;
+                        const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please upload a receipt.</div>');
+                        receiptField.closest('.col-12').find('.form-text').after(errorMessage);
+                        firstError = firstError || receiptField;
+                    }
+
+                    // Payment mode validation removed
+
+                    // If this entry has errors, expand it
+                    if (firstError && $(this).find(firstError).length > 0) {
+                        $(this).find('.collapse').collapse('show');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+
+                    // Scroll to the first error
+                    if (firstError) {
+                        $('html, body').animate({
+                            scrollTop: firstError.offset().top - 100
+                        }, 500);
+                        firstError.focus();
+                    }
+
+                    return false;
+                }
+
+                // Show loading state on submit button
+                $(this).find('button[type="submit"]').html('<i class="fas fa-spinner fa-spin me-2"></i> Submitting...');
+
+                // Use AJAX to submit the form
+                e.preventDefault();
+
+                // Create FormData object to handle file uploads
+                const formData = new FormData(this);
+
+                // Debug form data
+                console.log('Form data being submitted:');
+                for (let [key, value] of formData.entries()) {
+                    if (key.includes('receipt')) {
+                        console.log(`${key}: File ${value.name}, size: ${value.size} bytes, type: ${value.type}`);
+                    } else {
+                        console.log(`${key}: ${value}`);
+                    }
+                }
+
+                // Submit the form via AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log('Form submission response:', response);
+
+                        // Reset submit button
+                        $('#expenseForm').find('button[type="submit"]').html('<i class="fas fa-paper-plane me-2"></i> Submit Expense');
+
+                        // Show success message
+                        const successAlert = $('<div class="alert alert-success mt-3"><i class="fas fa-check-circle me-2"></i> ' + response.message + '</div>');
+                        $('#expenseForm').prepend(successAlert);
+
+                        // Scroll to the top of the form
+                        $('html, body').animate({
+                            scrollTop: $('#expenseForm').offset().top - 100
+                        }, 500);
+
+                        // If there are warnings, show them
+                        if (response.warnings && response.warnings.length > 0) {
+                            const warningContent = response.warning_message ?
+                                `<p><strong>${response.warning_message}</strong></p>` :
+                                '<p><strong>Some files had issues during processing:</strong></p>';
+
+                            let warningList = '<ul class="mb-0">';
+                            response.warnings.forEach(warning => {
+                                warningList += `<li>${warning}</li>`;
+                            });
+                            warningList += '</ul>';
+
+                            const warningAlert = $(`
+                                <div class="alert alert-warning mt-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    ${warningContent}
+                                    ${warningList}
+                                </div>
+                            `);
+
+                            successAlert.after(warningAlert);
+                        }
+
+                        // If there's an error message, show it
+                        if (response.error) {
+                            let errorContent = '';
+
+                            if (response.error_message) {
+                                errorContent += `<p><strong>${response.error_message}</strong></p>`;
+                            }
+
+                            // Add detailed file errors if available
+                            if (response.file_errors && response.file_errors.length > 0) {
+                                errorContent += '<p>Details:</p><ul class="mb-0">';
+                                response.file_errors.forEach(fileError => {
+                                    errorContent += `<li><strong>${fileError.filename}</strong>: ${fileError.error}</li>`;
+                                });
+                                errorContent += '</ul>';
+                            } else {
+                                // Just show the technical error
+                                errorContent += `<p class="text-muted small">Technical details: ${response.error}</p>`;
+                            }
+
+                            const errorAlert = $(`
+                                <div class="alert alert-danger mt-3">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    ${errorContent}
+                                </div>
+                            `);
+
+                            successAlert.after(errorAlert);
+                        }
+
+                        // If there's a PDF to download, show download button
+                        if (response.pdf_url) {
+                            console.log('PDF URL available:', response.pdf_url);
+
+                            let driveMessage = '';
+                            let driveLink = '';
+
+                            // Handle Google Drive upload status
+                            if (response.drive_file_id) {
+                                console.log('File uploaded to Google Drive with ID:', response.drive_file_id);
+
+                                // Success message with green checkmark icon
+                                driveMessage = `<div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Google Drive Upload Successful!</strong>
+                                    <p class="mb-0 mt-1">${response.drive_message || 'Your file has been uploaded to Google Drive.'}</p>
+                                </div>`;
+
+                                // Add Drive file URL if available
+                                if (response.drive_file_url) {
+                                    driveLink = `<a href="${response.drive_file_url}" class="btn btn-success mt-2 me-2" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i> View in Google Drive
+                                    </a>`;
+                                }
+                            } else if (response.drive_error) {
+                                // Error message with red exclamation icon
+                                console.log('Google Drive upload error:', response.drive_error);
+
+                                driveMessage = `<div class="alert alert-danger mb-3">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    <strong>Google Drive Upload Failed</strong>
+                                    <p class="mb-0 mt-1">${response.drive_error}</p>
+                                    <p class="mb-0 small">Your expense has been submitted successfully, but the file could not be uploaded to Google Drive.</p>
+                                </div>`;
+                            } else if (response.drive_attempted === false) {
+                                // Warning message when upload wasn't attempted (no folder ID)
+                                driveMessage = `<div class="alert alert-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Google Drive Upload Skipped</strong>
+                                    <p class="mb-0 mt-1">No Google Drive folder was found for the selected cost center.</p>
+                                    <p class="mb-0 small">Please contact your administrator to set up Google Drive integration for this cost center.</p>
+                                </div>`;
+                            }
+
+                            const pdfAlert = $(`
+                                <div class="alert alert-info mt-3">
+                                    <p><i class="fas fa-file-pdf me-2"></i> Your expense receipts have been converted to PDF.</p>
+                                    ${driveMessage}
+                                    <div class="mt-3">
+                                        <a href="${response.pdf_url}" class="btn btn-primary mt-2" target="_blank">
+                                            <i class="fas fa-download me-2"></i> Download PDF
+                                        </a>
+                                        ${driveLink}
+                                    </div>
+                                </div>
+                            `);
+
+                            // Add after the success alert (and any warning/error alerts)
+                            $('.alert').last().after(pdfAlert);
+                        } else {
+                            console.log('No PDF URL in response');
+                        }
+
+                        // Reset the form after 2 seconds
+                        setTimeout(function() {
+                            // Reset the form but keep employee name and cost center
+                            const employeeName = $('#employeeName').val();
+                            const employeeId = $('#employeeId').val();
+                            const employeeIdDisplay = $('#employeeIdDisplay').val();
+                            const costCenter = $('#costCenter').val();
+
+                            $('#expenseForm')[0].reset();
+
+                            // Restore employee and cost center values
+                            $('#employeeName').val(employeeName);
+                            $('#employeeId').val(employeeId);
+                            $('#employeeIdDisplay').val(employeeIdDisplay);
+                            $('#costCenter').val(costCenter);
+
+                            // Remove all expense entries except the first one
+                            $('.expense-entry:not(:first)').remove();
+
+                            // Reset the first expense entry
+                            const firstEntry = $('.expense-entry').first();
+                            firstEntry.find('.expense-amount').val('');
+                            firstEntry.find('.expense-description').val('');
+                            firstEntry.find('.receipt-upload').val('');
+                            firstEntry.find('.amount-in-words').empty();
+                            firstEntry.find('.head-code-badge').remove();
+                            firstEntry.find('.expense-head').val('');
+
+                            // Set today's date as default for from date and invoice date
+                            $('#fromDate').val(todayStr);
+                            $('.invoice-date').val(todayStr);
+
+                            // Update total amount
+                            updateTotalAmount();
+                        }, 2000);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Form submission error:', error);
+
+                        // Reset submit button
+                        $('#expenseForm').find('button[type="submit"]').html('<i class="fas fa-paper-plane me-2"></i> Submit Expense');
+
+                        // Show error message
+                        const errorMessage = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'An error occurred while submitting the form. Please try again.';
+                        const errorAlert = $('<div class="alert alert-danger mt-3"><i class="fas fa-exclamation-circle me-2"></i> ' + errorMessage + '</div>');
+                        $('#expenseForm').prepend(errorAlert);
+
+                        // Scroll to the top of the form
+                        $('html, body').animate({
+                            scrollTop: $('#expenseForm').offset().top - 100
+                        }, 500);
+                    }
+                });
+
+                return false;
+            });
+
+            // Show approval modal on successful submission
+            $(document).ajaxComplete(function(event, xhr, settings) {
+                console.log('AJAX request completed:', settings.url);
+                console.log('Response:', xhr.responseJSON);
+
+                if ((settings.url === '/new-expense' || settings.url.endsWith('/new-expense')) && xhr.responseJSON && xhr.responseJSON.success) {
+                    // Store EPV ID for later use
+                    window.currentEpvId = xhr.responseJSON.epv_id;
+
+                    // Get manager email from response or session
+                    const managerEmail = xhr.responseJSON.manager_email || '{{ session.get("employee_manager", "") }}';
+                    $('#managerEmail').val(managerEmail);
+
+                    // Initialize and show the modal using Bootstrap 5 syntax
+                    var approvalModal = new bootstrap.Modal(document.getElementById('approvalModal'));
+                    approvalModal.show();
+                }
+            });
+
+            // Handle send for approval button click
+            $('#sendApprovalBtn').click(function() {
+                const approvalOption = $('#approvalOption').val();
+                let emails = [];
+
+                if (approvalOption === 'yes') {
+                    // Use manager's email
+                    emails.push($('#managerEmail').val());
+                } else {
+                    // Use custom emails
+                    $('#emailChips input[name="approval_emails[]"]').each(function() {
+                        emails.push($(this).val());
+                    });
+                }
+
+                if (emails.length === 0) {
+                    alert('Please add at least one email address');
+                    return;
+                }
+
+                // Send approval request
+                $.ajax({
+                    url: '/send-for-approval',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        epv_id: window.currentEpvId,
+                        approval_option: approvalOption,
+                        manager_email: $('#managerEmail').val(),
+                        custom_emails: emails
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            $('#approvalModal').modal('hide');
+                            // Redirect to EPV records page
+                            window.location.href = '/epv-records';
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'An error occurred while sending the approval request.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        alert('Error: ' + errorMsg);
+                    }
+                });
+            });
+
+            // Handle approval option change
+            $('#approvalOption').change(function() {
+                if ($(this).val() === 'yes') {
+                    $('#managerEmailGroup').show();
+                    $('#customEmailsGroup').hide();
+                } else {
+                    $('#managerEmailGroup').hide();
+                    $('#customEmailsGroup').show();
+                }
+            });
+
+            // Add email button functionality
+            $('#addEmailBtn').click(function() {
+                const email = $('#newEmail').val().trim();
+                if (email && isValidEmail(email)) {
+                    addEmailChip(email);
+                    $('#newEmail').val('');
+                } else {
+                    alert('Please enter a valid email address');
+                }
+            });
+
+            // Function to validate email
+            function isValidEmail(email) {
+                const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                return re.test(email);
+            }
+
+            // Function to add email chip
+            function addEmailChip(email) {
+                const chip = $(`
+                    <div class="email-chip">
+                        <span>${email}</span>
+                        <button type="button" class="btn-close btn-close-white btn-sm ms-2" aria-label="Remove"></button>
+                        <input type="hidden" name="approval_emails[]" value="${email}">
+                    </div>
+                `);
+
+                chip.find('.btn-close').click(function() {
+                    chip.remove();
+                });
+
+                $('#emailChips').append(chip);
+            }
+        });
+    </script>
+
+    <!-- Approval Modal -->
+    <div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="approvalModalLabel">Send for Approval</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="approvalForm">
+                        <div class="mb-3">
+                            <label class="form-label">Would you like to send this EPV to your manager for approval?</label>
+                            <select class="form-select" id="approvalOption">
+                                <option value="yes">Yes, send to my manager</option>
+                                <option value="no">No, I want to specify different email(s)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="managerEmailGroup">
+                            <label for="managerEmail" class="form-label">Manager's Email:</label>
+                            <input type="email" class="form-control" id="managerEmail" readonly>
+                        </div>
+
+                        <div class="mb-3" id="customEmailsGroup" style="display: none;">
+                            <label class="form-label">Enter email addresses:</label>
+                            <div class="input-group mb-2">
+                                <input type="email" class="form-control" id="newEmail" placeholder="Enter email address">
+                                <button class="btn btn-outline-primary" type="button" id="addEmailBtn">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                            <div id="emailChips" class="d-flex flex-wrap gap-2 mt-2">
+                                <!-- Email chips will be added here -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="sendApprovalBtn">Send for Approval</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .email-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</body>
+</html>

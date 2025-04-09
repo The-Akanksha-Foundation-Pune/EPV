@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="50" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text { font-family: Arial, sans-serif; font-weight: bold; }
+    .expense { fill: #ffffff; }
+    .portal { fill: #ffffff; }
+  </style>
+  <rect x="0" y="0" width="200" height="50" rx="8" fill="#0176d3"/>
+  <text x="10" y="33" class="logo-text expense" font-size="24">Expense</text>
+  <text x="105" y="33" class="logo-text portal" font-size="24">Portal</text>
+  <path d="M180 15 L190 25 L180 35" stroke="#ffffff" stroke-width="3" fill="none"/>
+</svg>
