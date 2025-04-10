@@ -1,15 +1,12 @@
-{% extends 'base.html' %}
+{% extends 'base_salesforce.html' %}
 
 {% block title %}Dashboard - Expense Management Portal{% endblock %}
 
 {% block additional_styles %}
-body {
-    padding-top: 56px;
-}
 .feature-icon {
     font-size: 2rem;
     margin-bottom: 1rem;
-    color: var(--primary-color);
+    color: var(--sf-blue);
 }
 .dashboard-card {
     height: 100%;
@@ -23,8 +20,6 @@ body {
 {% endblock %}
 
 {% block content %}
-<!-- Include the navigation bar -->
-{% include 'includes/navbar.html' %}
 
 <!-- Main Content -->
 <main class="container mt-4">

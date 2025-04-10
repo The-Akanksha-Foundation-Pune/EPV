@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_salesforce.html" %}
 
 {% block title %}New Expense - Expense Portal{% endblock %}
 
@@ -7,7 +7,7 @@
             display: inline-flex;
             align-items: center;
             padding: 0.25rem 0.5rem;
-            background-color: var(--primary-color);
+            background-color: var(--sf-blue);
             color: white;
             border-radius: 50px;
             margin-right: 0.5rem;
@@ -16,9 +16,9 @@
         }
 
         .card {
-            border-radius: var(--border-radius);
+            border-radius: var(--sf-border-radius);
             border: none;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--sf-shadow);
             margin-bottom: 30px;
             overflow: hidden;
         }
@@ -1476,4 +1476,16 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all dropdowns
+        var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+        var dropdownList = dropdownElementList.map(function(dropdownToggleEl) {
+            return new bootstrap.Dropdown(dropdownToggleEl);
+        });
+    });
+</script>
 {% endblock %}

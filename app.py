@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import Flask, redirect, url_for, render_template, session, jsonify, request, send_file
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-from models import db, CostCenter, EmployeeDetails, SettingsFinance, ExpenseHead, EPV, EPVItem, init_db
+from models import db, CostCenter, EmployeeDetails, SettingsFinance, ExpenseHead, EPV, EPVItem, EPVApproval, init_db
 from pdf_converter import process_files
 from google.oauth2.credentials import Credentials
 
@@ -218,7 +218,7 @@ def dashboard():
     print(f"DEBUG: Dashboard accessed by {user_info.get('email')}")
     print(f"DEBUG: Employee role: {employee_role}, Manager: {employee_manager}, ID: {employee_id}")
 
-    return render_template('dashboard_new.html')
+    return render_template('dashboard_new.html', user=user_info)
 
 @app.route('/logout')
 def logout():
@@ -873,7 +873,7 @@ def new_expense():
             }), 500
 
     # For GET requests, render the form
-    return render_template('new_expense.html',
+    return render_template('new_expense_fixed.html',
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
@@ -1415,7 +1415,9 @@ def epv_records():
     # Return the EPV records template
     print("DEBUG: Rendering epv_records.html template")
     try:
-        return render_template('epv_records_new.html', records=records, user=session.get('user_info'))
+        # Get all cost centers for filtering
+        cost_centers = CostCenter.query.all()
+        return render_template('epv_records_salesforce.html', records=records, cost_centers=cost_centers, user=session.get('user_info'))
     except Exception as e:
         print(f"DEBUG: Error rendering template: {str(e)}")
         import traceback
@@ -1445,8 +1447,29 @@ def epv_record(epv_id):
     # Get the expense items for this EPV
     items = EPVItem.query.filter_by(epv_id=record.id).all()
 
+    # Get approval information
+    approvals = EPVApproval.query.filter_by(epv_id=record.id).all()
+
+    # Check if the current user is an approver for this EPV
+    is_approver = False
+    already_approved = False
+    token = request.args.get('token', '')
+
+    if token:
+        approval = EPVApproval.query.filter_by(token=token).first()
+        if approval and approval.epv_id == record.id:
+            is_approver = True
+            already_approved = approval.status in ['Approved', 'Rejected']
+
     print(f"DEBUG: User {user_email} viewing EPV record {epv_id}")
-    return render_template('epv_record.html', record=record, items=items)
+    return render_template('epv_record_view_salesforce.html',
+                           epv=record,
+                           expense_items=items,
+                           approvals=approvals,
+                           is_approver=is_approver,
+                           already_approved=already_approved,
+                           token=token,
+                           user=session.get('user_info'))
 
 if __name__ == '__main__':
     # Allow OAuth without HTTPS for local development
