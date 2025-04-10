@@ -28,24 +28,33 @@ def create_message(sender, to, subject, html_content):
 
 def send_message(credentials, sender, to, subject, html_content):
     """Send an email message."""
+    print(f"DEBUG: send_message called with sender: {sender}, to: {to}, subject: {subject}")
     try:
         # Build the Gmail service
+        print(f"DEBUG: Building Gmail service with credentials")
         service = build('gmail', 'v1', credentials=credentials)
+        print(f"DEBUG: Successfully built Gmail service")
 
         # Create the message
+        print(f"DEBUG: Creating message")
         message = create_message(sender, to, subject, html_content)
+        print(f"DEBUG: Successfully created message")
 
         # Send the message
+        print(f"DEBUG: Sending message")
         sent_message = service.users().messages().send(userId="me", body=message).execute()
-
-        print(f"Message sent successfully. Message ID: {sent_message['id']}")
+        print(f"DEBUG: Message sent successfully. Message ID: {sent_message['id']}")
         return True, sent_message['id']
 
     except HttpError as error:
-        print(f"An error occurred while sending the email: {error}")
+        print(f"ERROR: An HTTP error occurred while sending the email: {error}")
+        import traceback
+        print(f"DEBUG: HTTP error traceback: {traceback.format_exc()}")
         return False, str(error)
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"ERROR: An unexpected error occurred: {e}")
+        import traceback
+        print(f"DEBUG: Unexpected error traceback: {traceback.format_exc()}")
         return False, str(e)
 
 def create_approval_email(epv_record, sender_email, base_url, token=None):
@@ -193,14 +202,34 @@ def create_approval_email(epv_record, sender_email, base_url, token=None):
 
 def send_approval_email(epv_record, approver_email, credentials, base_url, token=None):
     """Send an approval email for an expense record."""
+    print(f"DEBUG: send_approval_email called with EPV ID: {epv_record.epv_id}, approver: {approver_email}")
+
     # Get sender email from credentials or use a default
     sender_email = "expense.system@akanksha.org"
+    print(f"DEBUG: Using sender email: {sender_email}")
 
     # Create email subject
     subject = f"Expense Approval Request: {epv_record.epv_id}"
+    print(f"DEBUG: Email subject: {subject}")
 
     # Create HTML content with token for secure approval/rejection
-    html_content = create_approval_email(epv_record, sender_email, base_url, token)
+    try:
+        html_content = create_approval_email(epv_record, sender_email, base_url, token)
+        print(f"DEBUG: Created HTML content for email, length: {len(html_content)}")
+    except Exception as e:
+        print(f"ERROR creating HTML content: {str(e)}")
+        import traceback
+        print(f"DEBUG: HTML content traceback: {traceback.format_exc()}")
+        raise
 
     # Send the email
-    return send_message(credentials, sender_email, approver_email, subject, html_content)
+    try:
+        print(f"DEBUG: Sending email to {approver_email}")
+        result = send_message(credentials, sender_email, approver_email, subject, html_content)
+        print(f"DEBUG: Email send result: {result}")
+        return result
+    except Exception as e:
+        print(f"ERROR sending email: {str(e)}")
+        import traceback
+        print(f"DEBUG: Email sending traceback: {traceback.format_exc()}")
+        raise

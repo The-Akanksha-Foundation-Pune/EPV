@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- jQuery UI CSS -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Custom Theme CSS -->
     <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
     <!-- Loading Screen CSS -->
@@ -354,6 +356,8 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Loading Screen JavaScript -->
     <script src="{{ url_for('static', filename='js/loading-screen.js') }}"></script>
     {% block scripts %}{% endblock %}
@@ -368,11 +372,15 @@
                     LoadingScreen.element = document.getElementById('loadingScreen');
                 }
 
+                // Check if we're navigating back
+                const isBackNavigation = window.performance &&
+                    window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD;
+
                 // Special handling for login page
                 const isLoginPage = window.location.pathname === '/' || window.location.pathname === '/login';
 
-                if (!isLoginPage) {
-                    // For non-login pages, show and then hide the loading screen
+                if (!isLoginPage && !isBackNavigation) {
+                    // For non-login pages and not back navigation, show and then hide the loading screen
                     LoadingScreen.show(3);
 
                     // Hide loading screen when page is fully loaded
@@ -381,8 +389,7 @@
                         LoadingScreen.hide();
                     });
                 } else {
-                    // For login page, hide the loading screen initially
-                    // It will be shown when the login button is clicked
+                    // For login page or back navigation, hide the loading screen initially
                     LoadingScreen.element.style.display = 'none';
                 }
 
@@ -417,6 +424,15 @@
                     form.addEventListener('submit', function() {
                         LoadingScreen.show(3);
                     });
+                });
+
+                // Handle back button specifically
+                window.addEventListener('pageshow', function(event) {
+                    if (event.persisted) {
+                        // Page was loaded from cache (back/forward navigation)
+                        console.log('Page loaded from cache (back/forward), hiding loading screen');
+                        LoadingScreen.element.style.display = 'none';
+                    }
                 });
             }
         });

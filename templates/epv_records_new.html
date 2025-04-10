@@ -10,26 +10,42 @@
         font-weight: 500;
     }
     .status-submitted {
-        background-color: #e3f2fd;
-        color: #0d6efd;
+        background-color: var(--sf-blue-light);
+        color: var(--sf-blue);
     }
     .status-approved {
-        background-color: #d1e7dd;
-        color: #198754;
+        background-color: var(--sf-success);
+        color: white;
     }
     .status-rejected {
-        background-color: #f8d7da;
-        color: #dc3545;
+        background-color: var(--sf-error);
+        color: white;
     }
     .status-pending {
-        background-color: #fff3cd;
-        color: #ffc107;
+        background-color: var(--sf-warning);
+        color: var(--sf-text);
+    }
+    .status-partially-approved {
+        background-color: var(--sf-blue-light);
+        color: var(--sf-blue);
+    }
+    .search-box {
+        position: relative;
+    }
+    .search-box .form-control {
+        padding-left: 2.5rem;
+    }
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--sf-neutral-dark);
     }
 {% endblock %}
 
 {% block content %}
-    <!-- Main Content -->
-    <main class="container mt-4">
+    <div class="container mt-4 pt-3">
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -84,5 +100,5 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 {% endblock %}

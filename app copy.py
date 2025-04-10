@@ -1,15 +1,13 @@
 import os
 import uuid
-import re
 import pymysql
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import Flask, redirect, url_for, render_template, session, jsonify, request, send_file
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-from models import db, CostCenter, EmployeeDetails, SettingsFinance, ExpenseHead, EPV, EPVItem, EPVApproval, init_db
+from models import db, CostCenter, EmployeeDetails, SettingsFinance, ExpenseHead, EPV, EPVItem, init_db
 from pdf_converter import process_files
 from google.oauth2.credentials import Credentials
-from email_utils import send_approval_email
 
 # Load environment variables
 load_dotenv()
@@ -34,7 +32,7 @@ google = oauth.register(
     access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params={'access_type': 'offline', 'prompt': 'consent'},  # Request refresh token
+    authorize_params=None,
     api_base_url='https://www.googleapis.com/oauth2/v1/',
     client_kwargs={'scope': 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/gmail.send'},
     jwks_uri='https://www.googleapis.com/oauth2/v3/certs'
@@ -155,13 +153,10 @@ def authorize():
         next_url = session.pop('next_url', '/dashboard')
         print(f"DEBUG: Redirecting to: {next_url}")
 
-        # Use a minimal redirect page that maintains the auth flow flag
+        # Add JavaScript to measure load time
         response_html = '''
-        <!DOCTYPE html>
-        <html lang="en">
+        <html>
         <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Redirecting...</title>
             <script>
                 // This script will be executed when the page loads
@@ -169,21 +164,25 @@ def authorize():
                     // Record the time when this page loaded
                     const startTime = new Date().getTime();
 
-                    // Store the start time in localStorage
-                    localStorage.setItem('loginStartTime', startTime);
+                    // Function to redirect and measure time
+                    function redirectWithTiming() {
+                        // Store the start time in localStorage
+                        localStorage.setItem('loginStartTime', startTime);
 
-                    // Maintain the auth flow flag
-                    if (!sessionStorage.getItem('authFlowInProgress')) {
-                        sessionStorage.setItem('authFlowInProgress', 'true');
+                        // Redirect to the target page
+                        window.location.href = "REDIRECT_URL";
                     }
 
-                    // Redirect immediately to the target page
-                    window.location.href = "REDIRECT_URL";
+                    // Redirect after a brief delay to ensure the script runs
+                    setTimeout(redirectWithTiming, 100);
                 });
             </script>
         </head>
-        <body style="margin: 0; padding: 0; height: 100vh; overflow: hidden; background-color: #f5f5f5;">
-            <!-- Intentionally empty - we're maintaining the loading screen from the previous page -->
+        <body>
+            <div style="text-align: center; margin-top: 100px;">
+                <h2>Logging you in...</h2>
+                <p>Please wait while we redirect you to your dashboard.</p>
+            </div>
         </body>
         </html>
         '''
@@ -215,123 +214,11 @@ def dashboard():
     employee_role = session.get('employee_role')
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
-    user_email = user_info.get('email')
 
-    print(f"DEBUG: Dashboard accessed by {user_email}")
+    print(f"DEBUG: Dashboard accessed by {user_info.get('email')}")
     print(f"DEBUG: Employee role: {employee_role}, Manager: {employee_manager}, ID: {employee_id}")
 
-    # Get filter options
-    expense_heads = ExpenseHead.query.filter_by(is_active=True).all()
-    cost_centers = CostCenter.query.filter_by(is_active=True).all()
-
-    # Get filter values from request
-    expense_head_filter = request.args.get('expense_head', '')
-    cost_center_filter = request.args.get('cost_center', '')
-    time_period_filter = request.args.get('time_period', 'all')
-
-    # Define time period filter dates
-    today = datetime.now().date()
-    if time_period_filter == 'this_month':
-        start_date = datetime(today.year, today.month, 1).date()
-        end_date = today
-    elif time_period_filter == 'last_month':
-        if today.month == 1:
-            start_date = datetime(today.year - 1, 12, 1).date()
-            end_date = datetime(today.year, 1, 1).date() - timedelta(days=1)
-        else:
-            start_date = datetime(today.year, today.month - 1, 1).date()
-            end_date = datetime(today.year, today.month, 1).date() - timedelta(days=1)
-    elif time_period_filter == 'this_year':
-        start_date = datetime(today.year, 1, 1).date()
-        end_date = today
-    else:  # 'all'
-        start_date = None
-        end_date = None
-
-    # Get real data for scorecards
-    try:
-        # Base query for EPVs
-        base_query = EPV.query.filter(EPV.email_id == user_email)
-
-        # Apply filters to base query
-        if expense_head_filter:
-            # Join with EPVItem to filter by expense_head
-            base_query = base_query.join(EPVItem, EPV.epv_id == EPVItem.epv_id)
-            base_query = base_query.filter(EPVItem.expense_head == expense_head_filter)
-
-        if cost_center_filter:
-            base_query = base_query.filter(EPV.cost_center_name == cost_center_filter)
-
-        if start_date and end_date:
-            base_query = base_query.filter(EPV.submission_date.between(start_date, end_date))
-
-        # 1. Pending Claims - Count of EPVs with status 'submitted' or 'pending_approval'
-        pending_query = base_query.filter(EPV.status.in_(['submitted', 'pending_approval']))
-        pending_claims = pending_query.count()
-
-        # 2. Approved This Month - Count of EPVs approved in the current month
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        approved_this_month_query = base_query.filter(
-            EPV.status == 'approved',
-            db.extract('month', EPV.approved_on) == current_month,
-            db.extract('year', EPV.approved_on) == current_year
-        )
-        approved_this_month = approved_this_month_query.count()
-
-        # 3. Total Amount - Sum of all approved EPVs
-        total_amount_query = base_query.filter(EPV.status == 'approved')
-        total_amount_result = db.session.query(db.func.sum(EPV.total_amount)).filter(
-            EPV.id.in_([epv.id for epv in total_amount_query])
-        ).scalar()
-        total_amount = total_amount_result if total_amount_result else 0
-
-        # 4. Average Processing Time - Average time between submission and approval
-        # First, get all approved EPVs with both submission_date and approved_on
-        approved_epvs_query = base_query.filter(
-            EPV.status == 'approved',
-            EPV.submission_date.isnot(None),
-            EPV.approved_on.isnot(None)
-        )
-        approved_epvs = approved_epvs_query.all()
-
-        # Calculate average processing time in days
-        if approved_epvs:
-            total_days = sum([(epv.approved_on - epv.submission_date).total_seconds() / (60*60*24) for epv in approved_epvs])
-            avg_processing_time = round(total_days / len(approved_epvs), 1)
-        else:
-            avg_processing_time = 0
-
-    except Exception as e:
-        print(f"ERROR: Failed to get dashboard data: {str(e)}")
-        pending_claims = 0
-        approved_this_month = 0
-        total_amount = 0
-        avg_processing_time = 0
-
-    # Format the total amount with commas for thousands
-    formatted_total_amount = f"₹{total_amount:,.2f}"
-
-    # Prepare dashboard data
-    dashboard_data = {
-        'pending_claims': pending_claims,
-        'approved_this_month': approved_this_month,
-        'total_amount': formatted_total_amount,
-        'avg_processing_time': f"{avg_processing_time} days"
-    }
-
-    # Debug output
-    print(f"DEBUG: Dashboard data: {dashboard_data}")
-    print(f"DEBUG: Filters applied - Expense Head: {expense_head_filter}, Cost Center: {cost_center_filter}, Time Period: {time_period_filter}")
-
-    return render_template('dashboard_new.html',
-                           user=user_info,
-                           dashboard_data=dashboard_data,
-                           expense_heads=expense_heads,
-                           cost_centers=cost_centers,
-                           selected_expense_head=expense_head_filter,
-                           selected_cost_center=cost_center_filter,
-                           selected_time_period=time_period_filter)
+    return render_template('dashboard_new.html')
 
 @app.route('/logout')
 def logout():
@@ -361,15 +248,14 @@ def cost_centers():
 
     # Get all cost centers
     cost_centers = CostCenter.query.all()
-    return render_template('cost_centers_new.html',
+    return render_template('cost_centers.html',
                            cost_centers=cost_centers,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
                            employee_id=employee_id)
 
-# Add a route to add/edit cost centers
-@app.route('/cost-centers/edit', defaults={'id': None}, methods=['GET', 'POST'])
+# Add a route to add/edit approver email
 @app.route('/cost-centers/<int:id>/edit', methods=['GET', 'POST'])
 def edit_cost_center(id):
     from flask import request
@@ -379,39 +265,23 @@ def edit_cost_center(id):
     if not user_info:
         return redirect(url_for('index'))
 
+    # Get the cost center
+    cost_center = CostCenter.query.get_or_404(id)
+
+    if request.method == 'POST':
+        # Update the cost center
+        cost_center.approver_email = request.form.get('approver_email')
+        cost_center.drive_id = request.form.get('drive_id')
+        db.session.commit()
+        return redirect(url_for('cost_centers'))
+
     # Get employee details from session
     employee_role = session.get('employee_role')
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
 
-    # Check if we're editing an existing cost center or creating a new one
-    if id is None:
-        # Creating a new cost center
-        cost_center = CostCenter()
-        is_new = True
-    else:
-        # Editing an existing cost center
-        cost_center = CostCenter.query.get_or_404(id)
-        is_new = False
-
-    if request.method == 'POST':
-        # Update or create the cost center
-        if is_new:
-            cost_center.costcenter = request.form.get('costcenter')
-            cost_center.city = request.form.get('city')
-            db.session.add(cost_center)
-
-        # Update fields for both new and existing cost centers
-        cost_center.approver_email = request.form.get('approver_email')
-        cost_center.drive_id = request.form.get('drive_id')
-        cost_center.is_active = 'is_active' in request.form
-
-        db.session.commit()
-        return redirect(url_for('cost_centers'))
-
-    return render_template('edit_cost_center_new.html',
+    return render_template('edit_cost_center.html',
                            cost_center=cost_center,
-                           is_new=is_new,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
@@ -432,15 +302,14 @@ def employees():
 
     # Get all employees
     employees = EmployeeDetails.query.all()
-    return render_template('employees_basic.html',
+    return render_template('employees.html',
                            employees=employees,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
                            employee_id=employee_id)
 
-# Add a route to add/edit employee details
-@app.route('/employees/edit', defaults={'id': None}, methods=['GET', 'POST'])
+# Add a route to edit employee details
 @app.route('/employees/<int:id>/edit', methods=['GET', 'POST'])
 def edit_employee(id):
     # Check if user is logged in
@@ -448,187 +317,25 @@ def edit_employee(id):
     if not user_info:
         return redirect(url_for('index'))
 
-    # Get employee details from session
-    employee_role = session.get('employee_role')
-    employee_manager = session.get('employee_manager')
-    employee_id = session.get('employee_id')
-
-    # Check if we're editing an existing employee or creating a new one
-    if id is None:
-        # Creating a new employee
-        employee = EmployeeDetails()
-        is_new = True
-    else:
-        # Editing an existing employee
-        employee = EmployeeDetails.query.get_or_404(id)
-        is_new = False
+    # Get the employee
+    employee = EmployeeDetails.query.get_or_404(id)
 
     if request.method == 'POST':
-        # Update or create the employee
+        # Update the employee
         employee.name = request.form.get('name')
-        employee.email = request.form.get('email') if is_new else employee.email  # Only set email for new employees
         employee.employee_id = request.form.get('employee_id')
         employee.manager = request.form.get('manager')
         employee.role = request.form.get('role')
-        employee.is_active = 'is_active' in request.form
-
-        if is_new:
-            db.session.add(employee)
-
         db.session.commit()
         return redirect(url_for('employees'))
 
-    return render_template('edit_employee_new.html',
+    # Get employee details from session
+    employee_role = session.get('employee_role')
+    employee_manager = session.get('employee_manager')
+    employee_id = session.get('employee_id')
+
+    return render_template('edit_employee.html',
                            employee=employee,
-                           is_new=is_new,
-                           user=user_info,
-                           employee_role=employee_role,
-                           employee_manager=employee_manager,
-                           employee_id=employee_id)
-
-# Add a route to toggle cost center status
-@app.route('/cost_center/<int:id>/toggle-status', methods=['POST'])
-@app.route('/cost_centers/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
-def toggle_cost_center_status(id):
-    # Check if user is logged in
-    user_info = session.get('user_info')
-    if not user_info:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Not logged in'})
-        return redirect(url_for('index'))
-
-    try:
-        # Get the cost center
-        cost_center = CostCenter.query.get_or_404(id)
-
-        # Toggle the status
-        cost_center.is_active = not cost_center.is_active
-        db.session.commit()
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, 'is_active': cost_center.is_active})
-        return redirect(url_for('cost_centers'))
-    except Exception as e:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': str(e)})
-        return redirect(url_for('cost_centers'))
-
-# Add a route to toggle employee status
-@app.route('/employee/<int:id>/toggle-status', methods=['POST'])
-@app.route('/employees/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
-def toggle_employee_status(id):
-    # Check if user is logged in
-    user_info = session.get('user_info')
-    if not user_info:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Not logged in'})
-        return redirect(url_for('index'))
-
-    try:
-        # Get the employee
-        employee = EmployeeDetails.query.get_or_404(id)
-
-        # Toggle the status
-        employee.is_active = not employee.is_active
-        db.session.commit()
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, 'is_active': employee.is_active})
-        return redirect(url_for('employees'))
-    except Exception as e:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': str(e)})
-        return redirect(url_for('employees'))
-
-# Add a route to view expense heads
-@app.route('/expense-heads')
-def expense_heads():
-    # Check if user is logged in
-    user_info = session.get('user_info')
-    if not user_info:
-        return redirect(url_for('index'))
-
-    # Get employee details from session
-    employee_role = session.get('employee_role')
-    employee_manager = session.get('employee_manager')
-    employee_id = session.get('employee_id')
-
-    # Get all expense heads
-    expense_heads = ExpenseHead.query.all()
-    return render_template('expense_heads.html',
-                           expense_heads=expense_heads,
-                           user=user_info,
-                           employee_role=employee_role,
-                           employee_manager=employee_manager,
-                           employee_id=employee_id)
-
-# Add a route to toggle expense head status
-@app.route('/expense_head/<int:id>/toggle-status', methods=['POST'])
-@app.route('/expense-heads/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
-def toggle_expense_head_status(id):
-    # Check if user is logged in
-    user_info = session.get('user_info')
-    if not user_info:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Not logged in'})
-        return redirect(url_for('index'))
-
-    try:
-        # Get the expense head
-        expense_head = ExpenseHead.query.get_or_404(id)
-
-        # Toggle the status
-        expense_head.is_active = not expense_head.is_active
-        db.session.commit()
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, 'is_active': expense_head.is_active})
-        return redirect(url_for('expense_heads'))
-    except Exception as e:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': str(e)})
-        return redirect(url_for('expense_heads'))
-
-# Add a route to add/edit expense heads
-@app.route('/expense-heads/edit', defaults={'id': None}, methods=['GET', 'POST'])
-@app.route('/expense-heads/<int:id>/edit', methods=['GET', 'POST'])
-def edit_expense_head(id):
-    # Check if user is logged in
-    user_info = session.get('user_info')
-    if not user_info:
-        return redirect(url_for('index'))
-
-    # Get employee details from session
-    employee_role = session.get('employee_role')
-    employee_manager = session.get('employee_manager')
-    employee_id = session.get('employee_id')
-
-    # Check if we're editing an existing expense head or creating a new one
-    if id is None:
-        # Creating a new expense head
-        expense_head = ExpenseHead()
-        is_new = True
-    else:
-        # Editing an existing expense head
-        expense_head = ExpenseHead.query.get_or_404(id)
-        is_new = False
-
-    if request.method == 'POST':
-        # Update or create the expense head
-        expense_head.head_name = request.form.get('head_name')
-        expense_head.head_code = request.form.get('head_code')
-        expense_head.description = request.form.get('description')
-        expense_head.is_active = 'is_active' in request.form
-
-        if is_new:
-            db.session.add(expense_head)
-
-        db.session.commit()
-        return redirect(url_for('expense_heads'))
-
-    return render_template('edit_expense_head.html',
-                           expense_head=expense_head,
-                           is_new=is_new,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
@@ -647,11 +354,11 @@ def new_expense():
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
 
-    # Get all active cost centers for the dropdown
-    cost_centers = CostCenter.query.filter_by(is_active=True).all()
+    # Get all cost centers for the dropdown
+    cost_centers = CostCenter.query.all()
 
-    # Get all active employees for the autocomplete
-    employees = EmployeeDetails.query.filter_by(is_active=True).all()
+    # Get all employees for the autocomplete
+    employees = EmployeeDetails.query.all()
 
     # Get all active expense heads
     expense_heads = ExpenseHead.query.filter_by(is_active=True).all()
@@ -660,6 +367,7 @@ def new_expense():
     if request.method == 'POST':
         try:
             # Process the expense form data
+            expense_files = []
 
             # Get form data
             employee_name = request.form.get('employee_name')  # Changed from 'employeeName' to match the form field name
@@ -683,13 +391,7 @@ def new_expense():
 
             if cost_center_id:
                 try:
-                    # Try to convert cost_center_id to integer directly
-                    try:
-                        cost_center_id = int(cost_center_id)
-                    except ValueError:
-                        print(f"DEBUG: cost_center_id is not an integer: {cost_center_id}")
-
-                    # Now get the cost center by ID
+                    # First try with string comparison
                     cost_center = CostCenter.query.filter_by(id=cost_center_id).first()
                     print(f"DEBUG: Cost center lookup result: {cost_center}")
 
@@ -703,6 +405,17 @@ def new_expense():
                             print(f"WARNING: Drive folder ID is empty or None for cost center {cost_center_name}")
                     else:
                         print(f"WARNING: No cost center found with ID: {cost_center_id}")
+
+                        # Try with integer ID if string lookup failed
+                        try:
+                            int_id = int(cost_center_id)
+                            cost_center = CostCenter.query.filter_by(id=int_id).first()
+                            if cost_center:
+                                cost_center_name = cost_center.costcenter
+                                drive_folder_id = cost_center.drive_id
+                                print(f"DEBUG: Found cost center with int ID: {cost_center_name}, Drive folder ID: {drive_folder_id}")
+                        except ValueError:
+                            print(f"DEBUG: cost_center_id is not an integer: {cost_center_id}")
                 except Exception as e:
                     print(f"ERROR: Failed to get cost center details: {str(e)}")
 
@@ -712,11 +425,21 @@ def new_expense():
                 file = request.files[key]
                 print(f"DEBUG: File key: {key}, filename: {file.filename if file else 'None'}")
 
+            # Collect all uploaded files from the form
+            for key, file in request.files.items():
+                if ('receipt' in key or 'receipt_upload' in key) and file.filename:
+                    print(f"DEBUG: Adding file to process: {key} = {file.filename}")
+                    expense_files.append(file)
+                else:
+                    print(f"DEBUG: Skipping file: {key} = {file.filename if file else 'None'} (receipt in key: {'receipt' in key}, has filename: {bool(file.filename) if file else False})")
+
+            print(f"Found {len(expense_files)} files to process")
+
+            # Always prepare expense data for PDF generation
             # Generate a unique EPV ID for this expense
             # Format: EPV-YYYYMMDD-XXXXXXXXXX (10 hex chars from UUID for near-absolute uniqueness)
             epv_id = f"EPV-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:10].upper()}"
 
-            # Prepare expense data structure
             expense_data = {
                 'employee_id': employee_id,
                 'employee_name': employee_name,
@@ -729,69 +452,20 @@ def new_expense():
             }
 
             # Extract expense items from form data
-            # Check if we have invoice_date[] format (new format)
-            if 'invoice_date[]' in request.form:
-                # Get all invoice dates
-                invoice_dates = request.form.getlist('invoice_date[]')
-                expense_heads = request.form.getlist('expense_head[]')
-                amounts = request.form.getlist('amount[]')
-                descriptions = request.form.getlist('description[]')
-
-                # Process each expense item
-                for i in range(len(invoice_dates)):
-                    if i < len(expense_heads) and i < len(amounts) and i < len(descriptions):
-                        expense = {
-                            'invoice_date': invoice_dates[i],
-                            'expense_head': expense_heads[i],
-                            'amount': amounts[i],
-                            'description': descriptions[i],
-                            'split_invoice': False  # Default value
-                        }
-                        expense_data['expenses'].append(expense)
-                        print(f"DEBUG: Added expense item: {expense}")
-            # Old format (expenses[i][field])
-            else:
-                i = 0
-                while f'expenses[{i}][invoice_date]' in request.form:
-                    expense = {
-                        'invoice_date': request.form.get(f'expenses[{i}][invoice_date]'),
-                        'expense_head': request.form.get(f'expenses[{i}][expense_head]'),
-                        'amount': request.form.get(f'expenses[{i}][amount]'),
-                        'description': request.form.get(f'expenses[{i}][description]'),
-                        'split_invoice': request.form.get(f'expenses[{i}][split_invoice]') == '1'
-                    }
-                    expense_data['expenses'].append(expense)
-                    i += 1
+            i = 0
+            while f'expenses[{i}][invoice_date]' in request.form:
+                expense = {
+                    'invoice_date': request.form.get(f'expenses[{i}][invoice_date]'),
+                    'expense_head': request.form.get(f'expenses[{i}][expense_head]'),
+                    'amount': request.form.get(f'expenses[{i}][amount]'),
+                    'description': request.form.get(f'expenses[{i}][description]')
+                }
+                expense_data['expenses'].append(expense)
+                i += 1
 
             # Calculate total amount
             total_amount = sum(float(expense['amount']) for expense in expense_data['expenses'] if expense['amount'])
             expense_data['total_amount'] = f"{total_amount:.2f}"
-
-            # Identify split invoices
-            split_invoice_indices = []
-            for i, expense in enumerate(expense_data['expenses']):
-                if expense.get('split_invoice'):
-                    split_invoice_indices.append(i)
-                    print(f"DEBUG: Expense #{i+1} is marked as a split invoice, will skip receipt upload")
-
-            # Process files based on split invoice information
-            expense_files = []
-            for key, file in request.files.items():
-                if ('receipt' in key or 'receipt_upload' in key) and file.filename:
-                    # Extract the index from the key (e.g., expenses[0][receipt] -> 0)
-                    try:
-                        index_match = re.search(r'expenses\[(\d+)\]', key)
-                        if index_match:
-                            index = int(index_match.group(1))
-                            # Skip if this is a split invoice
-                            if index in split_invoice_indices:
-                                print(f"DEBUG: Skipping file for split invoice: {key} = {file.filename}")
-                                continue
-                    except Exception as e:
-                        print(f"DEBUG: Error parsing index from key {key}: {str(e)}")
-
-                    print(f"DEBUG: Adding file to process: {key} = {file.filename}")
-                    expense_files.append(file)
 
             # Generate expense document PDF
             from pdf_converter import generate_expense_document
@@ -837,8 +511,7 @@ def new_expense():
                         expense_head=expense['expense_head'],
                         description=expense['description'],
                         amount=float(expense['amount']),
-                        gst=0.0,  # Default value, can be updated later
-                        split_invoice=expense.get('split_invoice', False)  # Include the split invoice flag
+                        gst=0.0  # Default value, can be updated later
                     )
                     db.session.add(item)
 
@@ -966,12 +639,20 @@ def new_expense():
 
                         if drive_file_id and drive_file_id != 'local_file':
                             drive_file_url = get_file_url(drive_file_id)
-                            # Don't return here, continue to create approval record
-                            # Store the file URL for later use
-                            file_url = drive_file_url
+                            return jsonify({
+                                'success': True,
+                                'message': 'Expense document uploaded to Google Drive',
+                                'drive_file_url': drive_file_url
+                            })
 
                     # Store the PDF path in session for download
                     session['merged_pdf_path'] = expense_pdf_path
+
+                    return jsonify({
+                        'success': True,
+                        'message': 'Expense submitted successfully!',
+                        'pdf_url': '/download-pdf'
+                    })
                 except Exception as e:
                     print(f"Error serving expense PDF: {str(e)}")
                     return jsonify({
@@ -979,102 +660,13 @@ def new_expense():
                         'message': f"Error serving expense PDF: {str(e)}"
                     })
 
-            # Store success response for later
-            success_response = {
+            # Otherwise, just return success
+            return jsonify({
                 'success': True,
                 'message': 'Expense submitted successfully!',
                 'epv_id': epv_id,
-                'pdf_url': '/download-pdf'
-            }
-
-            # Add drive file URL to response if available
-            if 'file_url' in locals() and file_url:
-                success_response['drive_file_url'] = file_url
-
-            print("DEBUG: About to create approval record")
-            print(f"DEBUG: Current session data: {session}")
-
-            # Update EPV status to pending_approval and create approval record
-            manager_email = session.get('employee_manager', '')
-            print(f"DEBUG: Manager email from session: {manager_email}")
-
-            if manager_email:
-                # Get the EPV record
-                epv_obj = EPV.query.filter_by(epv_id=epv_id).first()
-                print(f"DEBUG: Retrieved EPV record: {epv_obj}")
-
-                if epv_obj:
-                    # Generate a token for approval
-                    token = str(uuid.uuid4())
-                    print(f"DEBUG: Generated approval token: {token}")
-
-                    try:
-                        # Create an EPVApproval record
-                        approval = EPVApproval(
-                            epv_id=epv_obj.id,
-                            approver_email=manager_email,
-                            status='pending',
-                            token=token
-                        )
-                        db.session.add(approval)
-
-                        # Update the EPV status
-                        epv_obj.status = 'pending_approval'
-                        db.session.commit()
-
-                        print(f"DEBUG: Created approval record for manager: {manager_email}")
-                        print(f"DEBUG: Updated EPV status to pending_approval")
-                    except Exception as e:
-                        print(f"ERROR creating approval record: {str(e)}")
-                        import traceback
-                        print(f"DEBUG: Exception traceback: {traceback.format_exc()}")
-
-                    # Try to send email using the email_utils module
-                    print(f"DEBUG: Attempting to send email to manager: {manager_email}")
-
-                    # Check if we have Google token in session
-                    if 'google_token' in session:
-                        print(f"DEBUG: Google token found in session: {session['google_token'].keys()}")
-
-                        # Create credentials object
-                        token_info = session['google_token']
-                        try:
-                            credentials = Credentials(
-                                token=token_info['access_token'],
-                                refresh_token=token_info.get('refresh_token'),
-                                token_uri='https://oauth2.googleapis.com/token',
-                                client_id=os.environ.get('GOOGLE_CLIENT_ID'),
-                                client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
-                                scopes=['https://www.googleapis.com/auth/gmail.send']
-                            )
-                            print(f"DEBUG: Successfully created credentials from session token")
-
-                            # Send the approval email
-                            base_url = request.url_root.rstrip('/')
-                            print(f"DEBUG: Base URL for approval links: {base_url}")
-
-                            try:
-                                success, message_id = send_approval_email(epv_obj, manager_email, credentials, base_url, token)
-
-                                if success:
-                                    print(f"DEBUG: Successfully sent approval email to {manager_email} with message ID: {message_id}")
-                                else:
-                                    print(f"WARNING: Failed to send approval email to {manager_email}")
-                            except Exception as email_error:
-                                print(f"ERROR sending approval email: {str(email_error)}")
-                                import traceback
-                                print(f"DEBUG: Email sending traceback: {traceback.format_exc()}")
-                        except Exception as cred_error:
-                            print(f"ERROR creating credentials: {str(cred_error)}")
-                            import traceback
-                            print(f"DEBUG: Credentials traceback: {traceback.format_exc()}")
-                    else:
-                        print("WARNING: No Google token in session for sending email")
-
-            # No need for additional code here, approval record is created above
-
-            # Return success
-            return jsonify(success_response)
+                'manager_email': session.get('employee_manager', '')
+            })
         except Exception as e:
             print(f"Unexpected error in expense submission: {str(e)}")
             return jsonify({
@@ -1274,9 +866,6 @@ def send_for_approval():
 
         # Create credentials object
         token_info = session['google_token']
-        print(f"DEBUG: Token info: {token_info.keys()}")
-        print(f"DEBUG: Token scopes: {token_info.get('scope')}")
-
         credentials = Credentials(
             token=token_info['access_token'],
             refresh_token=token_info.get('refresh_token'),
@@ -1285,7 +874,6 @@ def send_for_approval():
             client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
             scopes=['https://www.googleapis.com/auth/gmail.send']
         )
-        print(f"DEBUG: Created credentials with scopes: {credentials.scopes}")
 
         # Import email utilities
         from email_utils import send_approval_email
@@ -1295,7 +883,6 @@ def send_for_approval():
             base_url = f"http://{request.host}"
         else:
             base_url = f"https://{request.host}"
-        print(f"DEBUG: Base URL for approval links: {base_url}")
 
         # Import uuid for generating tokens
         import uuid
@@ -1305,10 +892,8 @@ def send_for_approval():
         success_count = 0
         for approver_email in emails:
             try:
-                print(f"DEBUG: Processing approver email: {approver_email}")
                 # Create a unique token for this approval
                 token = str(uuid.uuid4())
-                print(f"DEBUG: Generated token: {token}")
 
                 # Create an EPVApproval record
                 approval = EPVApproval(
@@ -1318,13 +903,9 @@ def send_for_approval():
                     token=token
                 )
                 db.session.add(approval)
-                print(f"DEBUG: Added approval record to session")
 
                 # Send the approval email with the token
-                print(f"DEBUG: Sending approval email to {approver_email}")
                 success, message_id = send_approval_email(epv, approver_email, credentials, base_url, token)
-                print(f"DEBUG: Email send result: {success}, message ID: {message_id}")
-
                 if success:
                     success_count += 1
                     # Store approver email in EPV record (legacy support)
@@ -1332,16 +913,12 @@ def send_for_approval():
                         epv.approver_emails = approver_email
                     else:
                         epv.approver_emails += f", {approver_email}"
-                    print(f"DEBUG: Updated EPV record with approver email")
             except Exception as email_error:
-                print(f"ERROR sending email to {approver_email}: {str(email_error)}")
-                import traceback
-                print(f"DEBUG: Email error traceback: {traceback.format_exc()}")
+                print(f"Error sending email to {approver_email}: {str(email_error)}")
 
         # Update the EPV record to indicate approval has been requested
         epv.status = 'pending_approval'
         db.session.commit()
-        print(f"DEBUG: Committed changes to database, updated EPV status to pending_approval")
 
         if success_count > 0:
             return jsonify({
@@ -1355,9 +932,7 @@ def send_for_approval():
             }), 500
 
     except Exception as e:
-        print(f"ERROR sending approval request: {str(e)}")
-        import traceback
-        print(f"DEBUG: Approval request error traceback: {traceback.format_exc()}")
+        print(f"Error sending approval request: {str(e)}")
         return jsonify({'success': False, 'message': f"Error: {str(e)}"}), 500
 
 # Route to approve an expense
@@ -1643,9 +1218,7 @@ def epv_records():
     # Return the EPV records template
     print("DEBUG: Rendering epv_records.html template")
     try:
-        # Get all cost centers for filtering
-        cost_centers = CostCenter.query.all()
-        return render_template('epv_records_new.html', records=records, cost_centers=cost_centers, user=session.get('user_info'))
+        return render_template('epv_records.html', records=records)
     except Exception as e:
         print(f"DEBUG: Error rendering template: {str(e)}")
         import traceback
@@ -1675,29 +1248,8 @@ def epv_record(epv_id):
     # Get the expense items for this EPV
     items = EPVItem.query.filter_by(epv_id=record.id).all()
 
-    # Get approval information
-    approvals = EPVApproval.query.filter_by(epv_id=record.id).all()
-
-    # Check if the current user is an approver for this EPV
-    is_approver = False
-    already_approved = False
-    token = request.args.get('token', '')
-
-    if token:
-        approval = EPVApproval.query.filter_by(token=token).first()
-        if approval and approval.epv_id == record.id:
-            is_approver = True
-            already_approved = approval.status in ['Approved', 'Rejected']
-
     print(f"DEBUG: User {user_email} viewing EPV record {epv_id}")
-    return render_template('epv_record_view.html',
-                           epv=record,
-                           expense_items=items,
-                           approvals=approvals,
-                           is_approver=is_approver,
-                           already_approved=already_approved,
-                           token=token,
-                           user=session.get('user_info'))
+    return render_template('epv_record.html', record=record, items=items)
 
 if __name__ == '__main__':
     # Allow OAuth without HTTPS for local development

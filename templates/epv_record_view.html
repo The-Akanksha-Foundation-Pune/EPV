@@ -231,7 +231,7 @@
                                 <tbody>
                                     {% for item in epv_items %}
                                         <tr>
-                                            <td>{{ item.invoice_date }}</td>
+                                            <td>{{ item.expense_invoice_date.strftime('%Y-%m-%d') if item.expense_invoice_date else 'N/A' }}</td>
                                             <td>{{ item.expense_head }}</td>
                                             <td>{{ item.description }}</td>
                                             <td>₹{{ item.amount|float|round(2) }}</td>
@@ -295,6 +295,12 @@
                     <a href="{{ url_for('epv_records') }}" class="btn btn-primary">
                         <i class="fas fa-arrow-left me-2"></i> Back to EPV Records
                     </a>
+
+                    {% if epv.status == 'submitted' %}
+                        <button type="button" class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#sendApprovalModal">
+                            <i class="fas fa-paper-plane me-2"></i> Send for Approval
+                        </button>
+                    {% endif %}
 
                     {% if epv.status == 'pending_approval' %}
                         {% if is_approver and current_approval %}

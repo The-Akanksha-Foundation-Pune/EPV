@@ -176,6 +176,13 @@ const LoadingScreen = {
                 }, 500); // Match with CSS transition time
             };
 
+            // Always hide the loading screen immediately when using back button
+            if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+                console.log('Back button detected, hiding loading screen immediately');
+                this.element.style.display = 'none';
+                return;
+            }
+
             // Check if we're in the auth flow and on the final page
             const isAuthFlow = this.authInProgress || sessionStorage.getItem('authFlowInProgress') === 'true';
             const isFinalPage = window.location.pathname === '/dashboard' ||
