@@ -156,6 +156,9 @@ class EPVItem(db.Model):
     receipt_path = db.Column(db.String(255))
     receipt_drive_id = db.Column(db.String(100))
 
+    # Split invoice flag
+    split_invoice = db.Column(db.Boolean, default=False)
+
     def __repr__(self):
         return f"<EPVItem {self.id} for EPV {self.epv_id}>"
 

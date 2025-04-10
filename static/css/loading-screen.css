@@ -15,7 +15,7 @@
     align-items: center;
     z-index: 9999;
     transition: all 0.5s ease-in-out;
-    animation: bg-color-change 4s ease-in-out forwards; /* Background color animation */
+    animation: bg-color-change 2s ease-in-out forwards; /* Background color animation - faster */
 }
 
 .loading-screen.fade-out {
@@ -62,7 +62,7 @@
     background-position: center;
     filter: grayscale(100%);
     clip-path: inset(0 0 0 0); /* Start with full overlay */
-    animation: remove-from-bottom 4s ease-in-out forwards;
+    animation: remove-from-bottom 2s ease-in-out forwards; /* Faster animation */
     z-index: 2;
 }
 

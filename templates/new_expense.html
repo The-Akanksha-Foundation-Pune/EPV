@@ -1,35 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Expense - Expense Management Portal</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <style>
-        :root {
-            --primary-color: #3f51b5;
-            --primary-light: #e8eaf6;
-            --primary-dark: #303f9f;
-            --secondary-color: #ff4081;
-            --text-color: #333;
-            --light-gray: #f8f9fa;
-            --medium-gray: #e9ecef;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+{% extends "base.html" %}
 
-        body {
-            padding-top: 56px;
-            background-color: var(--light-gray);
-            color: var(--text-color);
-            font-family: 'Roboto', 'Segoe UI', sans-serif;
-        }
+{% block title %}New Expense - Expense Portal{% endblock %}
 
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+{% block additional_styles %}
 
         .card {
             border-radius: var(--border-radius);
@@ -393,6 +366,15 @@
                                                     </div>
                                                     <div class="row mb-3">
                                                         <div class="col-12">
+                                                            <!-- For the first expense entry, we don't show the split invoice option -->
+                                                            <div class="d-none split-invoice-container">
+                                                                <div class="form-check mb-2">
+                                                                    <input class="form-check-input split-invoice-checkbox" type="checkbox" id="splitInvoice-0" name="expenses[0][split_invoice]" value="1">
+                                                                    <label class="form-check-label" for="splitInvoice-0">
+                                                                        <i class="fas fa-cut me-1"></i> This is a split invoice (shares receipt with another expense)
+                                                                    </label>
+                                                                </div>
+                                                            </div>
                                                             <label for="receiptUpload-0" class="form-label required-field">Receipt</label>
                                                             <div class="input-group">
                                                                 <span class="input-group-text"><i class="fas fa-receipt"></i></span>
@@ -733,6 +715,9 @@
                 if (index > 0) {
                     const removeBtn = $('<button type="button" class="btn btn-danger btn-remove-expense me-2" title="Remove this expense"><i class="fas fa-trash me-1"></i> Remove</button>');
                     newEntry.find('.card-header div').prepend(removeBtn);
+
+                    // Show the split invoice option for expenses after the first one
+                    newEntry.find('.split-invoice-container').removeClass('d-none');
                 }
 
                 // Update form element IDs and names
@@ -870,6 +855,26 @@
 
                 // Update total amount
                 updateTotalAmount();
+            });
+
+            // Split invoice checkbox (using event delegation)
+            $('#expenseEntriesContainer').on('change', '.split-invoice-checkbox', function() {
+                const isChecked = $(this).is(':checked');
+                const receiptUpload = $(this).closest('.col-12').find('.receipt-upload');
+                const receiptLabel = $(this).closest('.col-12').find('label[for^="receiptUpload"]');
+
+                if (isChecked) {
+                    // If split invoice is checked, make receipt upload optional and disable it
+                    receiptUpload.prop('required', false);
+                    receiptUpload.prop('disabled', true);
+                    receiptLabel.removeClass('required-field');
+                    receiptUpload.val(''); // Clear any selected file
+                } else {
+                    // If split invoice is unchecked, make receipt upload required and enable it
+                    receiptUpload.prop('required', true);
+                    receiptUpload.prop('disabled', false);
+                    receiptLabel.addClass('required-field');
+                }
             });
 
             // Invoice date validation (using event delegation)
@@ -1046,9 +1051,12 @@
                         firstError = firstError || descriptionField;
                     }
 
-                    // Validate receipt upload
+                    // Validate receipt upload (unless it's a split invoice)
                     const receiptField = $(this).find('.receipt-upload');
-                    if (!receiptField.val()) {
+                    const splitInvoiceChecked = $(this).find('.split-invoice-checkbox').is(':checked');
+
+                    // Only validate receipt if this is not a split invoice or it's the first expense
+                    if (!splitInvoiceChecked && !receiptField.val()) {
                         isValid = false;
                         const errorMessage = $('<div class="alert alert-danger mt-2 validation-error"><i class="fas fa-exclamation-circle me-2"></i> Please upload a receipt.</div>');
                         receiptField.closest('.col-12').find('.form-text').after(errorMessage);
@@ -1105,6 +1113,11 @@
                     contentType: false,
                     success: function(response) {
                         console.log('Form submission response:', response);
+
+                        // Hide loading screen
+                        if (typeof LoadingScreen !== 'undefined') {
+                            LoadingScreen.hide();
+                        }
 
                         // Reset submit button
                         $('#expenseForm').find('button[type="submit"]').html('<i class="fas fa-paper-plane me-2"></i> Submit Expense');
@@ -1272,6 +1285,11 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Form submission error:', error);
+
+                        // Hide loading screen
+                        if (typeof LoadingScreen !== 'undefined') {
+                            LoadingScreen.hide();
+                        }
 
                         // Reset submit button
                         $('#expenseForm').find('button[type="submit"]').html('<i class="fas fa-paper-plane me-2"></i> Submit Expense');
@@ -1453,18 +1471,15 @@
         </div>
     </div>
 
-    <style>
-        .email-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50px;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-        }
-    </style>
-</body>
-</html>
+    .email-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50px;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+{% endblock %}

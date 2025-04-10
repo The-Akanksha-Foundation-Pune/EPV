@@ -1,87 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense {{ result|capitalize }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #3f51b5;
-            --secondary-color: #f50057;
-            --success-color: #4caf50;
-            --danger-color: #f44336;
-            --warning-color: #ff9800;
-            --info-color: #2196f3;
-        }
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .card {
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-        
-        .card-header {
-            padding: 1.5rem;
-            color: white;
-        }
-        
-        .approved .card-header {
-            background-color: var(--success-color);
-        }
-        
-        .rejected .card-header {
-            background-color: var(--danger-color);
-        }
-        
-        .card-body {
-            padding: 2rem;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: #303f9f;
-            border-color: #303f9f;
-        }
-        
-        .expense-details {
-            margin-top: 1.5rem;
-        }
-        
-        .expense-details dt {
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .expense-details dd {
-            margin-bottom: 0.75rem;
-        }
-        
-        .icon-large {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Expense {{ result|capitalize }}{% endblock %}
+
+{% block additional_styles %}
+    .approved .card-header {
+        background-color: var(--success-color, #4caf50);
+    }
+
+    .rejected .card-header {
+        background-color: var(--danger-color, #f44336);
+    }
+
+    .card-header {
+        padding: 1.5rem;
+        color: white;
+    }
+
+    .expense-details {
+        margin-top: 1.5rem;
+    }
+
+    .expense-details dt {
+        font-weight: 600;
+        color: #555;
+    }
+
+    .expense-details dd {
+        margin-bottom: 0.75rem;
+    }
+
+    .icon-large {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+{% endblock %}
+
+{% block content %}
     <div class="container mt-5">
         <div class="card {{ result }}">
             <div class="card-header text-center">
@@ -97,16 +51,16 @@
                 <div class="text-center mb-4">
                     <p class="lead">{{ message }}</p>
                 </div>
-                
+
                 <div class="expense-details">
                     <h4>Expense Details</h4>
                     <dl class="row">
                         <dt class="col-sm-4">EPV ID:</dt>
                         <dd class="col-sm-8">{{ epv.epv_id }}</dd>
-                        
+
                         <dt class="col-sm-4">Employee:</dt>
                         <dd class="col-sm-8">{{ epv.employee_name }} ({{ epv.employee_id }})</dd>
-                        
+
                         <dt class="col-sm-4">Date Range:</dt>
                         <dd class="col-sm-8">
                             {% if epv.from_date and epv.to_date %}
@@ -115,10 +69,10 @@
                                 N/A
                             {% endif %}
                         </dd>
-                        
+
                         <dt class="col-sm-4">Total Amount:</dt>
                         <dd class="col-sm-8">₹{{ epv.total_amount|float|round(2) }}</dd>
-                        
+
                         <dt class="col-sm-4">Status:</dt>
                         <dd class="col-sm-8">
                             {% if result == 'approved' %}
@@ -127,26 +81,26 @@
                                 <span class="badge bg-danger">Rejected</span>
                             {% endif %}
                         </dd>
-                        
+
                         {% if result == 'approved' %}
                             <dt class="col-sm-4">Approved By:</dt>
                             <dd class="col-sm-8">{{ epv.approved_by }}</dd>
-                            
+
                             <dt class="col-sm-4">Approved On:</dt>
                             <dd class="col-sm-8">{{ epv.approved_on.strftime('%Y-%m-%d %H:%M:%S') if epv.approved_on else 'N/A' }}</dd>
                         {% else %}
                             <dt class="col-sm-4">Rejected By:</dt>
                             <dd class="col-sm-8">{{ epv.rejected_by }}</dd>
-                            
+
                             <dt class="col-sm-4">Rejected On:</dt>
                             <dd class="col-sm-8">{{ epv.rejected_on.strftime('%Y-%m-%d %H:%M:%S') if epv.rejected_on else 'N/A' }}</dd>
-                            
+
                             <dt class="col-sm-4">Reason:</dt>
                             <dd class="col-sm-8">{{ epv.rejection_reason }}</dd>
                         {% endif %}
                     </dl>
                 </div>
-                
+
                 <div class="text-center mt-4">
                     <a href="{{ url_for('epv_records') }}" class="btn btn-primary">
                         <i class="fas fa-list me-2"></i> Back to EPV Records
@@ -155,7 +109,4 @@
             </div>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

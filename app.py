@@ -1,5 +1,6 @@
 import os
 import uuid
+import re
 import pymysql
 from datetime import datetime
 from flask import Flask, redirect, url_for, render_template, session, jsonify, request, send_file
@@ -153,10 +154,13 @@ def authorize():
         next_url = session.pop('next_url', '/dashboard')
         print(f"DEBUG: Redirecting to: {next_url}")
 
-        # Add JavaScript to measure load time
+        # Use a minimal redirect page that maintains the auth flow flag
         response_html = '''
-        <html>
+        <!DOCTYPE html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Redirecting...</title>
             <script>
                 // This script will be executed when the page loads
@@ -164,25 +168,21 @@ def authorize():
                     // Record the time when this page loaded
                     const startTime = new Date().getTime();
 
-                    // Function to redirect and measure time
-                    function redirectWithTiming() {
-                        // Store the start time in localStorage
-                        localStorage.setItem('loginStartTime', startTime);
+                    // Store the start time in localStorage
+                    localStorage.setItem('loginStartTime', startTime);
 
-                        // Redirect to the target page
-                        window.location.href = "REDIRECT_URL";
+                    // Maintain the auth flow flag
+                    if (!sessionStorage.getItem('authFlowInProgress')) {
+                        sessionStorage.setItem('authFlowInProgress', 'true');
                     }
 
-                    // Redirect after a brief delay to ensure the script runs
-                    setTimeout(redirectWithTiming, 100);
+                    // Redirect immediately to the target page
+                    window.location.href = "REDIRECT_URL";
                 });
             </script>
         </head>
-        <body>
-            <div style="text-align: center; margin-top: 100px;">
-                <h2>Logging you in...</h2>
-                <p>Please wait while we redirect you to your dashboard.</p>
-            </div>
+        <body style="margin: 0; padding: 0; height: 100vh; overflow: hidden; background-color: #f5f5f5;">
+            <!-- Intentionally empty - we're maintaining the loading screen from the previous page -->
         </body>
         </html>
         '''
@@ -367,7 +367,6 @@ def new_expense():
     if request.method == 'POST':
         try:
             # Process the expense form data
-            expense_files = []
 
             # Get form data
             employee_name = request.form.get('employee_name')  # Changed from 'employeeName' to match the form field name
@@ -425,21 +424,11 @@ def new_expense():
                 file = request.files[key]
                 print(f"DEBUG: File key: {key}, filename: {file.filename if file else 'None'}")
 
-            # Collect all uploaded files from the form
-            for key, file in request.files.items():
-                if ('receipt' in key or 'receipt_upload' in key) and file.filename:
-                    print(f"DEBUG: Adding file to process: {key} = {file.filename}")
-                    expense_files.append(file)
-                else:
-                    print(f"DEBUG: Skipping file: {key} = {file.filename if file else 'None'} (receipt in key: {'receipt' in key}, has filename: {bool(file.filename) if file else False})")
-
-            print(f"Found {len(expense_files)} files to process")
-
-            # Always prepare expense data for PDF generation
             # Generate a unique EPV ID for this expense
             # Format: EPV-YYYYMMDD-XXXXXXXXXX (10 hex chars from UUID for near-absolute uniqueness)
             epv_id = f"EPV-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:10].upper()}"
 
+            # Prepare expense data structure
             expense_data = {
                 'employee_id': employee_id,
                 'employee_name': employee_name,
@@ -458,7 +447,8 @@ def new_expense():
                     'invoice_date': request.form.get(f'expenses[{i}][invoice_date]'),
                     'expense_head': request.form.get(f'expenses[{i}][expense_head]'),
                     'amount': request.form.get(f'expenses[{i}][amount]'),
-                    'description': request.form.get(f'expenses[{i}][description]')
+                    'description': request.form.get(f'expenses[{i}][description]'),
+                    'split_invoice': request.form.get(f'expenses[{i}][split_invoice]') == '1'
                 }
                 expense_data['expenses'].append(expense)
                 i += 1
@@ -466,6 +456,32 @@ def new_expense():
             # Calculate total amount
             total_amount = sum(float(expense['amount']) for expense in expense_data['expenses'] if expense['amount'])
             expense_data['total_amount'] = f"{total_amount:.2f}"
+
+            # Identify split invoices
+            split_invoice_indices = []
+            for i, expense in enumerate(expense_data['expenses']):
+                if expense.get('split_invoice'):
+                    split_invoice_indices.append(i)
+                    print(f"DEBUG: Expense #{i+1} is marked as a split invoice, will skip receipt upload")
+
+            # Process files based on split invoice information
+            expense_files = []
+            for key, file in request.files.items():
+                if ('receipt' in key or 'receipt_upload' in key) and file.filename:
+                    # Extract the index from the key (e.g., expenses[0][receipt] -> 0)
+                    try:
+                        index_match = re.search(r'expenses\[(\d+)\]', key)
+                        if index_match:
+                            index = int(index_match.group(1))
+                            # Skip if this is a split invoice
+                            if index in split_invoice_indices:
+                                print(f"DEBUG: Skipping file for split invoice: {key} = {file.filename}")
+                                continue
+                    except Exception as e:
+                        print(f"DEBUG: Error parsing index from key {key}: {str(e)}")
+
+                    print(f"DEBUG: Adding file to process: {key} = {file.filename}")
+                    expense_files.append(file)
 
             # Generate expense document PDF
             from pdf_converter import generate_expense_document
@@ -511,7 +527,8 @@ def new_expense():
                         expense_head=expense['expense_head'],
                         description=expense['description'],
                         amount=float(expense['amount']),
-                        gst=0.0  # Default value, can be updated later
+                        gst=0.0,  # Default value, can be updated later
+                        split_invoice=expense.get('split_invoice', False)  # Include the split invoice flag
                     )
                     db.session.add(item)
 

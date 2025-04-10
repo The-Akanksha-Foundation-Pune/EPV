@@ -5,9 +5,9 @@ const LoadingScreen = {
     // Store start time when showing the loading screen
     startTime: 0,
     // Minimum display time in milliseconds (ensures animation completes)
-    minDisplayTime: 1000,
+    minDisplayTime: 2000, // Reduced to make the loading screen disappear faster
     // Animation duration in milliseconds (from CSS)
-    animationDuration: 4000,
+    animationDuration: 2000, // Reduced to match minDisplayTime
     // Reference to the loading screen element
     element: null,
     // CSS variables for animation control
@@ -18,20 +18,43 @@ const LoadingScreen = {
     isMeasuring: false,
     // Store measured load times for different operations
     loadTimes: {
-        login: 3, // Default starting value in seconds
-        dashboard: 2,
-        expenseForm: 2,
-        dataLoad: 2
+        login: 4, // Increased default starting value in seconds
+        dashboard: 3,
+        expenseForm: 3,
+        dataLoad: 3
     },
     // Track the current operation being timed
     currentOperation: null,
+    // Track if logo is loaded
+    logoLoaded: false,
+    // Track if we're in the authentication flow
+    authInProgress: false,
 
     // Initialize the loading screen
     init: function() {
         this.element = document.getElementById('loadingScreen');
 
-        // Set up default event listener for page load
+        // Preload the logo image
         if (this.element) {
+            const logoImg = this.element.querySelector('.loading-logo-color');
+            if (logoImg) {
+                // If logo is already loaded
+                if (logoImg.complete) {
+                    this.logoLoaded = true;
+                } else {
+                    // Wait for logo to load
+                    logoImg.onload = () => {
+                        this.logoLoaded = true;
+                        console.log('Logo image loaded successfully');
+                    };
+                    logoImg.onerror = () => {
+                        console.error('Error loading logo image');
+                        this.logoLoaded = true; // Proceed anyway to avoid blocking
+                    };
+                }
+            }
+
+            // Set up default event listener for page load
             window.addEventListener('load', function() {
                 // If we were measuring, stop and record the time
                 if (LoadingScreen.isMeasuring) {
@@ -98,6 +121,12 @@ const LoadingScreen = {
 
     // Show the loading screen
     show: function(estimatedLoadTime) {
+        // Check if we're already in the auth flow to prevent multiple loading screens
+        if (this.authInProgress || sessionStorage.getItem('authFlowInProgress') === 'true') {
+            console.log('Auth flow in progress, not showing another loading screen');
+            return;
+        }
+
         if (!this.element) {
             this.element = document.getElementById('loadingScreen');
         }
@@ -108,21 +137,17 @@ const LoadingScreen = {
                 this.startTime = Date.now();
             }
 
-            // Adjust animation speed based on estimated load time
-            if (estimatedLoadTime && estimatedLoadTime > 0) {
-                // Cap the animation duration between 1-10 seconds
-                const duration = Math.max(1, Math.min(10, estimatedLoadTime)) + 's';
-                this.element.style.setProperty(this.cssVars.fillDuration, duration);
-                this.animationDuration = estimatedLoadTime * 1000;
-            } else {
-                // Default animation duration
-                this.element.style.setProperty(this.cssVars.fillDuration, '3s');
-                this.animationDuration = 3000;
-            }
+            // Set a consistent, faster animation speed
+            // Cap the animation duration at 2 seconds
+            const duration = '2s';
+            this.element.style.setProperty(this.cssVars.fillDuration, duration);
+            this.animationDuration = 2000;
+            this.minDisplayTime = 2000; // Ensure minDisplayTime matches animation duration
 
             // Show the loading screen
             this.element.style.display = 'flex';
             this.element.classList.remove('fade-out');
+            console.log('Loading screen shown');
         }
     },
 
@@ -136,15 +161,57 @@ const LoadingScreen = {
             const elapsedTime = Date.now() - this.startTime;
             const remainingTime = Math.max(0, this.minDisplayTime - elapsedTime);
 
-            // Ensure the loading screen is displayed for at least the minimum time
-            setTimeout(() => {
+            // Function to actually hide the loading screen
+            const performHide = () => {
                 this.element.classList.add('fade-out');
 
                 // Remove from DOM after transition completes
                 setTimeout(() => {
                     this.element.style.display = 'none';
+
+                    // Reset auth flow flags when hiding
+                    this.authInProgress = false;
+                    sessionStorage.removeItem('authFlowInProgress');
+                    console.log('Loading screen hidden, auth flow flags reset');
                 }, 500); // Match with CSS transition time
-            }, remainingTime);
+            };
+
+            // Check if we're in the auth flow and on the final page
+            const isAuthFlow = this.authInProgress || sessionStorage.getItem('authFlowInProgress') === 'true';
+            const isFinalPage = window.location.pathname === '/dashboard' ||
+                              window.location.pathname === '/epv-records';
+
+            // If we're in auth flow but not on the final page, don't hide yet
+            if (isAuthFlow && !isFinalPage) {
+                console.log('Auth flow in progress but not on final page, keeping loading screen visible');
+                return;
+            }
+
+            // Check if logo is loaded before hiding
+            if (this.logoLoaded) {
+                // Logo is already loaded, just wait for minimum display time
+                setTimeout(performHide, remainingTime);
+            } else {
+                // Wait for logo to load before hiding
+                const logoImg = this.element.querySelector('.loading-logo-color');
+                if (logoImg) {
+                    const checkLogoLoaded = () => {
+                        if (this.logoLoaded) {
+                            // Logo is now loaded, proceed with hiding
+                            setTimeout(performHide, remainingTime);
+                        } else {
+                            // Check again in 100ms
+                            setTimeout(checkLogoLoaded, 100);
+                        }
+                    };
+
+                    // Start checking if logo is loaded
+                    checkLogoLoaded();
+                } else {
+                    // No logo found, proceed with hiding
+                    setTimeout(performHide, remainingTime);
+                }
+            }
         }
     }
 };
@@ -152,4 +219,25 @@ const LoadingScreen = {
 // Initialize loading screen on DOM content loaded
 document.addEventListener('DOMContentLoaded', function() {
     LoadingScreen.init();
+
+    // Preload the logo image to avoid flashing
+    const logoImg = document.querySelector('.loading-logo-color');
+    if (logoImg) {
+        const img = new Image();
+        img.onload = function() {
+            LoadingScreen.logoLoaded = true;
+            console.log('Logo preloaded successfully');
+        };
+        img.onerror = function() {
+            console.error('Error preloading logo');
+            LoadingScreen.logoLoaded = true; // Proceed anyway
+        };
+        img.src = logoImg.src;
+    }
+
+    // Check if we're on the login page
+    if (window.location.pathname === '/' || window.location.pathname === '/login') {
+        // Don't automatically hide the loading screen on the login page
+        // It will be shown when the login button is clicked and hidden after redirect
+    }
 });

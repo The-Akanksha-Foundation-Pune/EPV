@@ -90,6 +90,17 @@
         {% if record.file_url %}
         <a href="{{ record.file_url }}" target="_blank" class="btn btn-primary">View PDF</a>
         {% endif %}
+
+        {% if record.status == 'submitted' %}
+        <div class="mt-3">
+            <a href="{{ url_for('approve_expense', epv_id=record.epv_id) }}" class="btn btn-success">
+                <i class="fas fa-check-circle"></i> Approve
+            </a>
+            <a href="{{ url_for('reject_expense', epv_id=record.epv_id) }}" class="btn btn-danger">
+                <i class="fas fa-times-circle"></i> Reject
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <div class="card mb-4">
