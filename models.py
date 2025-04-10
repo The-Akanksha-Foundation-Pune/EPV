@@ -11,6 +11,7 @@ class CostCenter(db.Model):
     approver_email = db.Column(db.String(100), nullable=True)
     city = db.Column(db.String(50), nullable=True)
     drive_id = db.Column(db.String(100), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         return f'<CostCenter {self.costcenter}>'
@@ -23,6 +24,7 @@ class EmployeeDetails(db.Model):
     manager = db.Column(db.String(100), nullable=True)
     name = db.Column(db.String(100), nullable=True)
     role = db.Column(db.String(50), nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         return f'<EmployeeDetails {self.name} ({self.email})>'

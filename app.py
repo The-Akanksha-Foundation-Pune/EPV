@@ -248,14 +248,15 @@ def cost_centers():
 
     # Get all cost centers
     cost_centers = CostCenter.query.all()
-    return render_template('cost_centers.html',
+    return render_template('cost_centers_new.html',
                            cost_centers=cost_centers,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
                            employee_id=employee_id)
 
-# Add a route to add/edit approver email
+# Add a route to add/edit cost centers
+@app.route('/cost-centers/edit', defaults={'id': None}, methods=['GET', 'POST'])
 @app.route('/cost-centers/<int:id>/edit', methods=['GET', 'POST'])
 def edit_cost_center(id):
     from flask import request
@@ -265,23 +266,39 @@ def edit_cost_center(id):
     if not user_info:
         return redirect(url_for('index'))
 
-    # Get the cost center
-    cost_center = CostCenter.query.get_or_404(id)
-
-    if request.method == 'POST':
-        # Update the cost center
-        cost_center.approver_email = request.form.get('approver_email')
-        cost_center.drive_id = request.form.get('drive_id')
-        db.session.commit()
-        return redirect(url_for('cost_centers'))
-
     # Get employee details from session
     employee_role = session.get('employee_role')
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
 
-    return render_template('edit_cost_center.html',
+    # Check if we're editing an existing cost center or creating a new one
+    if id is None:
+        # Creating a new cost center
+        cost_center = CostCenter()
+        is_new = True
+    else:
+        # Editing an existing cost center
+        cost_center = CostCenter.query.get_or_404(id)
+        is_new = False
+
+    if request.method == 'POST':
+        # Update or create the cost center
+        if is_new:
+            cost_center.costcenter = request.form.get('costcenter')
+            cost_center.city = request.form.get('city')
+            db.session.add(cost_center)
+
+        # Update fields for both new and existing cost centers
+        cost_center.approver_email = request.form.get('approver_email')
+        cost_center.drive_id = request.form.get('drive_id')
+        cost_center.is_active = 'is_active' in request.form
+
+        db.session.commit()
+        return redirect(url_for('cost_centers'))
+
+    return render_template('edit_cost_center_new.html',
                            cost_center=cost_center,
+                           is_new=is_new,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
@@ -302,14 +319,15 @@ def employees():
 
     # Get all employees
     employees = EmployeeDetails.query.all()
-    return render_template('employees.html',
+    return render_template('employees_basic.html',
                            employees=employees,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
                            employee_id=employee_id)
 
-# Add a route to edit employee details
+# Add a route to add/edit employee details
+@app.route('/employees/edit', defaults={'id': None}, methods=['GET', 'POST'])
 @app.route('/employees/<int:id>/edit', methods=['GET', 'POST'])
 def edit_employee(id):
     # Check if user is logged in
@@ -317,25 +335,187 @@ def edit_employee(id):
     if not user_info:
         return redirect(url_for('index'))
 
-    # Get the employee
-    employee = EmployeeDetails.query.get_or_404(id)
+    # Get employee details from session
+    employee_role = session.get('employee_role')
+    employee_manager = session.get('employee_manager')
+    employee_id = session.get('employee_id')
+
+    # Check if we're editing an existing employee or creating a new one
+    if id is None:
+        # Creating a new employee
+        employee = EmployeeDetails()
+        is_new = True
+    else:
+        # Editing an existing employee
+        employee = EmployeeDetails.query.get_or_404(id)
+        is_new = False
 
     if request.method == 'POST':
-        # Update the employee
+        # Update or create the employee
         employee.name = request.form.get('name')
+        employee.email = request.form.get('email') if is_new else employee.email  # Only set email for new employees
         employee.employee_id = request.form.get('employee_id')
         employee.manager = request.form.get('manager')
         employee.role = request.form.get('role')
+        employee.is_active = 'is_active' in request.form
+
+        if is_new:
+            db.session.add(employee)
+
         db.session.commit()
         return redirect(url_for('employees'))
+
+    return render_template('edit_employee_new.html',
+                           employee=employee,
+                           is_new=is_new,
+                           user=user_info,
+                           employee_role=employee_role,
+                           employee_manager=employee_manager,
+                           employee_id=employee_id)
+
+# Add a route to toggle cost center status
+@app.route('/cost_center/<int:id>/toggle-status', methods=['POST'])
+@app.route('/cost_centers/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
+def toggle_cost_center_status(id):
+    # Check if user is logged in
+    user_info = session.get('user_info')
+    if not user_info:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Not logged in'})
+        return redirect(url_for('index'))
+
+    try:
+        # Get the cost center
+        cost_center = CostCenter.query.get_or_404(id)
+
+        # Toggle the status
+        cost_center.is_active = not cost_center.is_active
+        db.session.commit()
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'is_active': cost_center.is_active})
+        return redirect(url_for('cost_centers'))
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': str(e)})
+        return redirect(url_for('cost_centers'))
+
+# Add a route to toggle employee status
+@app.route('/employee/<int:id>/toggle-status', methods=['POST'])
+@app.route('/employees/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
+def toggle_employee_status(id):
+    # Check if user is logged in
+    user_info = session.get('user_info')
+    if not user_info:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Not logged in'})
+        return redirect(url_for('index'))
+
+    try:
+        # Get the employee
+        employee = EmployeeDetails.query.get_or_404(id)
+
+        # Toggle the status
+        employee.is_active = not employee.is_active
+        db.session.commit()
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'is_active': employee.is_active})
+        return redirect(url_for('employees'))
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': str(e)})
+        return redirect(url_for('employees'))
+
+# Add a route to view expense heads
+@app.route('/expense-heads')
+def expense_heads():
+    # Check if user is logged in
+    user_info = session.get('user_info')
+    if not user_info:
+        return redirect(url_for('index'))
 
     # Get employee details from session
     employee_role = session.get('employee_role')
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
 
-    return render_template('edit_employee.html',
-                           employee=employee,
+    # Get all expense heads
+    expense_heads = ExpenseHead.query.all()
+    return render_template('expense_heads.html',
+                           expense_heads=expense_heads,
+                           user=user_info,
+                           employee_role=employee_role,
+                           employee_manager=employee_manager,
+                           employee_id=employee_id)
+
+# Add a route to toggle expense head status
+@app.route('/expense_head/<int:id>/toggle-status', methods=['POST'])
+@app.route('/expense-heads/<int:id>/toggle-status', methods=['POST'])  # For backward compatibility
+def toggle_expense_head_status(id):
+    # Check if user is logged in
+    user_info = session.get('user_info')
+    if not user_info:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Not logged in'})
+        return redirect(url_for('index'))
+
+    try:
+        # Get the expense head
+        expense_head = ExpenseHead.query.get_or_404(id)
+
+        # Toggle the status
+        expense_head.is_active = not expense_head.is_active
+        db.session.commit()
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'is_active': expense_head.is_active})
+        return redirect(url_for('expense_heads'))
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': str(e)})
+        return redirect(url_for('expense_heads'))
+
+# Add a route to add/edit expense heads
+@app.route('/expense-heads/edit', defaults={'id': None}, methods=['GET', 'POST'])
+@app.route('/expense-heads/<int:id>/edit', methods=['GET', 'POST'])
+def edit_expense_head(id):
+    # Check if user is logged in
+    user_info = session.get('user_info')
+    if not user_info:
+        return redirect(url_for('index'))
+
+    # Get employee details from session
+    employee_role = session.get('employee_role')
+    employee_manager = session.get('employee_manager')
+    employee_id = session.get('employee_id')
+
+    # Check if we're editing an existing expense head or creating a new one
+    if id is None:
+        # Creating a new expense head
+        expense_head = ExpenseHead()
+        is_new = True
+    else:
+        # Editing an existing expense head
+        expense_head = ExpenseHead.query.get_or_404(id)
+        is_new = False
+
+    if request.method == 'POST':
+        # Update or create the expense head
+        expense_head.head_name = request.form.get('head_name')
+        expense_head.head_code = request.form.get('head_code')
+        expense_head.description = request.form.get('description')
+        expense_head.is_active = 'is_active' in request.form
+
+        if is_new:
+            db.session.add(expense_head)
+
+        db.session.commit()
+        return redirect(url_for('expense_heads'))
+
+    return render_template('edit_expense_head.html',
+                           expense_head=expense_head,
+                           is_new=is_new,
                            user=user_info,
                            employee_role=employee_role,
                            employee_manager=employee_manager,
@@ -354,11 +534,11 @@ def new_expense():
     employee_manager = session.get('employee_manager')
     employee_id = session.get('employee_id')
 
-    # Get all cost centers for the dropdown
-    cost_centers = CostCenter.query.all()
+    # Get all active cost centers for the dropdown
+    cost_centers = CostCenter.query.filter_by(is_active=True).all()
 
-    # Get all employees for the autocomplete
-    employees = EmployeeDetails.query.all()
+    # Get all active employees for the autocomplete
+    employees = EmployeeDetails.query.filter_by(is_active=True).all()
 
     # Get all active expense heads
     expense_heads = ExpenseHead.query.filter_by(is_active=True).all()
@@ -1235,7 +1415,7 @@ def epv_records():
     # Return the EPV records template
     print("DEBUG: Rendering epv_records.html template")
     try:
-        return render_template('epv_records.html', records=records)
+        return render_template('epv_records_new.html', records=records, user=session.get('user_info'))
     except Exception as e:
         print(f"DEBUG: Error rendering template: {str(e)}")
         import traceback

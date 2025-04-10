@@ -3,6 +3,17 @@
 {% block title %}New Expense - Expense Portal{% endblock %}
 
 {% block additional_styles %}
+        .email-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
 
         .card {
             border-radius: var(--border-radius);
@@ -219,11 +230,6 @@
 
     <!-- Main Content -->
     <main class="container mt-4">
-        <div class="mb-3">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-2">
-                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-            </a>
-        </div>
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -1470,16 +1476,4 @@
             </div>
         </div>
     </div>
-
-    .email-chip {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
-        background-color: var(--primary-color);
-        color: white;
-        border-radius: 50px;
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
 {% endblock %}

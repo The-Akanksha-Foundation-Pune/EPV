@@ -240,4 +240,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Don't automatically hide the loading screen on the login page
         // It will be shown when the login button is clicked and hidden after redirect
     }
+
+    // Fix for back buttons - prevent loading screen from showing on simple navigation links
+    document.addEventListener('click', function(e) {
+        // Check if the clicked element is a back button or navigation link
+        const isBackButton = e.target.closest('a.btn-secondary') ||
+                            (e.target.closest('a') && e.target.closest('a').textContent.includes('Back'));
+
+        if (isBackButton) {
+            // Don't show loading screen for back buttons
+            e.preventDefault();
+            const href = e.target.closest('a').getAttribute('href');
+            console.log('Back button clicked, navigating to:', href);
+            window.location.href = href;
+        }
+    });
 });

@@ -109,6 +109,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('expense_heads') %}active{% endif %}" href="{{ url_for('expense_heads') }}">
+                            <i class="fas fa-list-alt"></i> Expense Heads
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.path == url_for('new_expense') %}active{% endif %}" href="{{ url_for('new_expense') }}">
                             <i class="fas fa-file-invoice-dollar"></i> New Expense
                         </a>
