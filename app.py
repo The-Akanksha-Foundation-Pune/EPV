@@ -744,16 +744,25 @@ def new_expense():
                 expense_heads = request.form.getlist('expense_head[]')
                 amounts = request.form.getlist('amount[]')
                 descriptions = request.form.getlist('description[]')
+                split_invoices = request.form.getlist('split_invoice[]')
+
+                print(f"DEBUG: Split invoice values: {split_invoices}")
 
                 # Process each expense item
                 for i in range(len(invoice_dates)):
                     if i < len(expense_heads) and i < len(amounts) and i < len(descriptions):
+                        # Check if this is a split invoice
+                        is_split = False
+                        if i < len(split_invoices) and split_invoices[i] == '1':
+                            is_split = True
+                            print(f"DEBUG: Expense #{i+1} is marked as a split invoice")
+
                         expense = {
                             'invoice_date': invoice_dates[i],
                             'expense_head': expense_heads[i],
                             'amount': amounts[i],
                             'description': descriptions[i],
-                            'split_invoice': False  # Default value
+                            'split_invoice': is_split
                         }
                         expense_data['expenses'].append(expense)
                         print(f"DEBUG: Added expense item: {expense}")
@@ -804,23 +813,54 @@ def new_expense():
             # Process files based on split invoice information
             expense_files = []
 
-            # Process files, always skipping files for split invoices
-            for key, file in request.files.items():
-                if ('receipt' in key or 'receipt_upload' in key) and file.filename:
-                    # Extract the index from the key (e.g., expenses[0][receipt] -> 0)
-                    try:
-                        index_match = re.search(r'expenses\[(\d+)\]', key)
-                        if index_match:
-                            index = int(index_match.group(1))
-                            # Skip if this is a split invoice
-                            if index in split_invoice_indices:
-                                print(f"DEBUG: Skipping file for split invoice: {key} = {file.filename}")
-                                continue
-                    except Exception as e:
-                        print(f"DEBUG: Error parsing index from key {key}: {str(e)}")
+            # Print all files for debugging
+            print(f"DEBUG: All files in request.files: {list(request.files.keys())}")
+            print(f"DEBUG: Split invoice indices: {split_invoice_indices}")
 
-                    print(f"DEBUG: Adding file to process: {key} = {file.filename}")
-                    expense_files.append(file)
+            # Get all receipt files
+            receipt_files = request.files.getlist('receipt[]')
+            print(f"DEBUG: Found {len(receipt_files)} receipt[] files")
+
+            # Print all receipt files for debugging
+            for i, file in enumerate(receipt_files):
+                print(f"DEBUG: Receipt file {i}: {file.filename}")
+
+            # Create a mapping of expense index to file
+            expense_file_map = {}
+
+            # First, map the first file to the first expense
+            if len(receipt_files) > 0 and receipt_files[0].filename:
+                expense_file_map[0] = receipt_files[0]
+                print(f"DEBUG: Mapped first file {receipt_files[0].filename} to expense index 0")
+
+            # Now map the remaining files to non-split expenses
+            file_index = 1  # Start from the second file
+            expense_index = 1  # Start from the second expense
+
+            while file_index < len(receipt_files) and expense_index <= max_expense_index:
+                # Skip split invoices
+                if expense_index in split_invoice_indices:
+                    print(f"DEBUG: Skipping split invoice at expense index {expense_index}")
+                    expense_index += 1
+                    continue
+
+                # Map the file to the expense
+                if receipt_files[file_index].filename:
+                    expense_file_map[expense_index] = receipt_files[file_index]
+                    print(f"DEBUG: Mapped file {receipt_files[file_index].filename} to expense index {expense_index}")
+                    file_index += 1
+
+                expense_index += 1
+
+            # Print the final mapping
+            print(f"DEBUG: Final expense to file mapping:")
+            for exp_idx, file in expense_file_map.items():
+                print(f"DEBUG: Expense {exp_idx} -> {file.filename}")
+
+            # Add all files to be processed
+            for exp_idx, file in expense_file_map.items():
+                print(f"DEBUG: Adding file for expense {exp_idx}: {file.filename}")
+                expense_files.append(file)
 
             # Step 1: Generate expense document PDF
             from pdf_converter import generate_expense_document

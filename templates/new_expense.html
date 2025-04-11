@@ -332,10 +332,11 @@
                                             <div class="form-text">Accepted formats: PDF, JPG, JPEG, PNG (Max size: 5MB)</div>
                                         </div>
                                     </div>
-                                    <div class="row mt-3 split-invoice-row" style="display: none;">
+                                    <div class="row mt-3 split-invoice-row">
                                         <div class="col-12">
                                             <div class="form-check">
                                                 <input class="form-check-input split-invoice-check" type="checkbox" id="splitInvoice-1" data-expense-id="1">
+                                                <input type="hidden" name="split_invoice[]" id="splitInvoiceHidden-1" value="0">
                                                 <label class="form-check-label" for="splitInvoice-1">
                                                     This is a split from the same invoice as above
                                                 </label>
@@ -530,6 +531,22 @@
         // Initially disable to date until from date is selected
         $('#toDate').prop('disabled', true);
 
+        // Add event handler for the first split invoice checkbox
+        $('#splitInvoice-1').change(function() {
+            const isChecked = $(this).prop('checked');
+            if (isChecked) {
+                // Disable receipt upload for split invoices
+                $('#receipt-1').prop('disabled', true).prop('required', false);
+                // Set the hidden field value to 1 (true)
+                $('#splitInvoiceHidden-1').val('1');
+            } else {
+                // Enable receipt upload for non-split invoices
+                $('#receipt-1').prop('disabled', false).prop('required', true);
+                // Set the hidden field value to 0 (false)
+                $('#splitInvoiceHidden-1').val('0');
+            }
+        });
+
         // Invoice date datepickers will be initialized by our initializeAllDatepickers function
 
         // Employee name autocomplete
@@ -651,9 +668,10 @@
             // Update remove button
             newExpense.find(".remove-expense").attr("data-expense-id", expenseCount);
 
-            // Update split invoice checkbox
+            // Update split invoice checkbox and hidden field
             newExpense.find(".split-invoice-check").attr("data-expense-id", expenseCount);
             newExpense.find(".split-invoice-check").attr("id", `splitInvoice-${expenseCount}`);
+            newExpense.find("input[name='split_invoice[]']").attr("id", `splitInvoiceHidden-${expenseCount}`);
             newExpense.find(".split-invoice-row").show();
 
             // Collapse all existing expense items
@@ -679,9 +697,13 @@
                 if (isChecked) {
                     // Disable receipt upload for split invoices
                     $(`#receipt-${expenseId}`).prop("disabled", true).prop("required", false);
+                    // Set the hidden field value to 1 (true)
+                    $(`#splitInvoiceHidden-${expenseId}`).val("1");
                 } else {
                     // Enable receipt upload for non-split invoices
                     $(`#receipt-${expenseId}`).prop("disabled", false).prop("required", true);
+                    // Set the hidden field value to 0 (false)
+                    $(`#splitInvoiceHidden-${expenseId}`).val("0");
                 }
             });
 
@@ -936,6 +958,12 @@
             if (typeof LoadingScreen !== 'undefined') {
                 LoadingScreen.show(3); // Show loading screen for 3 seconds
             }
+
+            // Log split invoice values for debugging
+            console.log('Split invoice values:');
+            $('input[name="split_invoice[]"]').each(function(index) {
+                console.log(`Expense ${index+1}: ${$(this).val() === '1' ? 'Split' : 'Not Split'}`);
+            });
 
             $.ajax({
                 url: $("#expenseForm").attr("action"),
