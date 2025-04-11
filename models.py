@@ -35,8 +35,6 @@ class SettingsFinance(db.Model):
     setting_name = db.Column(db.String(100), nullable=False, unique=True)
     setting_value = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(255), nullable=True)
-    parent_drive_folder = db.Column(db.String(100), nullable=True)
-    parent_drive_id = db.Column(db.String(100), nullable=True)
 
     def __repr__(self):
         return f'<SettingsFinance {self.setting_name}: {self.setting_value}>'
@@ -326,18 +324,9 @@ def init_db(app):
             # Finance settings
             settings = [
                 {
-                    "setting_name": "max_days_past",
+                    "setting_name": "days",
                     "setting_value": "30",
-                    "description": "Maximum number of days in the past for expense claims",
-                    "parent_drive_folder": "SBP_BP",
-                    "parent_drive_id": "1Ku7ai51N19-p3nYViAa1eeooQjWPRUN1"
-                },
-                {
-                    "setting_name": "drive_folder_kctvn",
-                    "setting_value": "KCTVN",
-                    "description": "Google Drive folder for KCTVN",
-                    "parent_drive_folder": "KCTVN",
-                    "parent_drive_id": "1w48U4Kv_zZUhf9-Bwx6df8su8vQEqKvV"
+                    "description": "Maximum number of days in the past for expense claims"
                 }
             ]
 
@@ -346,9 +335,7 @@ def init_db(app):
                 setting = SettingsFinance(
                     setting_name=setting_data["setting_name"],
                     setting_value=setting_data["setting_value"],
-                    description=setting_data["description"],
-                    parent_drive_folder=setting_data["parent_drive_folder"],
-                    parent_drive_id=setting_data["parent_drive_id"]
+                    description=setting_data["description"]
                 )
                 db.session.add(setting)
 

@@ -5,9 +5,9 @@ const LoadingScreen = {
     // Store start time when showing the loading screen
     startTime: 0,
     // Minimum display time in milliseconds (ensures animation completes)
-    minDisplayTime: 2000, // Reduced to make the loading screen disappear faster
+    minDisplayTime: 1000, // Reduced to make the loading screen disappear faster
     // Animation duration in milliseconds (from CSS)
-    animationDuration: 2000, // Reduced to match minDisplayTime
+    animationDuration: 1000, // Reduced to match minDisplayTime
     // Reference to the loading screen element
     element: null,
     // CSS variables for animation control
@@ -138,11 +138,11 @@ const LoadingScreen = {
             }
 
             // Set a consistent, faster animation speed
-            // Cap the animation duration at 2 seconds
-            const duration = '2s';
+            // Cap the animation duration at 1 second
+            const duration = '1s';
             this.element.style.setProperty(this.cssVars.fillDuration, duration);
-            this.animationDuration = 2000;
-            this.minDisplayTime = 2000; // Ensure minDisplayTime matches animation duration
+            this.animationDuration = 1000;
+            this.minDisplayTime = 1000; // Ensure minDisplayTime matches animation duration
 
             // Show the loading screen
             this.element.style.display = 'flex';
@@ -173,7 +173,7 @@ const LoadingScreen = {
                     this.authInProgress = false;
                     sessionStorage.removeItem('authFlowInProgress');
                     console.log('Loading screen hidden, auth flow flags reset');
-                }, 500); // Match with CSS transition time
+                }, 300); // Match with CSS transition time (faster)
             };
 
             // Always hide the loading screen immediately when using back button

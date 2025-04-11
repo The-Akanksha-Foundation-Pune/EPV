@@ -55,9 +55,16 @@
         }
 
         .navbar-brand {
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 1rem;
             font-weight: 600;
             color: var(--sf-blue);
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand img {
+            max-height: 30px;
+            width: auto;
         }
 
         .navbar-nav .nav-link {
@@ -285,7 +292,8 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="fas fa-receipt me-2"></i> Expense Portal
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Expense Portal Logo" height="30" class="me-2">
+                Expense Portal
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

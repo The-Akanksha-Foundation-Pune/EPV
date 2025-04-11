@@ -664,6 +664,7 @@ def new_expense():
             # Get form data
             employee_name = request.form.get('employee_name')  # Changed from 'employeeName' to match the form field name
             cost_center_id = request.form.get('cost_center')  # Changed from 'costCenter' to match the form field name
+            cost_center_name_input = request.form.get('cost_center_name')  # Get the cost center name from the input field
 
             # Get cost center details for Google Drive upload
             cost_center = None
@@ -671,6 +672,7 @@ def new_expense():
             cost_center_name = None
 
             print(f"DEBUG: Selected cost_center_id: {cost_center_id}")
+            print(f"DEBUG: Cost center name from input: {cost_center_name_input}")
 
             # List all cost centers and their drive IDs for debugging
             try:
@@ -681,30 +683,36 @@ def new_expense():
             except Exception as e:
                 print(f"ERROR: Failed to list all cost centers: {str(e)}")
 
+            # Process cost center information
             if cost_center_id:
+                # Try to convert cost_center_id to integer
                 try:
-                    # Try to convert cost_center_id to integer directly
-                    try:
-                        cost_center_id = int(cost_center_id)
-                    except ValueError:
-                        print(f"DEBUG: cost_center_id is not an integer: {cost_center_id}")
+                    cost_center_id = int(cost_center_id)
+                except ValueError:
+                    print(f"DEBUG: cost_center_id is not an integer: {cost_center_id}")
 
-                    # Now get the cost center by ID
+                # Try to get the cost center by ID
+                try:
                     cost_center = CostCenter.query.filter_by(id=cost_center_id).first()
-                    print(f"DEBUG: Cost center lookup result: {cost_center}")
-
                     if cost_center:
                         cost_center_name = cost_center.costcenter
                         drive_folder_id = cost_center.drive_id
-                        print(f"DEBUG: Found cost center: {cost_center_name}, Drive folder ID: {drive_folder_id}")
-
-                        # Check if drive_folder_id is None or empty
-                        if not drive_folder_id or drive_folder_id.strip() == "":
-                            print(f"WARNING: Drive folder ID is empty or None for cost center {cost_center_name}")
+                        print(f"DEBUG: Found cost center by ID: {cost_center_name}, Drive folder ID: {drive_folder_id}")
                     else:
-                        print(f"WARNING: No cost center found with ID: {cost_center_id}")
+                        print(f"DEBUG: No cost center found with ID: {cost_center_id}, using name from input")
+                        cost_center_name = cost_center_name_input
                 except Exception as e:
-                    print(f"ERROR: Failed to get cost center details: {str(e)}")
+                    print(f"ERROR: Failed to get cost center by ID: {str(e)}")
+                    cost_center_name = cost_center_name_input
+            else:
+                # No cost center ID provided, use the name from input
+                print(f"DEBUG: No cost center ID provided, using name from input")
+                cost_center_name = cost_center_name_input
+
+            # If we still don't have a cost center name, use a default
+            if not cost_center_name:
+                cost_center_name = "Unknown Cost Center"
+                print(f"WARNING: Using default cost center name: {cost_center_name}")
 
             # Debug request.files
             print(f"DEBUG: request.files keys: {list(request.files.keys())}")
@@ -767,15 +775,36 @@ def new_expense():
             total_amount = sum(float(expense['amount']) for expense in expense_data['expenses'] if expense['amount'])
             expense_data['total_amount'] = f"{total_amount:.2f}"
 
-            # Identify split invoices
+            # Identify split invoices and collect all expense indices
             split_invoice_indices = []
+            all_expense_indices = []
             for i, expense in enumerate(expense_data['expenses']):
+                all_expense_indices.append(i)
                 if expense.get('split_invoice'):
                     split_invoice_indices.append(i)
                     print(f"DEBUG: Expense #{i+1} is marked as a split invoice, will skip receipt upload")
 
+            # Find the highest index in the expenses
+            max_expense_index = max(all_expense_indices) if all_expense_indices else -1
+            print(f"DEBUG: Max expense index: {max_expense_index}")
+            print(f"DEBUG: Split invoice indices: {split_invoice_indices}")
+
+            # Check if there are any expenses after a split invoice
+            has_expenses_after_split = False
+            for i in all_expense_indices:
+                # If this expense comes after a split invoice
+                for split_idx in split_invoice_indices:
+                    if i > split_idx:
+                        has_expenses_after_split = True
+                        print(f"DEBUG: Found expense #{i+1} after split invoice #{split_idx+1}")
+                        break
+                if has_expenses_after_split:
+                    break
+
             # Process files based on split invoice information
             expense_files = []
+
+            # Process files, always skipping files for split invoices
             for key, file in request.files.items():
                 if ('receipt' in key or 'receipt_upload' in key) and file.filename:
                     # Extract the index from the key (e.g., expenses[0][receipt] -> 0)
@@ -793,7 +822,7 @@ def new_expense():
                     print(f"DEBUG: Adding file to process: {key} = {file.filename}")
                     expense_files.append(file)
 
-            # Generate expense document PDF
+            # Step 1: Generate expense document PDF
             from pdf_converter import generate_expense_document
             expense_pdf_path = generate_expense_document(expense_data)
 
@@ -806,7 +835,99 @@ def new_expense():
             # Debug print expense type
             print(f"DEBUG: expense_type from form: {request.form.get('expense_type')}")
 
-            # Save expense data to the database
+            # Initialize variables to track file processing status
+            file_url = None
+            file_id = None
+            merged_pdf_path = None
+
+            # Step 2: Process the files if any were uploaded
+            result = None
+            if expense_files:
+                try:
+                    # Process the files: save, convert to PDF, merge with expense document, and upload to Google Drive
+                    result = process_files(
+                        files=expense_files,
+                        drive_folder_id=drive_folder_id,
+                        employee_name=employee_name,
+                        cost_center_name=cost_center_name,
+                        expense_pdf_path=expense_pdf_path
+                    )
+
+                    # Check if file processing was successful
+                    if not result['success']:
+                        error_msg = result.get('error') or "Failed to process files."
+                        user_msg = result.get('user_message') or "There was an issue with the file processing."
+                        return jsonify({
+                            'success': False,
+                            'message': user_msg,
+                            'error': error_msg
+                        })
+
+                    # Store merged PDF path if available
+                    if result.get('merged_pdf'):
+                        merged_pdf_path = result['merged_pdf']
+                        session['merged_pdf_path'] = merged_pdf_path
+
+                    # Check if Google Drive upload was successful
+                    if result.get('drive_file_id') and result.get('drive_file_url'):
+                        file_id = result['drive_file_id']
+                        file_url = result['drive_file_url']
+                        print(f"File uploaded to Google Drive: {file_url}")
+                    else:
+                        # If Drive upload failed, return error
+                        drive_error = result.get('drive_error') or "Failed to upload to Google Drive."
+                        return jsonify({
+                            'success': False,
+                            'message': "File processing completed but Google Drive upload failed.",
+                            'error': drive_error
+                        })
+                except Exception as e:
+                    print(f"Error processing files: {str(e)}")
+                    import traceback
+                    print(f"DEBUG: File processing error traceback: {traceback.format_exc()}")
+                    return jsonify({
+                        'success': False,
+                        'message': 'Error processing files.',
+                        'error': str(e)
+                    })
+            else:
+                # No files uploaded, just upload the expense document to Google Drive
+                try:
+                    # Generate a filename for download
+                    download_filename = f"Expense_{employee_name}_{cost_center_name}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+
+                    # If drive_folder_id is provided, upload to Google Drive
+                    if drive_folder_id:
+                        from drive_utils import upload_file_to_drive, get_file_url
+                        file_id = upload_file_to_drive(expense_pdf_path, download_filename, drive_folder_id)
+
+                        if file_id and file_id != 'local_file':
+                            file_url = get_file_url(file_id)
+                            print(f"Expense document uploaded to Google Drive: {file_url}")
+                        else:
+                            return jsonify({
+                                'success': False,
+                                'message': 'Failed to upload expense document to Google Drive'
+                            })
+                    else:
+                        return jsonify({
+                            'success': False,
+                            'message': f"No Google Drive folder ID found for the selected cost center: {cost_center_name if cost_center_name else cost_center_id}"
+                        })
+
+                    # Store the PDF path in session for download
+                    session['merged_pdf_path'] = expense_pdf_path
+                    merged_pdf_path = expense_pdf_path
+                except Exception as e:
+                    print(f"Error uploading expense document: {str(e)}")
+                    import traceback
+                    print(f"DEBUG: Document upload error traceback: {traceback.format_exc()}")
+                    return jsonify({
+                        'success': False,
+                        'message': f"Error uploading expense document: {str(e)}"
+                    })
+
+            # Step 3: Now that file processing and Google Drive upload are successful, save to database
             try:
                 # Create new EPV record
                 new_epv = EPV(
@@ -817,13 +938,16 @@ def new_expense():
                     from_date=datetime.strptime(request.form.get('from_date'), '%Y-%m-%d'),
                     to_date=datetime.strptime(request.form.get('to_date'), '%Y-%m-%d'),
                     payment_to=request.form.get('expense_type', 'General Expense'),  # Default value if not provided
+                    acknowledgement=request.form.get('acknowledgement', 'Yes') if request.form.get('acknowledgement') else None,  # Save acknowledgement
                     submission_date=datetime.now(),
                     academic_year=f"{datetime.now().year}-{datetime.now().year + 1}",
                     cost_center_id=cost_center_id,
                     cost_center_name=cost_center_name,
                     total_amount=float(expense_data['total_amount']),
                     amount_in_words=expense_data.get('amount_in_words', ''),
-                    status='submitted'
+                    status='submitted',
+                    file_url=file_url,  # Add the Google Drive file URL
+                    drive_file_id=file_id  # Add the Google Drive file ID
                 )
 
                 db.session.add(new_epv)
@@ -845,139 +969,16 @@ def new_expense():
                 db.session.commit()
                 print(f"DEBUG: Saved expense data to database with EPV ID: {epv_id}")
                 print(f"DEBUG: EPV record ID: {new_epv.id}")
-
             except Exception as e:
                 db.session.rollback()
                 print(f"ERROR saving expense data to database: {str(e)}")
                 import traceback
-                print(f"DEBUG: Exception traceback: {traceback.format_exc()}")
-                # Continue with file processing even if database save fails
-
-            # Process the files if any were uploaded
-            if expense_files:
-                try:
-
-                    # We already checked expense_pdf_path above
-
-                    # Process the files: save, convert to PDF, merge with expense document, and upload to Google Drive
-                    result = process_files(
-                        files=expense_files,
-                        drive_folder_id=drive_folder_id,
-                        employee_name=employee_name,
-                        cost_center_name=cost_center_name,
-                        expense_pdf_path=expense_pdf_path
-                    )
-
-                    # Prepare the response data
-                    response_data = {
-                        'success': True,
-                        'message': 'Expense submitted successfully!',
-                        'epv_id': epv_id  # Include the EPV ID in the response
-                    }
-
-                    # Handle successful PDF creation
-                    if result['success'] and result.get('merged_pdf'):
-                        # Store the merged PDF path in session for download
-                        merged_pdf_path = result['merged_pdf']
-                        session['merged_pdf_path'] = merged_pdf_path
-
-                        # Add download link to response
-                        response_data['pdf_url'] = '/download-pdf'
-
-                        # Add Google Drive information
-                        # First, indicate whether Drive upload was attempted
-                        response_data['drive_attempted'] = result.get('drive_upload_attempted', False)
-
-                        # If upload was successful, add file ID and URL
-                        if result.get('drive_file_id'):
-                            file_id = result['drive_file_id']
-                            response_data['drive_file_id'] = file_id
-                            response_data['drive_message'] = f"File uploaded to Google Drive for {cost_center_name if cost_center_name else 'your cost center'}"
-
-                            # Add Drive file URL if available
-                            if result.get('drive_file_url'):
-                                file_url = result['drive_file_url']
-                                response_data['drive_file_url'] = file_url
-
-                                # Update the EPV record with the file URL and Drive ID
-                                try:
-                                    if 'new_epv' in locals() and new_epv:
-                                        new_epv.file_url = file_url
-                                        new_epv.drive_file_id = file_id
-                                        db.session.commit()
-                                        print(f"Updated EPV record with file URL: {file_url}")
-                                except Exception as e:
-                                    db.session.rollback()
-                                    print(f"Error updating EPV record with file URL: {str(e)}")
-
-                        # Add Drive error if any
-                        if result.get('drive_error'):
-                            response_data['drive_error'] = result['drive_error']
-                        # If no drive folder ID was provided, add a specific message
-                        elif drive_folder_id is None and cost_center_id:
-                            response_data['drive_error'] = f"No Google Drive folder ID found for the selected cost center: {cost_center_name if cost_center_name else cost_center_id}"
-
-                        # Add warnings if any
-                        if result.get('warnings'):
-                            response_data['warnings'] = result['warnings']
-                            response_data['warning_message'] = result.get('user_message', 'Some files had issues during processing.')
-
-                    # Handle processing errors
-                    elif not result['success']:
-                        # Processing failed but we still want to submit the form
-                        error_msg = result.get('error') or "Failed to process files."
-                        user_msg = result.get('user_message') or "There was an issue with the file processing."
-
-                        response_data['error'] = error_msg
-                        response_data['error_message'] = user_msg
-
-                        # Add detailed processing results if available
-                        if result.get('processing_results'):
-                            file_errors = []
-                            for file_result in result['processing_results']:
-                                if not file_result['success'] and file_result.get('error'):
-                                    file_errors.append({
-                                        'filename': file_result['filename'],
-                                        'error': file_result['error']
-                                    })
-                            if file_errors:
-                                response_data['file_errors'] = file_errors
-
-                    return jsonify(response_data)
-                except Exception as e:
-                    print(f"Error processing files: {str(e)}")
-                    return jsonify({
-                        'success': True,
-                        'message': 'Expense submitted successfully, but there was an error processing the files.',
-                        'error': str(e)
-                    })
-
-            # If we get here, either no files were uploaded or processing failed
-            # If no files were uploaded, serve the expense document PDF
-            if not expense_files:
-                try:
-                    # Generate a filename for download
-                    download_filename = f"Expense_{employee_name}_{cost_center_name}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
-
-                    # If drive_folder_id is provided, upload to Google Drive
-                    if drive_folder_id:
-                        from drive_utils import upload_file_to_drive, get_file_url
-                        drive_file_id = upload_file_to_drive(expense_pdf_path, download_filename, drive_folder_id)
-
-                        if drive_file_id and drive_file_id != 'local_file':
-                            drive_file_url = get_file_url(drive_file_id)
-                            # Don't return here, continue to create approval record
-                            # Store the file URL for later use
-                            file_url = drive_file_url
-
-                    # Store the PDF path in session for download
-                    session['merged_pdf_path'] = expense_pdf_path
-                except Exception as e:
-                    print(f"Error serving expense PDF: {str(e)}")
-                    return jsonify({
-                        'success': False,
-                        'message': f"Error serving expense PDF: {str(e)}"
-                    })
+                print(f"DEBUG: Database error traceback: {traceback.format_exc()}")
+                return jsonify({
+                    'success': False,
+                    'message': 'File processing and upload successful, but database save failed.',
+                    'error': str(e)
+                })
 
             # Store success response for later
             success_response = {
@@ -988,88 +989,19 @@ def new_expense():
             }
 
             # Add drive file URL to response if available
-            if 'file_url' in locals() and file_url:
+            if file_url:
                 success_response['drive_file_url'] = file_url
 
             print("DEBUG: About to create approval record")
             print(f"DEBUG: Current session data: {session}")
 
-            # Update EPV status to pending_approval and create approval record
+            # Get manager email for approval - but don't send email automatically
+            # The email will be sent when the user clicks the "Send for Approval" button
             manager_email = session.get('employee_manager', '')
             print(f"DEBUG: Manager email from session: {manager_email}")
 
-            if manager_email:
-                # Get the EPV record
-                epv_obj = EPV.query.filter_by(epv_id=epv_id).first()
-                print(f"DEBUG: Retrieved EPV record: {epv_obj}")
-
-                if epv_obj:
-                    # Generate a token for approval
-                    token = str(uuid.uuid4())
-                    print(f"DEBUG: Generated approval token: {token}")
-
-                    try:
-                        # Create an EPVApproval record
-                        approval = EPVApproval(
-                            epv_id=epv_obj.id,
-                            approver_email=manager_email,
-                            status='pending',
-                            token=token
-                        )
-                        db.session.add(approval)
-
-                        # Update the EPV status
-                        epv_obj.status = 'pending_approval'
-                        db.session.commit()
-
-                        print(f"DEBUG: Created approval record for manager: {manager_email}")
-                        print(f"DEBUG: Updated EPV status to pending_approval")
-                    except Exception as e:
-                        print(f"ERROR creating approval record: {str(e)}")
-                        import traceback
-                        print(f"DEBUG: Exception traceback: {traceback.format_exc()}")
-
-                    # Try to send email using the email_utils module
-                    print(f"DEBUG: Attempting to send email to manager: {manager_email}")
-
-                    # Check if we have Google token in session
-                    if 'google_token' in session:
-                        print(f"DEBUG: Google token found in session: {session['google_token'].keys()}")
-
-                        # Create credentials object
-                        token_info = session['google_token']
-                        try:
-                            credentials = Credentials(
-                                token=token_info['access_token'],
-                                refresh_token=token_info.get('refresh_token'),
-                                token_uri='https://oauth2.googleapis.com/token',
-                                client_id=os.environ.get('GOOGLE_CLIENT_ID'),
-                                client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
-                                scopes=['https://www.googleapis.com/auth/gmail.send']
-                            )
-                            print(f"DEBUG: Successfully created credentials from session token")
-
-                            # Send the approval email
-                            base_url = request.url_root.rstrip('/')
-                            print(f"DEBUG: Base URL for approval links: {base_url}")
-
-                            try:
-                                success, message_id = send_approval_email(epv_obj, manager_email, credentials, base_url, token)
-
-                                if success:
-                                    print(f"DEBUG: Successfully sent approval email to {manager_email} with message ID: {message_id}")
-                                else:
-                                    print(f"WARNING: Failed to send approval email to {manager_email}")
-                            except Exception as email_error:
-                                print(f"ERROR sending approval email: {str(email_error)}")
-                                import traceback
-                                print(f"DEBUG: Email sending traceback: {traceback.format_exc()}")
-                        except Exception as cred_error:
-                            print(f"ERROR creating credentials: {str(cred_error)}")
-                            import traceback
-                            print(f"DEBUG: Credentials traceback: {traceback.format_exc()}")
-                    else:
-                        print("WARNING: No Google token in session for sending email")
+            # Add manager email to the response
+            success_response['manager_email'] = manager_email
 
             # No need for additional code here, approval record is created above
 
@@ -1096,16 +1028,32 @@ def new_expense():
 # Add an API endpoint to get employee details
 @app.route('/api/employees')
 def get_employees():
-    # Get all employees
-    employees = EmployeeDetails.query.all()
+    # Get search term from request
+    search_term = request.args.get('term', '')
+
+    # If search term is provided, filter employees by name
+    if search_term:
+        # Search for employees whose name contains the search term (case-insensitive)
+        employees = EmployeeDetails.query.filter(
+            EmployeeDetails.name.ilike(f'%{search_term}%'),
+            EmployeeDetails.is_active == True
+        ).all()
+    else:
+        # Get all active employees
+        employees = EmployeeDetails.query.filter_by(is_active=True).all()
 
     # Convert to JSON
     employee_list = [{
         'id': emp.id,
         'name': emp.name,
         'email': emp.email,
-        'employee_id': emp.employee_id
+        'employee_id': emp.employee_id,
+        'manager': emp.manager,
+        'value': emp.name,  # For jQuery UI autocomplete
+        'label': f"{emp.name} ({emp.employee_id})" if emp.employee_id else emp.name  # Include employee ID in label
     } for emp in employees if emp.name]
+
+    print(f"API response for '{search_term}': {len(employee_list)} employees found")
 
     return jsonify(employee_list)
 
@@ -1120,12 +1068,40 @@ def get_finance_settings():
     for setting in settings:
         settings_dict[setting.setting_name] = {
             'value': setting.setting_value,
-            'description': setting.description,
-            'parent_drive_folder': setting.parent_drive_folder,
-            'parent_drive_id': setting.parent_drive_id
+            'description': setting.description
         }
 
     return jsonify(settings_dict)
+
+# Add an API endpoint to get cost centers
+@app.route('/api/cost-centers')
+def get_cost_centers():
+    # Get search term from request
+    search_term = request.args.get('term', '')
+
+    # If search term is provided, filter cost centers by name
+    if search_term:
+        # Search for cost centers whose name contains the search term (case-insensitive)
+        cost_centers = CostCenter.query.filter(
+            CostCenter.costcenter.ilike(f'%{search_term}%'),
+            CostCenter.is_active == True
+        ).all()
+    else:
+        # Get all active cost centers
+        cost_centers = CostCenter.query.filter_by(is_active=True).all()
+
+    # Convert to JSON
+    cost_center_list = [{
+        'id': cc.id,
+        'name': cc.costcenter,
+        'city': cc.city,
+        'value': cc.costcenter,  # For jQuery UI autocomplete
+        'label': cc.costcenter   # For jQuery UI autocomplete
+    } for cc in cost_centers]
+
+    print(f"API response for cost centers '{search_term}': {len(cost_center_list)} found")
+
+    return jsonify(cost_center_list)
 
 # Add a route to download the merged PDF
 @app.route('/download-pdf')

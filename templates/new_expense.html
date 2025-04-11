@@ -99,24 +99,65 @@
         color: var(--sf-blue);
     }
 
+    /* Custom styles for date inputs */
+    input[type="date"] {
+        position: relative;
+        color: #212529;
+        background-color: white;
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    /* Style the date picker indicator */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+    }
+
     .alert-info .alert-link {
         color: var(--sf-blue);
     }
 
+    /* Enhanced autocomplete styling */
     .ui-autocomplete {
-        max-height: 200px;
+        max-height: 300px;
         overflow-y: auto;
         overflow-x: hidden;
         z-index: 9999;
+        border: 1px solid var(--sf-neutral-medium);
+        border-radius: var(--sf-border-radius);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: white;
+        padding: 5px 0;
     }
 
     .ui-menu-item {
-        padding: 8px 12px;
         cursor: pointer;
+        margin: 0;
     }
 
-    .ui-menu-item:hover {
-        background-color: var(--sf-neutral-light);
+    .ui-menu-item-wrapper {
+        padding: 10px 15px;
+        display: block;
+        border: none;
+        border-bottom: 1px solid var(--sf-neutral-light);
+    }
+
+    .ui-menu-item:last-child .ui-menu-item-wrapper {
+        border-bottom: none;
+    }
+
+    .ui-menu-item-wrapper.ui-state-active {
+        background-color: var(--sf-blue-light);
+        color: var(--sf-blue);
+        border: none;
+        margin: 0;
+    }
+
+    /* Employee ID styling in autocomplete */
+    .employee-id {
+        color: var(--sf-neutral-dark);
+        font-size: 0.85em;
+        margin-left: 5px;
     }
 
     .ui-helper-hidden-accessible {
@@ -192,18 +233,22 @@
                             <div class="row mb-4">
                                 <div class="col-md-6 mb-3 mb-md-0">
                                     <label for="costCenter" class="form-label required-field">Cost Center</label>
-                                    <select class="form-select" id="costCenter" name="cost_center" required>
-                                        <option value="">Select Cost Center</option>
-                                        {% for center in cost_centers %}
-                                        <option value="{{ center.id }}">{{ center.costcenter }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" class="form-control" id="costCenterName" name="cost_center_name" placeholder="Type to search..." required>
+                                        <input type="hidden" id="costCenter" name="cost_center" required>
+                                    </div>
+                                    <div id="costCenterHelp" class="form-text">Start typing to search for cost centers</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="paymentTo" class="form-label required-field">Payment To</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-money-bill"></i></span>
-                                        <input type="text" class="form-control" id="paymentTo" name="expense_type" placeholder="Enter payment recipient" required>
+                                        <select class="form-select" id="paymentTo" name="expense_type" required>
+                                            <option value="">Select Payment Type</option>
+                                            <option value="Vendor">Vendor</option>
+                                            <option value="Self">Self</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -212,14 +257,15 @@
                                     <label for="fromDate" class="form-label required-field">From Date</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                                        <input type="text" class="form-control datepicker" id="fromDate" name="from_date" placeholder="Select start date" required>
+                                        <input type="date" class="form-control" id="fromDate" name="from_date" required>
                                     </div>
+                                    <div id="fromDateHelp" class="form-text">Select a date within the allowed range</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="toDate" class="form-label required-field">To Date</label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                                        <input type="text" class="form-control datepicker" id="toDate" name="to_date" placeholder="Select end date" required>
+                                        <input type="date" class="form-control" id="toDate" name="to_date" required>
                                     </div>
                                 </div>
                             </div>
@@ -230,23 +276,27 @@
                         <div class="form-section">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i> Expense Items</h5>
-                                <button type="button" class="btn btn-sm btn-primary" id="addExpenseBtn">
-                                    <i class="fas fa-plus"></i> Add Expense
-                                </button>
                             </div>
 
-                            <div id="expenseItems">
-                                <!-- Expense item template will be added here dynamically -->
-                                <div class="expense-item" id="expense-1">
-                                    <i class="fas fa-times remove-expense" data-expense-id="1"></i>
-                                    <div class="row mb-3">
-                                        <div class="col-md-6 mb-3 mb-md-0">
-                                            <label for="invoiceDate-1" class="form-label required-field">Invoice Date</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                                                <input type="text" class="form-control datepicker" id="invoiceDate-1" name="invoice_date[]" placeholder="Select date" required>
-                                            </div>
+                            <!-- Expense Items Container -->
+                            <div id="expense-container">
+                                <!-- Expense Items -->
+                                <div id="expenseItems">
+                                    <!-- Expense item template will be added here dynamically -->
+                                    <div class="expense-item mb-3 border-bottom pb-2" id="expense-1">
+                                        <div class="d-flex justify-content-between align-items-center expense-header" data-bs-toggle="collapse" data-bs-target="#expense-1-content" aria-expanded="true" style="cursor: pointer;">
+                                            <h6 class="mb-0">Expense #1</h6>
+                                            <i class="fas fa-times remove-expense" data-expense-id="1"></i>
                                         </div>
+                                        <div id="expense-1-content" class="collapse show">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="invoiceDate-1" class="form-label required-field">Invoice Date</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                                    <input type="date" class="form-control" id="invoiceDate-1" name="invoice_date[]" required>
+                                                </div>
+                                            </div>
                                         <div class="col-md-6">
                                             <label for="expenseHead-1" class="form-label required-field">Expense Head</label>
                                             <select class="form-select" id="expenseHead-1" name="expense_head[]" required>
@@ -292,11 +342,28 @@
                                             </div>
                                         </div>
                                     </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Add Expense Button -->
+                                <div id="addExpenseButtonContainer" class="d-flex justify-content-start mb-3 mt-3">
+                                    <button type="button" class="btn btn-primary" id="addExpenseBtn">
+                                        <i class="fas fa-plus"></i> Add Expense
+                                    </button>
+                                </div>
+
+                                <!-- Acknowledgement Checkbox -->
+                                <div class="form-check mb-4 mt-2">
+                                    <input class="form-check-input" type="checkbox" id="acknowledgementCheck" name="acknowledgement" required>
+                                    <label class="form-check-label" for="acknowledgementCheck">
+                                        I declare that I have verified the invoice against the vendor contract.
+                                    </label>
                                 </div>
                             </div>
 
                             <!-- Total Amount Section -->
-                            <div class="total-section mt-4">
+                            <div class="total-section mt-5 pt-3 border-top">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="total-amount">Total Amount: ₹<span id="totalAmount">0.00</span></div>
@@ -379,72 +446,95 @@
             return new bootstrap.Dropdown(dropdownToggleEl);
         });
 
-        // Initialize datepicker for from date
-        $('#fromDate').datepicker({
-            dateFormat: 'yy-mm-dd',
-            changeMonth: true,
-            changeYear: true,
-            yearRange: "2020:2030",
-            maxDate: 0, // Can't select future dates
-            beforeShow: function(input, inst) {
-                // Ensure the datepicker appears above other elements
-                inst.dpDiv.css({
-                    zIndex: 1051
-                });
-            },
-            onSelect: function(dateText) {
-                // When from date changes, update the minimum date for to date
-                $('#toDate').datepicker('option', 'minDate', dateText);
-
+        // Handle from date change to enable to date and set min date
+        $('#fromDate').on('change', function() {
+            const fromDate = $(this).val();
+            if (fromDate) {
                 // Enable the to date field once from date is selected
                 $('#toDate').prop('disabled', false);
+
+                // Set the minimum date for to date
+                $('#toDate').attr('min', fromDate);
+
+                console.log(`From date changed to ${fromDate}, to date min set to ${fromDate}`);
+
+                // Update all invoice dates to have the same min date
+                $('input[id^="invoiceDate-"]').attr('min', fromDate);
+
+                // Check if any invoice dates are now out of range and show warnings
+                $('input[id^="invoiceDate-"]').each(function() {
+                    const invoiceDate = $(this).val();
+                    if (invoiceDate && invoiceDate < fromDate) {
+                        // Show warning for out-of-range invoice date
+                        const expenseId = $(this).attr('id').split('-')[1];
+                        const warningId = `invoiceDateWarning-${expenseId}`;
+
+                        // Create or update warning message
+                        if ($(`#${warningId}`).length === 0) {
+                            $(this).after(`<div id="${warningId}" class="text-danger small mt-1">Invoice date is before the from date</div>`);
+                        }
+                    } else {
+                        // Remove warning if date is now valid
+                        const expenseId = $(this).attr('id').split('-')[1];
+                        const warningId = `invoiceDateWarning-${expenseId}`;
+                        $(`#${warningId}`).remove();
+                    }
+                });
+            } else {
+                // If from date is cleared, disable to date
+                $('#toDate').prop('disabled', true);
             }
         });
 
-        // Initialize datepicker for to date
-        $('#toDate').datepicker({
-            dateFormat: 'yy-mm-dd',
-            changeMonth: true,
-            changeYear: true,
-            yearRange: "2020:2030",
-            maxDate: 0, // Can't select future dates
-            beforeShow: function(input, inst) {
-                // Ensure the datepicker appears above other elements
-                inst.dpDiv.css({
-                    zIndex: 1051
-                });
-            }
-        }).prop('disabled', true); // Initially disabled until from date is selected
+        // Handle to date change to update max date for invoice dates
+        $('#toDate').on('change', function() {
+            const toDate = $(this).val();
+            if (toDate) {
+                // Update all invoice dates to have the same max date
+                $('input[id^="invoiceDate-"]').attr('max', toDate);
 
-        // Initialize datepicker for invoice dates
-        $('.expense-item .datepicker').datepicker({
-            dateFormat: 'yy-mm-dd',
-            changeMonth: true,
-            changeYear: true,
-            yearRange: "2020:2030",
-            maxDate: 0, // Can't select future dates
-            beforeShow: function(input, inst) {
-                // Ensure the datepicker appears above other elements
-                inst.dpDiv.css({
-                    zIndex: 1051
+                // Check if any invoice dates are now out of range and show warnings
+                $('input[id^="invoiceDate-"]').each(function() {
+                    const invoiceDate = $(this).val();
+                    if (invoiceDate && invoiceDate > toDate) {
+                        // Show warning for out-of-range invoice date
+                        const expenseId = $(this).attr('id').split('-')[1];
+                        const warningId = `invoiceDateWarning-${expenseId}`;
+
+                        // Create or update warning message
+                        if ($(`#${warningId}`).length === 0) {
+                            $(this).after(`<div id="${warningId}" class="text-danger small mt-1">Invoice date is after the to date</div>`);
+                        } else {
+                            $(`#${warningId}`).text('Invoice date is after the to date');
+                        }
+                    } else {
+                        // Check if there's a from date warning
+                        const fromDate = $('#fromDate').val();
+                        const expenseId = $(this).attr('id').split('-')[1];
+                        const warningId = `invoiceDateWarning-${expenseId}`;
+
+                        if (invoiceDate && fromDate && invoiceDate < fromDate) {
+                            // Keep the from date warning
+                            if ($(`#${warningId}`).length === 0) {
+                                $(this).after(`<div id="${warningId}" class="text-danger small mt-1">Invoice date is before the from date</div>`);
+                            }
+                        } else {
+                            // Remove warning if date is now valid
+                            $(`#${warningId}`).remove();
+                        }
+                    }
                 });
             }
         });
+
+        // Initially disable to date until from date is selected
+        $('#toDate').prop('disabled', true);
+
+        // Invoice date datepickers will be initialized by our initializeAllDatepickers function
 
         // Employee name autocomplete
         $("#employeeName").autocomplete({
-            source: function(request, response) {
-                $.ajax({
-                    url: "/api/employees",
-                    dataType: "json",
-                    data: {
-                        term: request.term
-                    },
-                    success: function(data) {
-                        response(data);
-                    }
-                });
-            },
+            source: "/api/employees",
             minLength: 2,
             select: function(event, ui) {
                 // Fill in employee details
@@ -457,10 +547,66 @@
             }
         });
 
+        // Cost center autocomplete
+        $("#costCenterName").autocomplete({
+            source: "/api/cost-centers",
+            minLength: 2,
+            select: function(event, ui) {
+                // Fill in cost center ID
+                $("#costCenter").val(ui.item.id);
+                return true;
+            },
+            response: function(event, ui) {
+                // Show a message if no results found
+                if (ui.content.length === 0) {
+                    $("#costCenterHelp").text("No matching cost centers found").addClass("text-danger");
+                } else {
+                    $("#costCenterHelp").text("Start typing to search for cost centers").removeClass("text-danger");
+                }
+            }
+        });
+
+        // Clear employee details when name is cleared
+        $("#employeeName").on("input", function() {
+            if ($(this).val() === "") {
+                $("#employeeId").val("");
+                $("#employeeIdDisplay").val("");
+                $("#employeeEmail").val("");
+                $("#employeeManager").val("");
+                $("#managerEmail").val("");
+                $("#employeeNameHelp").text("Start typing to search for employees").removeClass("text-danger");
+            }
+        });
+
+        // Clear cost center ID when name is cleared
+        $("#costCenterName").on("input", function() {
+            if ($(this).val() === "") {
+                $("#costCenter").val("");
+                $("#costCenterHelp").text("Start typing to search for cost centers").removeClass("text-danger");
+            }
+        });
+
         // Add expense button
         let expenseCount = 1;
         $("#addExpenseBtn").click(function() {
-            expenseCount++;
+            // Find the next available expense number
+            let existingIds = [];
+            $(".expense-item").each(function() {
+                const id = $(this).attr("id");
+                const match = id.match(/expense-(\d+)/);
+                if (match) {
+                    existingIds.push(parseInt(match[1]));
+                }
+            });
+
+            // If there are no expense items, start with 1
+            if (existingIds.length === 0) {
+                expenseCount = 1;
+            } else {
+                // Find the next sequential number
+                existingIds.sort((a, b) => a - b);
+                expenseCount = existingIds[existingIds.length - 1] + 1;
+            }
 
             // Clone the first expense item
             const newExpense = $("#expense-1").clone();
@@ -468,7 +614,18 @@
             // Update IDs and attributes
             newExpense.attr("id", `expense-${expenseCount}`);
 
-            // Update all input IDs and names
+            // Update the header attributes
+            newExpense.find(".expense-header").attr("data-bs-target", `#expense-${expenseCount}-content`);
+
+            // Update header
+            newExpense.find("h6").text(`Expense #${expenseCount}`);
+
+            // Update content div
+            newExpense.find("#expense-1-content").attr("id", `expense-${expenseCount}-content`);
+
+            // We'll update input IDs and clear values now
+
+            // First update all input IDs and attributes before initializing datepicker
             newExpense.find("input, select, textarea").each(function() {
                 const oldId = $(this).attr("id");
                 if (oldId) {
@@ -480,15 +637,6 @@
                 if (!$(this).hasClass("split-invoice-check")) {
                     $(this).val("");
                 }
-            });
-
-            // Initialize datepicker for the new expense item
-            newExpense.find(".datepicker").datepicker({
-                dateFormat: 'yy-mm-dd',
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "2020:2030",
-                maxDate: 0
             });
 
             // Update labels
@@ -508,17 +656,13 @@
             newExpense.find(".split-invoice-check").attr("id", `splitInvoice-${expenseCount}`);
             newExpense.find(".split-invoice-row").show();
 
-            // Append the new expense item
+            // Collapse all existing expense items
+            $(".expense-item .collapse").collapse('hide');
+
+            // Insert the new expense item
             $("#expenseItems").append(newExpense);
 
-            // Initialize datepicker for the new expense
-            $(`#invoiceDate-${expenseCount}`).datepicker({
-                dateFormat: 'dd-mm-yy',
-                changeMonth: true,
-                changeYear: true,
-                yearRange: "2020:2030",
-                maxDate: 0
-            });
+            // Datepicker will be initialized separately by our initializeNewExpenseDatepicker function
 
             // Add event listener for the new remove button
             $(`#expense-${expenseCount} .remove-expense`).click(function() {
@@ -543,10 +687,14 @@
 
             // Add event listener for the new amount input
             $(`#amount-${expenseCount}`).on("input", updateTotalAmount);
+
+            // Show the new expense item
+            $(`#expense-${expenseCount}-content`).collapse('show');
         });
 
         // Remove expense button
-        $(document).on("click", ".remove-expense", function() {
+        $(document).on("click", ".remove-expense", function(e) {
+            e.stopPropagation(); // Prevent collapse toggle
             const expenseId = $(this).data("expense-id");
             if (expenseId !== 1) { // Don't remove the first expense item
                 $(`#expense-${expenseId}`).remove();
@@ -778,12 +926,17 @@
                 return;
             }
 
-            // Show loading screen
+            // Show loading screen only when submitting the form
             if (typeof LoadingScreen !== 'undefined') {
-                LoadingScreen.show(5); // Show loading screen for 5 seconds
+                // Don't show loading screen here, only when actually submitting
             }
 
             // Submit the form using AJAX to prevent page redirect
+            // Show loading screen now that we're actually submitting
+            if (typeof LoadingScreen !== 'undefined') {
+                LoadingScreen.show(3); // Show loading screen for 3 seconds
+            }
+
             $.ajax({
                 url: $("#expenseForm").attr("action"),
                 type: "POST",
@@ -800,6 +953,11 @@
                         if (approverEmails.length > 0) {
                             console.log("Sending approval request for EPV ID:", epvId);
                             console.log("Approver emails:", approverEmails);
+
+                            // Show loading screen for the approval email sending
+                            if (typeof LoadingScreen !== 'undefined') {
+                                LoadingScreen.show(2); // Show loading screen for 2 seconds
+                            }
 
                             $.ajax({
                                 url: "/send-for-approval",
@@ -905,6 +1063,209 @@
 
                 $(".datepicker").datepicker("option", "minDate", -maxDays);
             }
+        });
+
+        // Function to format date as dd-mm-yyyy for display (for reference only)
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return '';
+            const [year, month, day] = dateString.split('-');
+            return `${day}-${month}-${year}`;
+        }
+
+        // Function to format date as yyyy-mm-dd for input value (for reference only)
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+            const [day, month, year] = dateString.split('-');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Fetch finance settings to get max_days_past
+        let maxDaysPast = 30; // Default value
+
+        // Fetch finance settings from the API
+        $.ajax({
+            url: '/api/settings/finance',
+            method: 'GET',
+            dataType: 'json',
+            async: false, // Make this synchronous to ensure we have the value before proceeding
+            success: function(data) {
+                if (data.days && data.days.value) {
+                    maxDaysPast = parseInt(data.days.value);
+                    console.log(`Loaded days from settings: ${maxDaysPast} days`);
+                } else {
+                    console.log(`Using default max_days_past: ${maxDaysPast} days`);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching finance settings:', error);
+                console.log(`Using default max_days_past: ${maxDaysPast} days`);
+            }
+        });
+
+        // Set max date (today) and min date (today - maxDaysPast) for from date
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const maxDate = `${yyyy}-${mm}-${dd}`;
+
+        // Calculate min date (today - maxDaysPast)
+        const minDate = new Date();
+        minDate.setDate(today.getDate() - maxDaysPast);
+        const minYyyy = minDate.getFullYear();
+        const minMm = String(minDate.getMonth() + 1).padStart(2, '0');
+        const minDd = String(minDate.getDate()).padStart(2, '0');
+        const minDateStr = `${minYyyy}-${minMm}-${minDd}`;
+
+        // Set max date for all date inputs
+        $('input[type="date"]').attr('max', maxDate);
+
+        // Set min date only for from date
+        $('#fromDate').attr('min', minDateStr);
+
+        // Update the helper text to show the date range
+        const formattedMinDate = formatDateForDisplay(minDateStr);
+        const formattedMaxDate = formatDateForDisplay(maxDate);
+        $('#fromDateHelp').text(`Select a date between ${formattedMinDate} and ${formattedMaxDate}`);
+
+        console.log(`Date range for from date: ${minDateStr} to ${maxDate} (${maxDaysPast} days in the past)`);
+
+        // Set max date and min date for date inputs
+        $('input[type="date"]').each(function() {
+            $(this).attr('max', maxDate);
+
+            // Only set min date for fromDate
+            if ($(this).attr('id') === 'fromDate') {
+                $(this).attr('min', minDateStr);
+            }
+
+            // Add validation for invoice date inputs
+            if ($(this).attr('id').startsWith('invoiceDate-')) {
+                // Set initial min/max dates if from/to dates are already set
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+
+                if (fromDate) {
+                    $(this).attr('min', fromDate);
+                }
+
+                if (toDate) {
+                    $(this).attr('max', toDate);
+                }
+
+                // Add change event handler
+                $(this).off('change.validation').on('change.validation', function() {
+                    validateInvoiceDate($(this));
+                });
+            }
+        });
+
+        // Add event listener to set max date for new date inputs
+        $('#addExpenseBtn').on('click', function() {
+            setTimeout(function() {
+                // Set max date to today for all date inputs
+                $('input[type="date"]').each(function() {
+                    $(this).attr('max', maxDate);
+                });
+
+                // Set min and max dates for invoice dates based on from and to dates
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+
+                if (fromDate) {
+                    $('input[id^="invoiceDate-"]').attr('min', fromDate);
+                }
+
+                if (toDate) {
+                    $('input[id^="invoiceDate-"]').attr('max', toDate);
+                }
+
+                // Add change event handler for new invoice date inputs
+                $('input[id^="invoiceDate-"]').off('change.validation').on('change.validation', function() {
+                    validateInvoiceDate($(this));
+                });
+            }, 100);
+        });
+
+        // Function to validate invoice date against from and to dates
+        function validateInvoiceDate(invoiceDateInput) {
+            const invoiceDate = invoiceDateInput.val();
+            const fromDate = $('#fromDate').val();
+            const toDate = $('#toDate').val();
+            const expenseId = invoiceDateInput.attr('id').split('-')[1];
+            const warningId = `invoiceDateWarning-${expenseId}`;
+
+            // Remove any existing warning
+            $(`#${warningId}`).remove();
+
+            // Check if invoice date is outside the range
+            if (invoiceDate && fromDate && invoiceDate < fromDate) {
+                // Show warning for out-of-range invoice date
+                invoiceDateInput.after(`<div id="${warningId}" class="text-danger small mt-1">Invoice date is before the from date</div>`);
+            } else if (invoiceDate && toDate && invoiceDate > toDate) {
+                // Show warning for out-of-range invoice date
+                invoiceDateInput.after(`<div id="${warningId}" class="text-danger small mt-1">Invoice date is after the to date</div>`);
+            }
+        }
+
+        // When the form is submitted, validate all dates and prevent submission if invalid
+        $('#expenseForm').on('submit', function(e) {
+            // The native date input already stores dates in yyyy-mm-dd format
+
+            // Validate all invoice dates against from/to dates
+            const fromDate = $('#fromDate').val();
+            const toDate = $('#toDate').val();
+            let hasInvalidDates = false;
+
+            // Check all invoice dates
+            $('input[id^="invoiceDate-"]').each(function() {
+                const invoiceDate = $(this).val();
+                if (invoiceDate) {
+                    // Check if invoice date is outside the range
+                    if (fromDate && invoiceDate < fromDate) {
+                        hasInvalidDates = true;
+                        validateInvoiceDate($(this));
+                    } else if (toDate && invoiceDate > toDate) {
+                        hasInvalidDates = true;
+                        validateInvoiceDate($(this));
+                    }
+                }
+            });
+
+            // Prevent form submission if there are invalid dates
+            if (hasInvalidDates) {
+                e.preventDefault();
+
+                // Show error message
+                Swal.fire({
+                    title: 'Invalid Dates',
+                    text: 'One or more invoice dates are outside the from/to date range. Please correct them before submitting.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+
+                // Scroll to the first invalid date
+                const firstInvalidDate = $('div[id^="invoiceDateWarning-"]').first();
+                if (firstInvalidDate.length) {
+                    $('html, body').animate({
+                        scrollTop: firstInvalidDate.offset().top - 100
+                    }, 500);
+                }
+
+                return false;
+            }
+            // which is what we need for the server
+            console.log('Form submitted with dates in yyyy-mm-dd format');
+
+            // For debugging, log all date values
+            $('input[type="date"]').each(function() {
+                const dateValue = $(this).val();
+                if (dateValue) {
+                    console.log(`Date field ${$(this).attr('id')}: ${dateValue} (displayed as ${formatDateForDisplay(dateValue)})`);
+                }
+            });
+
+            return true; // Allow form submission to proceed
         });
     });
 </script>
