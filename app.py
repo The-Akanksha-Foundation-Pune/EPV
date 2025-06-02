@@ -5,6 +5,7 @@ import pymysql
 import sys
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 from flask import Flask, redirect, url_for, render_template, session, jsonify, request, send_file, flash, abort, send_from_directory
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -13,6 +14,21 @@ from flask_dance.consumer.storage.session import SessionStorage
 from flask_dance.consumer import oauth_authorized, oauth_error
 from dotenv import load_dotenv
 from sqlalchemy import func
+
+# Configure detailed logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('oauth_debug.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+print("=" * 80)
+print("APPLICATION STARTUP - DETAILED LOGGING ENABLED")
+print("=" * 80)
 from models import db, CostCenter, EmployeeDetails, SettingsFinance, ExpenseHead, EPV, EPVItem, EPVApproval, EPVAllocation, init_db, CityAssignment, FinanceEntry, SupplementaryDocument
 from pdf_converter import process_files
 from google.oauth2.credentials import Credentials
@@ -383,13 +399,36 @@ def get_amount_in_words_for_split(amount):
         return f"Rupees {amount:.2f} only"
 
 # Load environment variables
+print("STEP 1: Loading environment variables...")
 load_dotenv()
 
+# Log environment configuration
+flask_env = os.environ.get('FLASK_ENV', 'not-set')
+print(f"FLASK_ENV: {flask_env}")
+print(f"GOOGLE_CLIENT_ID: {os.environ.get('GOOGLE_CLIENT_ID', 'NOT SET')[:20]}...")
+print(f"GOOGLE_CLIENT_SECRET: {'SET' if os.environ.get('GOOGLE_CLIENT_SECRET') else 'NOT SET'}")
+print(f"DB_HOST: {os.environ.get('DB_HOST', 'NOT SET')}")
+print(f"DB_USER: {os.environ.get('DB_USER', 'NOT SET')}")
+logger.info(f"Environment loaded - FLASK_ENV: {flask_env}")
+
 # Initialize Flask app
+print("STEP 2: Creating Flask application...")
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key')
+
+# Set secret key with fallback
+secret_key = os.environ.get('FLASK_SECRET_KEY')
+if not secret_key:
+    # Temporary fallback for testing - CHANGE THIS IN PRODUCTION!
+    secret_key = 'temporary-secret-key-for-testing-please-change-in-production'
+    print("WARNING: Using temporary secret key! Set FLASK_SECRET_KEY in .env file!")
+
+app.secret_key = secret_key
+print(f"Flask secret key: {'SET' if app.secret_key else 'NOT SET'}")
+print(f"Secret key length: {len(app.secret_key) if app.secret_key else 0}")
+logger.info("Flask application created successfully")
 
 # Database configuration
+print("STEP 3: Configuring database connection...")
 # Get database credentials from environment variables
 db_user = os.environ.get('DB_USER')
 db_password = os.environ.get('DB_PASSWORD')
@@ -397,13 +436,24 @@ db_host = os.environ.get('DB_HOST')
 db_port = os.environ.get('DB_PORT', '3306')
 db_name = os.environ.get('DB_NAME')
 
+print(f"Database configuration:")
+print(f"   - Host: {db_host}")
+print(f"   - User: {db_user}")
+print(f"   - Password: {'SET' if db_password else 'NOT SET'}")
+print(f"   - Port: {db_port}")
+print(f"   - Database: {db_name}")
+
 # URL encode the password to handle special characters like @
 import urllib.parse
 encoded_password = urllib.parse.quote_plus(db_password) if db_password else ''
 
 # Construct the database URI
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{encoded_password}@{db_host}:{db_port}/{db_name}"
+database_uri = f"mysql+pymysql://{db_user}:{encoded_password}@{db_host}:{db_port}/{db_name}"
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+print(f"Database URI: mysql+pymysql://{db_user}:***@{db_host}:{db_port}/{db_name}")
+logger.info(f"Database configured - Host: {db_host}, User: {db_user}, DB: {db_name}")
 
 # Store Google credentials in app config
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID')
@@ -444,18 +494,31 @@ def load_user(user_id):
     try:
         return EmployeeDetails.query.get(int(user_id))
     except Exception as e:
-        print(f"❌ ERROR: Failed to load user {user_id}: {str(e)}")
+        print(f"ERROR: ERROR: Failed to load user {user_id}: {str(e)}")
         return None
 
 # Configure Flask-Dance with Google OAuth
+print("STEP 4: Configuring Google OAuth...")
+logger.info("Starting OAuth configuration")
+
 # Dynamic OAuth redirect URI based on environment
-if os.environ.get('FLASK_ENV') == 'development':
+flask_env = os.environ.get('FLASK_ENV')
+print(f"FLASK_ENV detected: '{flask_env}'")
+
+if flask_env == 'development':
     oauth_redirect_uri = 'https://127.0.0.1:5000/login/google/authorized'
+    print(f"Using DEVELOPMENT OAuth redirect URI: {oauth_redirect_uri}")
+    logger.info(f"Development mode - OAuth redirect: {oauth_redirect_uri}")
 else:
     oauth_redirect_uri = 'https://webapporbit.com/login/google/authorized'
+    print(f"Using PRODUCTION OAuth redirect URI: {oauth_redirect_uri}")
+    logger.info(f"Production mode - OAuth redirect: {oauth_redirect_uri}")
 
-print(f"DEBUG: OAuth redirect URI: {oauth_redirect_uri}")
+print(f"Google Client ID: {os.environ.get('GOOGLE_CLIENT_ID', 'NOT SET')[:20]}...")
+print(f"Google Client Secret: {'SET' if os.environ.get('GOOGLE_CLIENT_SECRET') else 'NOT SET'}")
+print(f"Final OAuth redirect URI: {oauth_redirect_uri}")
 
+print("STEP 5: Creating Google OAuth blueprint...")
 blueprint = make_google_blueprint(
     client_id=os.environ.get('GOOGLE_CLIENT_ID'),
     client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
@@ -469,14 +532,25 @@ blueprint = make_google_blueprint(
     ],
     storage=SessionStorage(),
     redirect_to='after_login',
-    redirect_url=oauth_redirect_uri,  # Use dynamic redirect URI
+    # Don't use redirect_url parameter - let Flask-Dance handle it automatically
     # Request refresh token
     reprompt_consent=True,
     # Include offline access
     offline=True
 )
 
+# Override the redirect URI after blueprint creation
+blueprint.redirect_url = oauth_redirect_uri
+print(f"Blueprint redirect_url set to: {blueprint.redirect_url}")
+logger.info(f"OAuth blueprint created with redirect URL: {oauth_redirect_uri}")
+
 app.register_blueprint(blueprint, url_prefix='/login')
+
+# Debug: Print all registered routes
+print("STEP 6: Registered routes:")
+for rule in app.url_map.iter_rules():
+    print(f"  {rule.rule} -> {rule.endpoint}")
+logger.info("Flask-Dance blueprint registered and routes configured")
 
 # Helper function to ensure token is valid
 def ensure_valid_token():
@@ -546,53 +620,61 @@ def get_google_credentials(scopes=None):
 @oauth_authorized.connect_via(blueprint)
 def google_logged_in(blueprint, token):
     print("=" * 80)
-    print("🚨 OAUTH SIGNAL HANDLER CALLED!!!")
+    print("OAUTH SIGNAL HANDLER CALLED!!!")
     print("=" * 80)
-    print(f"🔍 DEBUG: Token received: {bool(token)}")
-    print(f"🔍 DEBUG: Blueprint name: {blueprint.name}")
+    print(f"DEBUG: Token received: {bool(token)}")
+    print(f"DEBUG: Blueprint name: {blueprint.name}")
+    print(f"DEBUG: Token details: {token if token else 'None'}")
+    print(f"DEBUG: Blueprint redirect_url: {getattr(blueprint, 'redirect_url', 'Not set')}")
+    print(f"DEBUG: Request URL: {request.url}")
+    print(f"DEBUG: Request endpoint: {request.endpoint}")
     print("=" * 80)
+    logger.info(f"OAuth callback received - Token: {bool(token)}, Blueprint: {blueprint.name}")
 
     if not token:
-        print("❌ DEBUG: No token received")
+        print("ERROR: No token received")
         flash("Failed to log in with Google.", category="error")
         return False
 
     # Get user info from Google
-    print("🔍 DEBUG: Getting user info from Google")
+    print("DEBUG: Getting user info from Google")
+    logger.info("Fetching user info from Google API")
     resp = blueprint.session.get("/oauth2/v2/userinfo")
     if not resp.ok:
-        print(f"❌ DEBUG: Failed to get user info. Status: {resp.status_code}")
+        print(f"ERROR: Failed to get user info. Status: {resp.status_code}")
+        logger.error(f"Failed to get user info from Google - Status: {resp.status_code}")
         flash("Failed to fetch user info from Google.", category="error")
         return False
 
     user_info = resp.json()
     email = user_info["email"]
-    print(f"🔍 DEBUG: User email: {email}")
+    print(f"DEBUG: User email: {email}")
+    print(f"DEBUG: User info: {user_info}")
+    logger.info(f"User info received - Email: {email}")
 
     # Find or create the user
     try:
         # Find employee in EmployeeDetails
-        print(f"🔍 DEBUG: Looking for employee with email: {email}")
+        print(f"DEBUG: Looking for employee with email: {email}")
+        print(f"DEBUG: Database URI: {app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT SET')[:50]}...")
+        logger.info(f"Querying database for employee: {email}")
+
         employee = EmployeeDetails.query.filter_by(email=email).first()
+        print(f"DEBUG: Database query completed. Employee found: {employee is not None}")
         if not employee:
-            print("🔍 DEBUG: Employee not found, creating new record")
-            # Create basic employee record for new users
-            employee = EmployeeDetails(
-                email=email,
-                name=user_info.get('name', ''),
-                role='user',  # Default role for new users
-                is_active=True
-            )
-            db.session.add(employee)
-            db.session.commit()
-            print(f"🔍 DEBUG: Created new employee with ID: {employee.id}")
+            print("DEBUG: Employee not found in database - access denied")
+            # Store user info in session for the access denied page
+            session['user_info'] = user_info
+            session['email'] = email
+            # Redirect to access denied page instead of creating new record
+            return redirect(url_for('access_denied'))
         else:
-            print(f"🔍 DEBUG: Found existing employee with ID: {employee.id}")
+            print(f" DEBUG: Found existing employee with ID: {employee.id}")
 
         # Log in the employee (EmployeeDetails now implements UserMixin)
-        print("🔍 DEBUG: Calling login_user()")
+        print(" DEBUG: Calling login_user()")
         login_user(employee)
-        print(f"🔍 DEBUG: login_user() completed. current_user.is_authenticated: {current_user.is_authenticated}")
+        print(f" DEBUG: login_user() completed. current_user.is_authenticated: {current_user.is_authenticated}")
 
         # Store user info and token in session for backward compatibility
         session['user_info'] = user_info
@@ -623,23 +705,33 @@ def google_logged_in(blueprint, token):
         if cost_center_approver:
             print(f"DEBUG: User is approver for cost center: {cost_center_approver.costcenter}")
 
-        print(f"🔍 DEBUG: Successfully logged in user: {email}")
+        print(f" DEBUG: Successfully logged in user: {email}")
 
         # Get the next URL and redirect immediately
         next_url = session.get('next_url', '/dashboard')
         session.pop('next_url', None)  # Clear the next_url
-        print(f"🔍 DEBUG: OAuth callback redirecting to: {next_url}")
-        print(f"🔍 DEBUG: About to return redirect({next_url})")
+        print(f" DEBUG: OAuth callback redirecting to: {next_url}")
+        print(f" DEBUG: About to return redirect({next_url})")
 
         # Return redirect to override Flask-Dance default behavior
         redirect_response = redirect(next_url)
-        print(f"🔍 DEBUG: Created redirect response: {redirect_response}")
-        print(f"🔍 DEBUG: Redirect response location: {redirect_response.location}")
+        print(f" DEBUG: Created redirect response: {redirect_response}")
+        print(f" DEBUG: Redirect response location: {redirect_response.location}")
         return redirect_response
 
     except Exception as e:
-        print(f"ERROR: {str(e)}")
-        flash("An error occurred during login.", category="error")
+        print(f"ERROR: ERROR: Database/OAuth error: {str(e)}")
+        print(f"ERROR: ERROR TYPE: {type(e).__name__}")
+        logger.error(f"OAuth login failed - {type(e).__name__}: {str(e)}")
+
+        # Check if it's a database connection error
+        if "Access denied" in str(e) or "OperationalError" in str(e):
+            print("ERROR: DATABASE CONNECTION ERROR DETECTED!")
+            print(f"ERROR: Current DB config: Host={os.environ.get('DB_HOST')}, User={os.environ.get('DB_USER')}")
+            logger.error(f"Database connection failed - Host: {os.environ.get('DB_HOST')}, User: {os.environ.get('DB_USER')}")
+            flash("Database connection error. Please check server configuration.", category="error")
+        else:
+            flash("An error occurred during login.", category="error")
         return False
 
     # This should not be reached due to redirect above
@@ -654,19 +746,49 @@ def google_error(blueprint, error, error_description=None, error_uri=None):
     flash(msg, category="error")
     print(f"ERROR: {msg}")
 
+# Test route for debugging
+@app.route('/test')
+def test_route():
+    print(" DEBUG: Test route called")
+    try:
+        response = "Flask application is working! Routes are accessible."
+        print(" DEBUG: Test route returning successful response")
+        return response
+    except Exception as e:
+        print(f" ERROR: Test route failed: {e}")
+        return f"Test route error: {e}"
+
+# Additional test route with different path
+@app.route('/debug-route-test')
+def debug_route_test():
+    print(" DEBUG: Debug route test called")
+    return "DEBUG: This is the debug-route-test endpoint - Flask routing is working!"
+
+# Test route that returns JSON
+@app.route('/api/test')
+def api_test():
+    print(" DEBUG: API test route called")
+    return {"status": "success", "message": "API routing is working", "route": "/api/test"}
+
 # Routes
 @app.route('/')
 def index():
-    print("🔍 DEBUG: Index route called")
-    print(f"🔍 DEBUG: current_user.is_authenticated: {current_user.is_authenticated}")
-    print(f"🔍 DEBUG: current_user: {current_user}")
-    print(f"🔍 DEBUG: Session keys: {list(session.keys())}")
-    print(f"🔍 DEBUG: Session email: {session.get('email')}")
-    print(f"🔍 DEBUG: Session user_info: {session.get('user_info')}")
+    print(" DEBUG: ===== INDEX ROUTE CALLED =====")
+    print(f" DEBUG: Request URL: {request.url}")
+    print(f" DEBUG: Request path: {request.path}")
+    print(f" DEBUG: Request method: {request.method}")
+    print(f" DEBUG: Request endpoint: {request.endpoint}")
+    print(f" DEBUG: Request args: {dict(request.args)}")
+    print(f" DEBUG: current_user.is_authenticated: {current_user.is_authenticated}")
+    print(f" DEBUG: current_user: {current_user}")
+    print(f" DEBUG: Session keys: {list(session.keys())}")
+    print(f" DEBUG: Session email: {session.get('email')}")
+    print(f" DEBUG: Session user_info: {session.get('user_info')}")
+    print(" DEBUG: ===== END INDEX DEBUG =====")
 
     # If user appears authenticated but has no email, clear everything
     if current_user.is_authenticated and not session.get('email'):
-        print("🔍 DEBUG: User authenticated but missing session data, clearing all session data")
+        print(" DEBUG: User authenticated but missing session data, clearing all session data")
         logout_user()
         session.clear()
         flash("Your session has expired. Please log in again.", "info")
@@ -674,27 +796,60 @@ def index():
 
     # Clear any stale session data if user is not authenticated
     elif not current_user.is_authenticated and ('email' in session or 'user_info' in session):
-        print("🔍 DEBUG: Clearing stale session data")
+        print(" DEBUG: Clearing stale session data")
         session.clear()
 
     # Check if user is properly authenticated with session data
     if current_user.is_authenticated and session.get('email'):
-        print("🔍 DEBUG: User is properly authenticated, redirecting to dashboard")
+        print(" DEBUG: User is properly authenticated, redirecting to dashboard")
         return redirect(url_for('dashboard'))
 
-    print("🔍 DEBUG: User not authenticated, showing login page")
-    return render_template('login.html')
+    print(" DEBUG: User not authenticated, showing login page")
+    try:
+        print(" DEBUG: Attempting to render login.html template")
+        result = render_template('login.html')
+        print(" DEBUG: Successfully rendered login.html template")
+        return result
+    except Exception as e:
+        print(f" ERROR: Failed to render login.html template: {e}")
+        import traceback
+        print(f" ERROR: Template rendering traceback: {traceback.format_exc()}")
+        # Return a simple HTML response as fallback
+        return '''
+        <!DOCTYPE html>
+        <html>
+        <head><title>EPV Login</title></head>
+        <body>
+            <h1>EPV System Login</h1>
+            <p>Template rendering failed. <a href="/login">Click here to login with Google</a></p>
+        </body>
+        </html>
+        '''
 
 @app.route('/login')
 def login():
+    print("=" * 80)
+    print(" LOGIN ROUTE CALLED")
+    print("=" * 80)
+    logger.info("Login route accessed")
+
     # Store the original URL the user was trying to access
     next_url = request.args.get('next') or request.referrer or '/dashboard'
     session['next_url'] = next_url
-    print(f"DEBUG: Storing next_url in session: {next_url}")
-    
+    print(f" Storing next_url in session: {next_url}")
+    print(f" Request args: {dict(request.args)}")
+    print(f" Request referrer: {request.referrer}")
+    print(f" Session before OAuth: {dict(session)}")
+    logger.info(f"Login initiated - next_url: {next_url}")
+
+    # Get the Google OAuth login URL
+    google_login_url = url_for('google.login')
+    print(f" Google OAuth login URL: {google_login_url}")
+    print(f" Redirecting to Google OAuth...")
+    logger.info(f"Redirecting to Google OAuth: {google_login_url}")
 
     # Redirect to Google OAuth login
-    return redirect(url_for('google.login'))
+    return redirect(google_login_url)
 
 @app.route('/refresh-token')
 def refresh_token():
@@ -818,51 +973,54 @@ def logout_user_route():
 
 @app.route('/after-login')
 def after_login():
-    print("=" * 50)
-    print("🔍 DEBUG: AFTER-LOGIN ROUTE CALLED!!!")
-    print("=" * 50)
+    print("=" * 80)
+    print(" AFTER-LOGIN ROUTE CALLED!!!")
+    print("=" * 80)
+    logger.info("After-login route accessed")
+
+    print(f" Request URL: {request.url}")
+    print(f" Request args: {dict(request.args)}")
+    print(f" Session data: {dict(session)}")
+    print(f" Google authorized: {google.authorized}")
 
     # Check if user is authenticated with Google
     if not google.authorized:
-        print("❌ DEBUG: Not authorized with Google")
+        print("ERROR: DEBUG: Not authorized with Google")
+        logger.error("After-login called but Google not authorized")
         flash("Authentication failed.")
         return redirect(url_for('index'))
 
-    print("🔍 DEBUG: Google OAuth authorized, getting user info")
+    print(" DEBUG: Google OAuth authorized, getting user info")
+    logger.info("Google OAuth authorized, fetching user info")
 
     # Get user info from Google
     resp = google.get('/oauth2/v2/userinfo')
     if not resp.ok:
-        print(f"❌ DEBUG: Failed to get user info. Status: {resp.status_code}")
+        print(f"ERROR: DEBUG: Failed to get user info. Status: {resp.status_code}")
         flash("Failed to get user info from Google.")
         return redirect(url_for('index'))
 
     user_info = resp.json()
     email = user_info['email']
-    print(f"🔍 DEBUG: User email: {email}")
+    print(f" DEBUG: User email: {email}")
 
     # Find employee in EmployeeDetails
-    print(f"🔍 DEBUG: Looking for employee with email: {email}")
+    print(f" DEBUG: Looking for employee with email: {email}")
     employee = EmployeeDetails.query.filter_by(email=email).first()
     if not employee:
-        print("🔍 DEBUG: Employee not found, creating new record")
-        # Create basic employee record for new users
-        employee = EmployeeDetails(
-            email=email,
-            name=user_info.get('name', ''),
-            role='user',  # Default role for new users
-            is_active=True
-        )
-        db.session.add(employee)
-        db.session.commit()
-        print(f"🔍 DEBUG: Created new employee with ID: {employee.id}")
+        print(" DEBUG: Employee not found in database - access denied")
+        # Store user info in session for the access denied page
+        session['user_info'] = user_info
+        session['email'] = email
+        # Redirect to access denied page instead of creating new record
+        return redirect(url_for('access_denied'))
     else:
-        print(f"🔍 DEBUG: Found existing employee with ID: {employee.id}")
+        print(f" DEBUG: Found existing employee with ID: {employee.id}")
 
     # Log in the employee with Flask-Login
-    print("🔍 DEBUG: Calling login_user()")
+    print(" DEBUG: Calling login_user()")
     login_user(employee)
-    print(f"🔍 DEBUG: login_user() completed. current_user.is_authenticated: {current_user.is_authenticated}")
+    print(f" DEBUG: login_user() completed. current_user.is_authenticated: {current_user.is_authenticated}")
 
     # Store user info in session for backward compatibility
     session['user_info'] = user_info
@@ -881,12 +1039,12 @@ def after_login():
     if cost_center_approver:
         print(f"DEBUG: User is approver for cost center: {cost_center_approver.costcenter}")
 
-    print(f"🔍 DEBUG: Successfully logged in user: {email}")
+    print(f" DEBUG: Successfully logged in user: {email}")
 
     # Get the next URL from session
     next_url = session.get('next_url', '/dashboard')
     session.pop('next_url', None)  # Clear the next_url
-    print(f"🔍 DEBUG: after-login redirecting to: {next_url}")
+    print(f" DEBUG: after-login redirecting to: {next_url}")
 
     # Redirect to the next URL
     return redirect(next_url)
@@ -1030,7 +1188,7 @@ def update_finance_settings():
 def dashboard():
     # Double-check authentication - if user is not properly authenticated, redirect to login
     if not current_user.is_authenticated or not session.get('email'):
-        print("🔍 DEBUG: Dashboard accessed without proper authentication, redirecting to login")
+        print(" DEBUG: Dashboard accessed without proper authentication, redirecting to login")
         session.clear()  # Clear any stale session data
         return redirect(url_for('index'))
 
@@ -1124,20 +1282,12 @@ def dashboard():
                     assigned_cities = [ca.city for ca in city_assignments if ca.city]
 
                     if assigned_cities:
-                        # Get cost centers in the assigned cities
-                        assigned_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city.in_(assigned_cities)).all()
-                        assigned_cost_center_ids = [cc_id[0] for cc_id in assigned_cost_center_ids]
-
-                        # Base query for EPVs in assigned cost centers
-                        base_query = EPV.query.filter(EPV.cost_center_id.in_(assigned_cost_center_ids))
+                        # Base query for EPVs in assigned cities (filter by EPV.city, not cost center city)
+                        base_query = EPV.query.filter(EPV.city.in_(assigned_cities))
 
                         # If city filter is applied, filter by that specific city
                         if city_filter and city_filter in assigned_cities:
-                            city_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city == city_filter).all()
-                            city_cost_center_ids = [cc_id[0] for cc_id in city_cost_center_ids]
-
-                            if city_cost_center_ids:
-                                base_query = EPV.query.filter(EPV.cost_center_id.in_(city_cost_center_ids))
+                            base_query = EPV.query.filter(EPV.city == city_filter)
                     else:
                         # If no cities assigned, show no EPVs
                         base_query = EPV.query.filter(EPV.id == -1)  # This will return no results
@@ -1148,15 +1298,9 @@ def dashboard():
                 # Finance Approver and Super Admin see all EPVs
                 base_query = EPV.query
 
-                # If city filter is applied, filter by cost centers in that city
+                # If city filter is applied, filter by EPV city (not cost center city)
                 if city_filter:
-                    # Get cost centers in the selected city
-                    city_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city == city_filter).all()
-                    city_cost_center_ids = [cc_id[0] for cc_id in city_cost_center_ids]
-
-                    # Filter EPVs by cost centers in the selected city
-                    if city_cost_center_ids:
-                        base_query = base_query.filter(EPV.cost_center_id.in_(city_cost_center_ids))
+                    base_query = base_query.filter(EPV.city == city_filter)
         else:
             # Regular users see only their own EPVs
             base_query = EPV.query.filter(EPV.email_id == user_email)
@@ -1287,6 +1431,13 @@ def dashboard():
                            selected_time_period=time_period_filter,
                            selected_city=city_filter,
                            is_finance_user=(employee_role in ['Finance', 'Finance Approver', 'Super Admin']))
+
+@app.route('/access-denied')
+def access_denied():
+    """Show access denied page for unauthorized users"""
+    user_email = session.get('email', 'Unknown')
+    print(f"DEBUG: Access denied page shown for email: {user_email}")
+    return render_template('access_denied.html', user_email=user_email)
 
 @app.route('/logout')
 def logout():
@@ -3463,7 +3614,7 @@ def new_split_invoice_disabled():
                         print(f"DEBUG: Failed to send approval email to {allocation.approver_email}: {message_id}")
 
                 except Exception as e:
-                    print(f"❌ ERROR sending email to {allocation.approver_email}: {str(e)}")
+                    print(f"ERROR: ERROR sending email to {allocation.approver_email}: {str(e)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
 
@@ -4954,7 +5105,7 @@ def get_notification_count():
 
 # Route to view a specific EPV record
 @app.route('/epv-record/<epv_id>')
-def view_epv_record(epv_id):
+def epv_record(epv_id):
     try:
         # Get the token from the request
         token = request.args.get('token')
@@ -5152,21 +5303,19 @@ def epv_records():
                 city_assignments = CityAssignment.query.filter_by(employee_id=employee.id, is_active=True).all()
                 assigned_cities = [ca.city for ca in city_assignments if ca.city]
 
-                if assigned_cities:
-                    # Get cost centers in the assigned cities
-                    assigned_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city.in_(assigned_cities)).all()
-                    assigned_cost_center_ids = [cc_id[0] for cc_id in assigned_cost_center_ids]
+                print(f"DEBUG: Finance user {user_email} (ID: {employee.id}) has city assignments: {assigned_cities}")
+                print(f"DEBUG: Found {len(city_assignments)} city assignments for this user")
+                for ca in city_assignments:
+                    print(f"DEBUG: City assignment - City: {ca.city}, Active: {ca.is_active}")
 
-                    # Base query for EPVs in assigned cost centers
-                    base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter(EPV.cost_center_id.in_(assigned_cost_center_ids))
+                if assigned_cities:
+                    # Base query for EPVs in assigned cities using EPV.city field
+                    base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter(EPV.city.in_(assigned_cities))
+                    print(f"DEBUG: Filtering EPVs by cities: {assigned_cities}")
 
                     # If city filter is applied, filter by that specific city
                     if city_filter and city_filter in assigned_cities:
-                        city_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city == city_filter).all()
-                        city_cost_center_ids = [cc_id[0] for cc_id in city_cost_center_ids]
-
-                        if city_cost_center_ids:
-                            base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter(EPV.cost_center_id.in_(city_cost_center_ids))
+                        base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter(EPV.city == city_filter)
                 else:
                     # If no cities assigned, show no EPVs
                     base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter(EPV.id == -1)  # This will return no results
@@ -5179,13 +5328,8 @@ def epv_records():
 
             # Apply city filter if provided
             if city_filter:
-                # Get cost centers in the selected city
-                city_cost_center_ids = db.session.query(CostCenter.id).filter(CostCenter.city == city_filter).all()
-                city_cost_center_ids = [cc_id[0] for cc_id in city_cost_center_ids]
-
-                # Filter EPVs by cost centers in the selected city
-                if city_cost_center_ids:
-                    base_query = base_query.filter(EPV.cost_center_id.in_(city_cost_center_ids))
+                # Filter EPVs by city field
+                base_query = base_query.filter(EPV.city == city_filter)
     else:
         # Regular users, admins, and finance users in 'my_expenses' view can only see their own records
         base_query = EPV.query.options(db.joinedload(EPV.finance_entry)).options(db.joinedload(EPV.sub_invoices)).options(db.joinedload(EPV.allocations)).filter_by(email_id=user_email)
@@ -5218,7 +5362,7 @@ def epv_records():
     # Calculate TAT (Turn Around Time) for each record
     for record in records:
         record.tat_days = calculate_tat(record)
-        print(f"DEBUG: EPV ID: {record.epv_id}, Employee: {record.employee_name}, Email: {record.email_id}, Status: {record.status}, Type: {record.invoice_type}, TAT: {record.tat_days}")
+        print(f"DEBUG: EPV ID: {record.epv_id}, Employee: {record.employee_name}, Email: {record.email_id}, Status: {record.status}, Type: {record.invoice_type}, City: {record.city}, Cost Center City: {record.cost_center.city if record.cost_center else 'N/A'}, TAT: {record.tat_days}")
 
     # Calculate scorecard data
     total_records = len(records)
@@ -5244,6 +5388,7 @@ def epv_records():
     print(f"DEBUG: Found {len(records)} EPV records")
     for record in records:
         print(f"DEBUG: EPV ID: {record.epv_id}, Employee: {record.employee_name}, Email: {record.email_id}, Status: {record.status}")
+        print(f"DEBUG: EPV ID type: {type(record.epv_id)}, EPV ID repr: {repr(record.epv_id)}")
 
     # Return the EPV records template
     print("DEBUG: Rendering epv_records.html template")
@@ -5268,13 +5413,10 @@ def epv_records():
         print(f"DEBUG: Traceback: {traceback.format_exc()}")
         return f"Error: {str(e)}", 500
 
-# Route to view a specific EPV record
-@app.route('/epv-record/<epv_id>')
-def epv_record(epv_id):
-    # Check if user is logged in
-    if 'email' not in session:
-        return redirect(url_for('login'))
-
+# Route to view a specific EPV record (for logged-in users from EPV records page)
+@app.route('/epv-record-authenticated/<epv_id>')
+@login_required
+def epv_record_authenticated(epv_id):
     # Get the user's role
     user_email = session.get('email')
     employee = EmployeeDetails.query.filter_by(email=user_email).first()
@@ -5511,23 +5653,28 @@ def cost_center_admin():
 @app.before_request
 def check_authentication_and_token():
     """Check authentication and token validity before each request"""
-    # Skip for static files and certain routes (including Google OAuth routes)
-    skip_paths = ['/', '/login', '/logout', '/refresh-token', '/after-login']
+    # Skip for static files and certain routes (including Google OAuth routes and approval routes)
+    skip_paths = ['/', '/login', '/logout', '/refresh-token', '/after-login', '/access-denied']
     if (request.path.startswith('/static') or
         request.path in skip_paths or
-        request.path.startswith('/login/')):  # Skip Google OAuth routes
+        request.path.startswith('/login/') or  # Skip Google OAuth routes
+        request.path.startswith('/epv-record/') or  # Skip EPV record viewing (for email approvals)
+        request.path.startswith('/approve-expense/') or  # Skip approval routes
+        request.path.startswith('/reject-expense/') or  # Skip rejection routes
+        request.path.startswith('/approve-split-allocation/') or  # Skip split allocation approval
+        request.path.startswith('/reject-split-allocation/')):  # Skip split allocation rejection
         return
 
     # For all other routes, ensure user is properly authenticated
     if not current_user.is_authenticated or not session.get('email'):
-        print(f"🔍 DEBUG: Unauthenticated access attempt to {request.path}")
+        print(f" DEBUG: Unauthenticated access attempt to {request.path}")
         session.clear()  # Clear any stale session data
         flash("Please log in to access this page.", "info")
         return redirect(url_for('index'))
 
     # Skip token check if no Google token (for basic functionality)
     if not google.authorized:
-        print(f"🔍 DEBUG: No Google token for user {session.get('email')}")
+        print(f" DEBUG: No Google token for user {session.get('email')}")
         return
 
     # Check if token is valid
@@ -5758,54 +5905,26 @@ def finance_dashboard():
 
         if city_names:
             for invoice in standard_invoices:
-                # If the EPV has a city field, only show it if the finance person is assigned to that exact city
-                if invoice.city:
-                    if invoice.city in city_names:
-                        standard_epvs.append(invoice)
-                # If EPV doesn't have a city, fall back to the cost center's city
-                elif invoice.cost_center and invoice.cost_center.city in city_names:
-                    standard_epvs.append(invoice)
-                # Also include invoices that don't have a city or cost center
-                elif not invoice.city and not invoice.cost_center:
+                # Only show EPVs where the city field matches the finance person's assigned cities
+                if invoice.city and invoice.city in city_names:
                     standard_epvs.append(invoice)
 
             # Filter resubmitted invoices by city
             for invoice in resubmitted_invoices:
-                # If the EPV has a city field, only show it if the finance person is assigned to that exact city
-                if invoice.city:
-                    if invoice.city in city_names:
-                        resubmitted_epvs_filtered.append(invoice)
-                # If EPV doesn't have a city, fall back to the cost center's city
-                elif invoice.cost_center and invoice.cost_center.city in city_names:
-                    resubmitted_epvs_filtered.append(invoice)
-                # Also include invoices that don't have a city or cost center
-                elif not invoice.city and not invoice.cost_center:
+                # Only show EPVs where the city field matches the finance person's assigned cities
+                if invoice.city and invoice.city in city_names:
                     resubmitted_epvs_filtered.append(invoice)
 
             # Filter rejected invoices by city
             for invoice in rejected_invoices:
-                # If the EPV has a city field, only show it if the finance person is assigned to that exact city
-                if invoice.city:
-                    if invoice.city in city_names:
-                        rejected_epvs_filtered.append(invoice)
-                # If EPV doesn't have a city, fall back to the cost center's city
-                elif invoice.cost_center and invoice.cost_center.city in city_names:
-                    rejected_epvs_filtered.append(invoice)
-                # Also include invoices that don't have a city or cost center
-                elif not invoice.city and not invoice.cost_center:
+                # Only show EPVs where the city field matches the finance person's assigned cities
+                if invoice.city and invoice.city in city_names:
                     rejected_epvs_filtered.append(invoice)
 
             # Filter pending payment invoices by city
             for invoice in pending_payment_invoices:
-                # If the EPV has a city field, only show it if the finance person is assigned to that exact city
-                if invoice.city:
-                    if invoice.city in city_names:
-                        pending_payment_epvs_filtered.append(invoice)
-                # If EPV doesn't have a city, fall back to the cost center's city
-                elif invoice.cost_center and invoice.cost_center.city in city_names:
-                    pending_payment_epvs_filtered.append(invoice)
-                # Also include invoices that don't have a city or cost center
-                elif not invoice.city and not invoice.cost_center:
+                # Only show EPVs where the city field matches the finance person's assigned cities
+                if invoice.city and invoice.city in city_names:
                     pending_payment_epvs_filtered.append(invoice)
         else:
             # If the user has no assigned cities, show all invoices
@@ -5838,15 +5957,8 @@ def finance_dashboard():
         split_epvs_filtered = []
         if city_names:
             for invoice in split_epvs:
-                # If the EPV has a city field, only show it if the finance person is assigned to that exact city
-                if invoice.city:
-                    if invoice.city in city_names:
-                        split_epvs_filtered.append(invoice)
-                # If EPV doesn't have a city, fall back to the cost center's city
-                elif invoice.cost_center and invoice.cost_center.city in city_names:
-                    split_epvs_filtered.append(invoice)
-                # Also include invoices that don't have a city or cost center
-                elif not invoice.city and not invoice.cost_center:
+                # Only show EPVs where the city field matches the finance person's assigned cities
+                if invoice.city and invoice.city in city_names:
                     split_epvs_filtered.append(invoice)
         else:
             # If the user has no assigned cities, show all split invoices
@@ -5899,10 +6011,8 @@ def finance_dashboard():
 
         # Get processed entries for the assigned cities
         if city_names:
-            processed_entries = FinanceEntry.query.join(EPV).join(
-                CostCenter, EPV.cost_center_id == CostCenter.id
-            ).filter(
-                CostCenter.city.in_(city_names)
+            processed_entries = FinanceEntry.query.join(EPV).filter(
+                EPV.city.in_(city_names)
             ).order_by(FinanceEntry.entry_date.desc()).all()
             print(f"DEBUG: Found {len(processed_entries)} processed entries for assigned cities")
         else:
@@ -5929,14 +6039,11 @@ def finance_dashboard():
         pending_approval_entries = []
         if city_names:
             # If finance approver has assigned cities, show entries from those cities
-            # Use LEFT JOIN to handle EPVs without cost centers and include direct city matches
-            pending_approval_entries = FinanceEntry.query.join(EPV).outerjoin(CostCenter).filter(
+            # Only use EPV.city for filtering
+            pending_approval_entries = FinanceEntry.query.join(EPV).filter(
                 FinanceEntry.status == 'pending',
                 EPV.finance_status == 'processed',  # CRITICAL FIX: Only show processed EPVs
-                db.or_(
-                    EPV.city.in_(city_names),  # Direct city match
-                    CostCenter.city.in_(city_names)  # Cost center city match
-                )
+                EPV.city.in_(city_names)  # Only direct city match
             ).order_by(FinanceEntry.entry_date.desc()).all()
             print(f"DEBUG: Found {len(pending_approval_entries)} pending approval entries for assigned cities: {city_names}")
         else:
@@ -6013,34 +6120,20 @@ def finance_dashboard_content():
                 if city_names:
                     # Count the current number of pending EPVs
                     # Only count expenses with direct city match to assigned cities
-                    direct_city_count = EPV.query.filter(
+                    current_count = EPV.query.filter(
                         EPV.status.in_(['approved', 'partially_approved']),  # Include both approved and partially_approved
                         EPV.city.in_(city_names),
                         db.or_(EPV.finance_status == 'pending', EPV.finance_status == None)
                     ).count()
-
-                    # Then count expenses without city but with cost center city match
-                    cost_center_city_count = EPV.query.join(CostCenter).filter(
-                        EPV.status.in_(['approved', 'partially_approved']),  # Include both approved and partially_approved
-                        EPV.city == None,  # Only count expenses without a direct city
-                        CostCenter.city.in_(city_names),
-                        db.or_(EPV.finance_status == 'pending', EPV.finance_status == None)
-                    ).count()
-
-                    # Total count
-                    current_count = direct_city_count + cost_center_city_count
 
                     # Check if the count is different
                     if current_count != current_rows:
                         has_updates = True
                     else:
                         # Check if any EPV's processing status has changed
-                        recent_updates = EPV.query.outerjoin(CostCenter).filter(
+                        recent_updates = EPV.query.filter(
                             EPV.status.in_(['approved', 'partially_approved']),  # Include both approved and partially_approved
-                            db.or_(
-                                EPV.city.in_(city_names),
-                                CostCenter.city.in_(city_names)
-                            ),
+                            EPV.city.in_(city_names),
                             (EPV.finance_status == None) | (EPV.finance_status == 'pending'),
                             db.or_(
                                 EPV.being_processed_by != None,  # Someone started processing
@@ -6054,12 +6147,9 @@ def finance_dashboard_content():
                 # Check for new resubmitted EPVs
                 if city_names:
                     # Count the current number of resubmitted EPVs
-                    current_count = EPV.query.outerjoin(CostCenter).filter(
+                    current_count = EPV.query.filter(
                         EPV.status.in_(['approved', 'partially_approved']),  # Include both approved and partially_approved
-                        db.or_(
-                            EPV.city.in_(city_names),
-                            CostCenter.city.in_(city_names)
-                        ),
+                        EPV.city.in_(city_names),
                         EPV.finance_status == 'pending',
                         EPV.document_status == 'documents_uploaded'
                     ).count()
@@ -6105,27 +6195,9 @@ def finance_dashboard_content():
                 )
 
                 if city_names:
-                    # Filter by city if assigned
-                    # We need to handle this differently since we're already in a query
-                    # First get the IDs of EPVs with direct city match
-                    direct_city_epv_ids = db.session.query(EPV.id).filter(
-                        EPV.city.in_(city_names)
-                    ).all()
-                    direct_city_epv_ids = [id[0] for id in direct_city_epv_ids]
-
-                    # Then get the IDs of EPVs with cost center city match but no direct city
-                    cost_center_city_epv_ids = db.session.query(EPV.id).join(CostCenter).filter(
-                        EPV.city == None,
-                        CostCenter.city.in_(city_names)
-                    ).all()
-                    cost_center_city_epv_ids = [id[0] for id in cost_center_city_epv_ids]
-
-                    # Combine the IDs
-                    all_epv_ids = direct_city_epv_ids + cost_center_city_epv_ids
-
-                    # Filter the query by these IDs
+                    # Filter by city if assigned - only use EPV.city
                     pending_payment_query = pending_payment_query.filter(
-                        EPV.id.in_(all_epv_ids)
+                        EPV.city.in_(city_names)
                     )
 
                 # Count the current number of pending payment EPVs
@@ -6139,11 +6211,8 @@ def finance_dashboard_content():
                 # Check for new rejected EPVs
                 if city_names:
                     # Count the current number of rejected EPVs
-                    current_count = EPV.query.outerjoin(CostCenter).filter(
-                        db.or_(
-                            EPV.city.in_(city_names),
-                            CostCenter.city.in_(city_names)
-                        ),
+                    current_count = EPV.query.filter(
+                        EPV.city.in_(city_names),
                         EPV.finance_status == 'rejected'
                     ).count()
                 else:
@@ -6185,13 +6254,10 @@ def finance_dashboard_content():
 
                 if city_names:
                     # Count the current number of pending entries
-                    current_count = FinanceEntry.query.join(EPV).outerjoin(CostCenter).filter(
+                    current_count = FinanceEntry.query.join(EPV).filter(
                         FinanceEntry.status == 'pending',
                         EPV.finance_status == 'processed',  # CRITICAL FIX: Only show processed EPVs
-                        db.or_(
-                            EPV.city.in_(city_names),
-                            CostCenter.city.in_(city_names)
-                        )
+                        EPV.city.in_(city_names)
                     ).count()
 
                     # Check if the count is different
@@ -6199,13 +6265,10 @@ def finance_dashboard_content():
                         has_updates = True
                     else:
                         # Check if any entries have been updated recently
-                        recent_updates = FinanceEntry.query.join(EPV).outerjoin(CostCenter).filter(
+                        recent_updates = FinanceEntry.query.join(EPV).filter(
                             FinanceEntry.status == 'pending',
                             EPV.finance_status == 'processed',  # CRITICAL FIX: Only show processed EPVs
-                            db.or_(
-                                EPV.city.in_(city_names),
-                                CostCenter.city.in_(city_names)
-                            ),
+                            EPV.city.in_(city_names),
                             FinanceEntry.entry_date > last_update_datetime
                         ).count()
 
@@ -7122,12 +7185,12 @@ if __name__ == '__main__':
         """Initialize database with proper error handling"""
         try:
             with app.app_context():
-                print("🔍 DEBUG: Attempting to initialize database...")
+                print(" DEBUG: Attempting to initialize database...")
                 # Don't drop all tables to preserve EPV records
                 # db.drop_all()
                 db.create_all()
                 init_db(app)
-                print("✅ DEBUG: Database initialized successfully")
+                print("SUCCESS: DEBUG: Database initialized successfully")
 
                 # Add new columns to finance_entry table if they don't exist
                 try:
@@ -7162,9 +7225,9 @@ if __name__ == '__main__':
                         db.session.commit()
 
         except Exception as e:
-            print(f"❌ ERROR: Database initialization failed: {str(e)}")
-            print("⚠️  WARNING: Application will continue without database. Some features may not work.")
-            print("💡 HINT: Please check your database connection settings in .env file")
+            print(f"ERROR: ERROR: Database initialization failed: {str(e)}")
+            print("WARNING:  WARNING: Application will continue without database. Some features may not work.")
+            print(" HINT: Please check your database connection settings in .env file")
             return False
         return True
 
@@ -7202,9 +7265,15 @@ if __name__ == '__main__':
                 app.run(host=host, port=port, debug=False)
         else:
             # Development mode - disable auto-reload to prevent database commit interruption
-            print("🚀 Starting Flask development server with auto-reload DISABLED for testing")
-            print("📝 This prevents database commit interruption during form submissions")
+            print(" Starting Flask development server with auto-reload DISABLED for testing")
+            print(" This prevents database commit interruption during form submissions")
             app.run(host=host, port=port, debug=debug_mode, use_reloader=False)
+
+# Final route check
+print("STEP 7: All application routes loaded. Final route list:")
+for rule in app.url_map.iter_rules():
+    print(f"  {rule.rule} -> {rule.endpoint}")
+print(f"Total routes registered: {len(list(app.url_map.iter_rules()))}")
 
 # Make the Flask application available as 'application' for WSGI
 application = app

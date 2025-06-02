@@ -155,7 +155,21 @@ def generate_expense_document(expense_data):
             styles = getSampleStyleSheet()
             title_style = styles['Heading1']
             subtitle_style = styles['Heading2']
-            normal_style = styles['Normal']
+
+            # Create enhanced normal style for better text wrapping
+            normal_style = ParagraphStyle(
+                'EnhancedNormal',
+                parent=styles['Normal'],
+                fontName='Helvetica',
+                fontSize=9,
+                leading=11,
+                alignment=0,  # Left alignment
+                wordWrap='LTR',
+                allowWidows=1,
+                allowOrphans=1,
+                spaceAfter=2,
+                spaceBefore=2
+            )
 
             # Generate a unique EPV ID if not provided
             # Format: EPV-YYYYMMDD-CC-XXXXXXXXXX (CC is cost center code, 10 hex chars from UUID for near-absolute uniqueness)
@@ -194,15 +208,56 @@ def generate_expense_document(expense_data):
             # Add a colored header line at the extreme top
             elements.append(HRFlowable(width="100%", thickness=2, color=colors.blue, spaceBefore=0, spaceAfter=0.2*inch))
 
-            # Add logo
-            logo_path = '/Users/admin/Downloads/EPV/static/images/logo.png'
+            # Add logo - use relative path from current working directory
+            print(f"DEBUG: Current working directory when generating PDF: {os.getcwd()}")
+            print(f"DEBUG: Files in current directory: {os.listdir('.')}")
+
+            logo_path = os.path.join('static', 'images', 'logo.png')
+            print(f"DEBUG: Attempting to load logo from: {logo_path}")
+            print(f"DEBUG: Logo path exists: {os.path.exists(logo_path)}")
+
             if os.path.exists(logo_path):
                 print(f"DEBUG: Logo found at {logo_path}")
-                logo = Image(logo_path, width=1.5*inch, height=0.75*inch)
-                elements.append(logo)
-                elements.append(Spacer(1, 0.1*inch))
+                try:
+                    logo = Image(logo_path, width=1.5*inch, height=0.75*inch)
+                    elements.append(logo)
+                    elements.append(Spacer(1, 0.1*inch))
+                    print(f"DEBUG: Logo successfully added to PDF")
+                except Exception as e:
+                    print(f"DEBUG: Error creating logo image: {e}")
             else:
                 print(f"DEBUG: Logo not found at {logo_path}")
+                # Try alternative paths
+                alt_paths = [
+                    'static/images/logo.png',
+                    './static/images/logo.png',
+                    os.path.join(os.getcwd(), 'static', 'images', 'logo.png'),
+                    os.path.abspath('static/images/logo.png')
+                ]
+                print(f"DEBUG: Trying alternative paths: {alt_paths}")
+
+                for alt_path in alt_paths:
+                    print(f"DEBUG: Checking path: {alt_path} - exists: {os.path.exists(alt_path)}")
+                    if os.path.exists(alt_path):
+                        print(f"DEBUG: Logo found at alternative path: {alt_path}")
+                        try:
+                            logo = Image(alt_path, width=1.5*inch, height=0.75*inch)
+                            elements.append(logo)
+                            elements.append(Spacer(1, 0.1*inch))
+                            print(f"DEBUG: Logo successfully added to PDF from alternative path")
+                            break
+                        except Exception as e:
+                            print(f"DEBUG: Error creating logo image from {alt_path}: {e}")
+                            continue
+                else:
+                    print(f"DEBUG: Logo not found in any of the attempted paths")
+                    print(f"DEBUG: Current working directory: {os.getcwd()}")
+                    if os.path.exists('static'):
+                        print(f"DEBUG: Files in static directory: {os.listdir('static')}")
+                        if os.path.exists(os.path.join('static', 'images')):
+                            print(f"DEBUG: Files in static/images directory: {os.listdir(os.path.join('static', 'images'))}")
+                    else:
+                        print(f"DEBUG: 'static' directory does not exist in current working directory")
 
             # Create a table for the header with title, date and EPV ID
             header_style = ParagraphStyle(
@@ -301,22 +356,49 @@ def generate_expense_document(expense_data):
                 except Exception as e:
                     print(f"Error formatting date: {e}")
 
+                # Create Paragraph objects for text wrapping with explicit width constraints
+                # Use a smaller font and tighter leading for better fitting
+                wrap_style = ParagraphStyle(
+                    'WrapStyle',
+                    parent=normal_style,
+                    fontSize=8,
+                    leading=10,
+                    wordWrap='LTR',
+                    allowWidows=1,
+                    allowOrphans=1
+                )
+
+                expense_head_para = Paragraph(expense.get('expense_head', ''), wrap_style)
+                description_para = Paragraph(expense.get('description', ''), wrap_style)
+
                 expense_data.append([
                     str(i+1),
                     invoice_date,
-                    expense.get('expense_head', ''),
-                    expense.get('description', ''),
+                    expense_head_para,
+                    description_para,
                     expense.get('amount', '')
                 ])
 
             # Add total row
             expense_data.append(['', '', '', 'Total:', data.get('total_amount', '')])
 
-            # Adjust row heights to ensure up to 10 rows can fit on a single page
-            row_height = 0.3*inch  # Reduced row height to fit more rows
+            # Use fixed column widths optimized for text wrapping
+            # Total available width is approximately 7.5 inches (8.5 - 1 for margins)
+            col_widths = [
+                0.4*inch,   # # column - narrow
+                0.9*inch,   # Date column - adequate for dates
+                2.3*inch,   # Expense Head column - wider for long text
+                2.8*inch,   # Description column - widest for descriptions
+                1.1*inch    # Amount column - adequate for numbers
+            ]
+            print(f"DEBUG: Using column widths: {[f'{w/inch:.1f}\"' for w in col_widths]}")
+
+            # Increased row height to accommodate wrapped text
+            row_height = 0.6*inch  # Increased to 0.6 for better text wrapping
             expense_table = Table(expense_data,
-                                 colWidths=[0.5*inch, 1*inch, 1.5*inch, 3*inch, 1*inch],
-                                 rowHeights=[0.4*inch] + [row_height] * (len(expense_data) - 2) + [0.4*inch])
+                                 colWidths=col_widths,
+                                 rowHeights=[0.4*inch] + [row_height] * (len(expense_data) - 2) + [0.4*inch],
+                                 repeatRows=1)  # Repeat header on page breaks
 
             expense_table.setStyle(TableStyle([
                 # Header row styling
@@ -337,11 +419,17 @@ def generate_expense_document(expense_data):
 
                 # General styling
                 ('ALIGN', (-1, 1), (-1, -1), 'RIGHT'),  # Right-align amounts
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('ALIGN', (0, 1), (0, -2), 'CENTER'),   # Center align row numbers
+                ('ALIGN', (1, 1), (1, -2), 'CENTER'),   # Center align dates
+                ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),  # Middle align header row
+                ('VALIGN', (0, 1), (-1, -2), 'TOP'),    # Top align data rows for better text wrapping
+                ('VALIGN', (0, -1), (-1, -1), 'MIDDLE'), # Middle align total row
                 ('GRID', (0, 0), (-1, -2), 0.5, colors.grey),
                 ('LINEABOVE', (0, -1), (-1, -1), 1, colors.blue),
                 ('LINEBELOW', (0, -1), (-1, -1), 1, colors.blue),
-                ('PADDING', (0, 0), (-1, -1), 4),  # Reduced padding to fit more content
+                ('PADDING', (0, 0), (-1, -1), 4),  # Reduced padding to allow more text space
+                ('LEFTPADDING', (2, 1), (3, -2), 6),  # Extra left padding for text columns
+                ('RIGHTPADDING', (2, 1), (3, -2), 6), # Extra right padding for text columns
             ]))
             elements.append(expense_table)
             elements.append(Spacer(1, 0.25*inch))

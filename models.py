@@ -18,6 +18,90 @@ class CostCenter(db.Model):
     def __repr__(self):
         return f'<CostCenter {self.costcenter}>'
 
+    @staticmethod
+    def get_default_cost_centers():
+        """Return the default cost center data for initialization"""
+        return [
+            ("Abhyudaya Nagar", "fatima.sawant@akanksha.org", "Mumbai", "1riw8YcNK2AbkdUcHQOBIaOsu5XsimPAg", True),
+            ("AFA Sales", "ruchika.gupta@akanksha.org", "", "1Ad49VZ1E6oA9YMVrD-RYTR3dDReP0TKE", True),
+            ("ANWEMS", "shruti.das@akanksha.org", "Pune", "1JTgrRBu54yJwkgFUqou2BzygeJSYLZhB", True),
+            ("Art Curriculum in Schools", "ruchika.gupta@akanksha.org", "", "136488itBUyzAKeo_WqS779yKWAqNZrGy", True),
+            ("ASE Mumbai", "zoya.khan@akanksha.org", "Mumbai", "1zzJg1C_ii773ZjvuUo7f-NbE0qcmCmMt", True),
+            ("ASE Pune", "zoya.khan@akanksha.org", "", "1fsCtoTj95L05hByqhkvBDoWdPNw9uagy", True),
+            ("Aspiring Teachers", "venil.ali@akanksha.org", "", "1C9LOdnIJOvsZNXeuxP83wKoP8blXgpuI", True),
+            ("Babhulban NMCPS (Nagpur)", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1mNIOjhowfdDJEEnHPo3IcY5lxxSkGO-f", True),
+            ("BOPEMS", "sushma.pathare@akanksha.org", "Pune", "1Z7MxiicescNuEd5okbndzUl3j-0FHM0w", True),
+            ("Central Administration", "megha.agarwal@akanksha.org/anjali.suresh@akanksha.org", "", "1tfBBT488oTrHopRPTFj82Qsx8SBRd3t-", True),
+            ("Chief of School and Alumni (COSA)", "venil.ali@akanksha.org", "", "1IQR5ze3QhShTnQyz4QGwAtnIpP-s53j6", True),
+            ("Coaches - Mumbai", "sheetal.murudkar@akanksha.org", "Mumbai", "1kKvpLxLDRNpoB7sFT21OkBm3jADQCUTo", True),
+            ("Coaches - Nagpur", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1dtT5SEZrA_UvyM2NCJ7KxJZ-GT_28_my", True),
+            ("Coaches - Pune", "sivakami.kotla@akanksha.org", "Pune", "1atuB34p_wlFJgLJ1aCvz-DOuuR3R8jMp", True),
+            ("Communication", "urvashi.pant@akanksha.org", "", "1SwzQDm44JhvZeU_16-TWiWjqGB8P2AGe", True),
+            ("Community Engagement Mumbai", "sheetal.murudkar@akanksha.org", "Mumbai", "1fyyOyUcsOg6-_-EOs2eOD_knfv6TDgXU", True),
+            ("Community Engagement Nagpur", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1s2k5NJbDGjZqDP6KbJPemTFVC60QLOX6", True),
+            ("Community Engagement Pune", "sivakami.kotla@akanksha.org", "Pune", "1wVqR55aw8d5SJebVgIpSj5ovyhs_zzaF", True),
+            ("Counseling & Intervention Mumbai", "sheetal.murudkar@akanksha.org", "Mumbai", "1DVMKGA9CT_TyBoaBTaAa2Vq_a7lzolhT", True),
+            ("Counseling & Intervention Nagpur", "somsuvra.chatterjee@akanksha.org", "Nagpur", "h1ZRxl_zcqLI1LWO1b98gRcKOeeWazD1ki", True),
+            ("Counseling & Intervention Pune", "sivakami.kotla@akanksha.org", "Pune", "1GrqDvaTAkJaRHVtiHrmqP1G-jywj_jGe", True),
+            ("CSMEMS", "parijat.prakash@akanksha.org", "Pune", "1cTVu0RyHdHJyS33_r4_Ekpl4ZKOSwyeb", True),
+            ("CWSN - IS", "venil.ali@akanksha.org", "", "19ZDT9EfcTPGctC4H7FEbgB7tGcRRGFnB", True),
+            ("D. N. Nagar", "samina.quettawala@akanksha.org", "Mumbai", "1bqaMJzz8wpRu-tLpMSbJhR3unVJVde1p", True),
+            ("Digital Learning", "gauri.kirtane@akanksha.org", "", "1CT0pIDNgPFfnSTYiinfGRR-v2s7Ans_C", True),
+            ("Donor Relations", "chanda.peswani@akanksha.org", "", "1NMB2bZOuSbITIBg0-MmnoEoSl_k-2VFp", True),
+            ("Finance - Central", "manoj.balamkar@akanksha.org", "", "19_4f_SjMLNPazQI-Ka-l7t_6YsLYx75r", True),
+            ("Global Awareness Initiative", "sivakami.kotla@akanksha.org", "", "1GQKKYxVq_PapWRxbO491kbFdNWu7xjCg", True),
+            ("Human Resources Central", "megha.agarwal@akanksha.org", "", "1p3ZaEOyV8p2va2ChSwD7FUcWUZKCpBSZ", True),
+            ("Impact & Research", "nishant.singhania@akanksha.org", "", "1_zpOwQA9o68SAEOdPip04CwCa4pXdgno", True),
+            ("Instruction Specialist", "gauri.kirtane@akanksha.org", "", "1lDtc0jODzZYmAK1U1_et9kcHCtFLQleC", True),
+            ("Instruction Specialist - Mumbai", "gauri.kirtane@akanksha.org", "Mumbai", "1rQ9p6JWe2bSwChZ3xZ5WhS8EcmnecIHE", True),
+            ("Instruction Specialist - Nagpur", "gauri.kirtane@akanksha.org", "Nagpur", "1LNjq5q2nvTVSn6NNh368N5jcvrEAPqah", True),
+            ("Instruction Specialist - Pune", "gauri.kirtane@akanksha.org", "Pune", "1FHSRoksFPXZXtLMSUA2jQWHSlQ122Ulr", True),
+            ("IT & Tech Infra - Admin", "nitin.aurora@akanksha.org", "", "1YRKFMPz_TuS2VHLXTQbYTL005pthPtZ-", True),
+            ("IT & Tech Infra - ASE", "nitin.aurora@akanksha.org", "", "1nJ1EnHitWsGv_uxwjgTVRuvdh9DHD_BT", True),
+            ("IT & Tech Infra - MSP", "nitin.aurora@akanksha.org", "", "1fVBNssVbcrQKmUQNqzSLV-5h0oj43CpL", True),
+            ("KCTVN", "shalini.sachdev@akanksha.org", "Pune", "15Li69dovMhLaUo96Z8dX6DpDKjjfxh_T", True),
+            ("LAPMEMS", "shruti.manerker@akanksha.org", "Pune", "1Y6s8dTIrTSql0n--e5Tf_QjNStPA6oVD", True),
+            ("Late Baburaoji Bobade NMCPS", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1qe6vQLM7HSxypG31RRECq28kqXiTf4Gv", True),
+            ("Late Gopalrao Moghare (Khadan)", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1DVmjbr9NdNTISYyJKg6VrJQ8qeFrOwvR", True),
+            ("Laxmi Nagar", "prachi.mangaonkar@akanksha.org", "Mumbai", "1sF2cj6clLsLH_H1aAQftL163U1vUet8L", True),
+            ("LDRKEMS", "ritu.pasricha@akanksha.org", "Pune", "1WUmQ5SzjgyM848WKXNDD0JrFtl-Zc-A_", True),
+            ("Mahalaxmi", "sima.jhaveri@akanksha.org", "Mumbai", "1HPLJAbfzsoA2M8dUCanSGhREW3Lo67OX", True),
+            ("Management - CEO", "saurabh.taneja@akanksha.org", "", "1DrVccC0H2iEX65zK-pd1fJDn65EtnZY6", True),
+            ("MEMS", "nilambari.nair@akanksha.org", "Pune", "1Egnob_v9nXb5uvO15CR7or65W3fpAR2f", True),
+            ("MPMMPS", "bhima.jetty@akanksha.org", "Mumbai", "1JaU9IhNJE-jNpQJv6sJ4qzo2wHSKH0Iz", True),
+            ("Natwar Nagar", "rekha.ghelani@akanksha.org", "Mumbai", "1f46qyK_qTV34rydMX4pFnmQOnwj-hAH7", True),
+            ("Navi Mumbai", "diana.isabel@akanksha.org", "Mumbai", "12FNpfiRUVOAtGdnX5iA204XpaSdrOWU7", True),
+            ("Operations Mumbai", "sheetal.murudkar@akanksha.org", "Mumbai", "13RX8hKfusoKIyF1Ab1iPu7JTemRx87E-", True),
+            ("Operations Nagpur", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1OWdy60tQrxhq6i1o1aagRbIWf2mFw-E1", True),
+            ("Operations Pune", "sivakami.kotla@akanksha.org", "Pune", "1NRMF4Dq78w0COEcMlNw-kCH0QkEtdrHR", True),
+            ("PE Mumbai", "subhash.ghodake@akanksha.org", "Mumbai", "1JOqgHo0OePrAHzNRvtZMiXzv4YygRJgb", True),
+            ("PE Nagpur", "gauri.kirtane@akanksha.org", "Nagpur", "1UyU5JredtHqZL28Eyx7dAM2D8fs1fSnH", True),
+            ("PE Pune", "sivakami.kotla@akanksha.org", "Pune", "1wzh84o_0dgdaX7lnL9_Yhe7siSej-JTR", True),
+            ("PKGEMS", "nishant.singhania@akanksha.org", "Pune", "1xl8FfP7SOqecpQBF5mYYBoZN2ZBI74wB", True),
+            ("Rambhau Mhalginagar NMCPS", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1YxJEV5xtS-7NYboLFGmIYafcE1CqTwtu", True),
+            ("Ramnagar NMCPS (Nagpur)", "somsuvra.chatterjee@akanksha.org", "Nagpur", "1JJ_j7adnRicZOcK4ItYhTjUjLsrbDBNW", True),
+            ("Rani Durgavati NMCPS (Nagpur)", "somsuvra.chatterjee@akanksha.org", "Nagpur", "103dt8_Zhkz2sVMdj0YLSWxOtLz6rSOTy", True),
+            ("RISE", "sapna1.shah@akanksha.org", "", "1Enm2IcW99TASUN3VqftmmHNltN-XlRTk", True),
+            ("SBPEMS - Bhawani Peth", "mohmmed.ahmedulla@akanksha.org", "Pune", "1Zmo8zq6viyAwxiaH3QGyuUG9TlEqE63t", True),
+            ("SBPEMS - Moshi", "merlin1.elias@akanksha.org", "Pune", "1G_tN9rDJfGqPV4HXbWWoDhU23KCkwLC5", True),
+            ("Scholarship - Mumbai", "zoya.khan@akanksha.org", "Mumbai", "1s9h8ZizfAmEMdhORLfA3ADRkuTuJHXrJ", True),
+            ("Scholarship - Pune", "zoya.khan@akanksha.org", "Pune", "13TKF2LI7TwzWPoj3m91COhQ8LC_jvAd1", True),
+            ("Senior Secondary Specialist", "gauri.kirtane@akanksha.org", "", "12CV5MZgALWp-5f2KtXigPc0S8tgDBQzF", True),
+            ("SETU", "jayshree.oberoi@akanksha.org", "Pune", "18Y8yc1IdGGZIGbfLdfqPQ_ksMyEf25vU", True),
+            ("Setu - Art", "jayshree.oberoi@akanksha.org", "", "1q-syD2OYNac-TEo4Z_h3az-TRbqSL0vN", True),
+            ("Shindewadi", "sakshi.bhatia@akanksha.org", "Mumbai", "1xjagICZtuhH4Oj5kA15NRrCd-CE9b2rD", True),
+            ("Sitaram Mill", "mandira.purohit@akanksha.org", "Mumbai", "1_EvNrCm3vEn_zPlfS2vVT1XQfbbNdzd6", True),
+            ("SL Academy", "venil.ali@akanksha.org", "", "1dko5lsmLrlyTGvbSFbtmzPmW_6J0jWPD", True),
+            ("Sports Program Mumbai", "subhash.ghodake@akanksha.org", "Mumbai", "1SckHL7C8NQS4AfZWKRvF1cfXdFIWJ2z3", True),
+            ("Sports Program Nagpur", "subhash.ghodake@akanksha.org", "Nagpur", "1ptib4zUhy4-fj6Hjzwzkh3BMPUUOaFxU", True),
+            ("Sports Program Pune", "subhash.ghodake@akanksha.org", "Pune", "1Kii9qi9zz5cpo5SrTYe6wdwXUxfVWyFI", True),
+            ("STEM", "zoya.khan@akanksha.org", "", "14BSwzTyMODo9_2fMSg_asBlcyw9V-jSb", True),
+            ("Student Wellbeing COI Leads", "dhira.peer@akanksha.org", "", "1nwOwQL6eKQoI_RLjWh79kBK778G61c7u", True),
+            ("Vocational Labs", "doney.biju@akanksha.org", "", "1I4aJR9MlcZJ6jD90w0bK0B_vuu3ZLt80", True),
+            ("Volunteer", "megha.agarwal@akanksha.org", "", "1jKHfN3qtcq2koLjMqcVN2OtoYPjcNWcq", True),
+            ("Wadibunder", "prachi.sanghvi@akanksha.org", "Mumbai", "1BiqWixh-PngjP4m76NJb59uscUPxcGeO", True),
+        ]
+
 class EmployeeDetails(UserMixin, db.Model):
     __tablename__ = 'employee_details'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -51,6 +135,65 @@ class EmployeeDetails(UserMixin, db.Model):
 
     def __repr__(self):
         return f'<EmployeeDetails {self.name} ({self.email})>'
+
+    @staticmethod
+    def get_default_employees():
+        """Return the default employee data for initialization from CSV file"""
+        import csv
+        import os
+
+        csv_file_path = os.path.join('uploads', 'Employee Details.csv')
+
+        if not os.path.exists(csv_file_path):
+            print(f"WARNING: CSV file not found at {csv_file_path}")
+            print("Using minimal default employee data...")
+            # Return minimal essential employees if CSV is not available
+            return [
+                ("nikhil.aher@akanksha.org", "NIKAHE160185", "saurabh.taneja@akanksha.org", "NIKHIL RAJESH AHER", "Super Admin", True),
+                ("saurabh.taneja@akanksha.org", "SAUTAN", "", "SAURABH TANEJA", "Super Admin", True),
+                ("megha.agarwal@akanksha.org", "MEGAGA", "", "MEGHA AGARWAL", "Super Admin", True),
+                ("manoj.balamkar@akanksha.org", "MANBAL", "", "MANOJ BALAMKAR", "Finance Approver", True),
+                ("karishma.bhoir@akanksha.org", "KARBHO", "manoj.balamkar@akanksha.org", "KARISHMA BHOIR", "Finance Approver", True),
+            ]
+
+        try:
+            employee_data = []
+            with open(csv_file_path, 'r', encoding='utf-8') as file:
+                csv_reader = csv.DictReader(file)
+
+                for row in csv_reader:
+                    # Extract and clean data
+                    email = row.get('email', '').strip().lower()
+                    employee_id = row.get('employee_id', '').strip()
+                    manager = row.get('manager', '').strip().lower()
+                    manager_name = row.get('manager_name', '').strip()
+                    name = row.get('name', '').strip()
+                    role = row.get('role', 'user').strip()
+                    is_active = str(row.get('is_active', '1')).lower() in ['true', 'yes', '1', 'active', 'y']
+
+                    # Skip rows without email
+                    if not email:
+                        continue
+
+                    # Handle empty manager
+                    manager_value = manager if manager else ""
+
+                    employee_data.append((email, employee_id, manager_value, name, role, is_active))
+
+            print(f"Loaded {len(employee_data)} employees from CSV file")
+            return employee_data
+
+        except Exception as e:
+            print(f"ERROR: Failed to read CSV file: {e}")
+            print("Using minimal default employee data...")
+            # Return minimal essential employees if CSV reading fails
+            return [
+                ("nikhil.aher@akanksha.org", "NIKAHE160185", "saurabh.taneja@akanksha.org", "NIKHIL RAJESH AHER", "Super Admin", True),
+                ("saurabh.taneja@akanksha.org", "SAUTAN", "", "SAURABH TANEJA", "Super Admin", True),
+                ("megha.agarwal@akanksha.org", "MEGAGA", "", "MEGHA AGARWAL", "Super Admin", True),
+                ("manoj.balamkar@akanksha.org", "MANBAL", "", "MANOJ BALAMKAR", "Finance Approver", True),
+                ("karishma.bhoir@akanksha.org", "KARBHO", "manoj.balamkar@akanksha.org", "KARISHMA BHOIR", "Finance Approver", True),
+            ]
 
 class CityAssignment(db.Model):
     __tablename__ = 'city_assignment'
@@ -91,6 +234,70 @@ class ExpenseHead(db.Model):
     def __repr__(self):
         return f'<ExpenseHead {self.head_name} ({self.head_code})>'
 
+    @staticmethod
+    def get_default_expense_heads():
+        """Return the default expense head data for initialization"""
+        return [
+            ("Staff tea and refreshments", "Staff Welfare", "", True),
+            ("Staff annual lunch", "Staff Welfare", "", True),
+            ("Staff retreat", "Staff Welfare", "", True),
+            ("Staff momentos", "Staff Welfare", "", True),
+            ("Education Material", "Education Expenses", "", True),
+            ("Art Material", "Education Expenses", "", True),
+            ("Teachers' reference books", "Education Expenses", "", True),
+            ("Science Lab kits and other equipment", "Education Expenses", "", True),
+            ("Students' External Evaluation fees & expenses", "Education Expenses", "", True),
+            ("Field Trips", "Education Expenses", "", True),
+            ("Educational Software Subscriptions", "Education Expenses", "", True),
+            ("SDR Expenses", "Education Expenses", "", True),
+            ("Exam Fees", "Education Expenses", "", True),
+            ("Annual day", "School Events", "", True),
+            ("Fairs and Festival Celebrations", "School Events", "", True),
+            ("SSC farewell", "School Events", "", True),
+            ("Sports Day - Food/Fees", "Sports Expenses", "", True),
+            ("Sports Day - Venue", "Sports Expenses", "", True),
+            ("Sports Material and Equipment", "Sports Expenses", "", True),
+            ("Akanksha Sports event", "Sports Expenses", "", True),
+            ("External Sports event", "Sports Expenses", "", True),
+            ("Mid-Day Meal Contingency", "603000 - Child Welfare", "", True),
+            ("Medical Welfare Expenses", "603001 - Child Welfare", "", True),
+            ("School clubs", "603002 - Child Welfare", "", True),
+            ("External Visit", "Community Engagement", "", True),
+            ("Local Events", "Community Engagement", "", True),
+            ("Local Conveyance", "Travel Expenses", "", True),
+            ("Domestic Travel", "Travel Expenses", "", True),
+            ("International travel", "Travel Expenses", "", True),
+            ("Postage & Courier", "Communication", "", True),
+            ("Telephone & Internet", "Communication", "", True),
+            ("Stationery, photocopying, printing & computer accessories", "Printing & Stationery", "", True),
+            ("Rent", "Rent, Electricity And Other Utilities", "", True),
+            ("Electricity", "Rent, Electricity And Other Utilities", "", True),
+            ("Utility & Water Charges", "Rent, Electricity And Other Utilities", "", True),
+            ("Repair costs", "Repairs & Maintenance", "", True),
+            ("Maintenance expenses", "Repairs & Maintenance", "", True),
+            ("AMC", "Repairs & Maintenance", "", True),
+            ("Cleaning & cleaning Supplies", "Repairs & Maintenance", "", True),
+            ("Video Creation Expenses", "Communication/Fund Raising Expenses", "", True),
+            ("Events", "Communication/Fund Raising Expenses", "", True),
+            ("Billdesk Charges", "Communication/Fund Raising Expenses", "", True),
+            ("Other Communication Expense", "Communication/Fund Raising Expenses", "", True),
+            ("Website Maintenance", "Communication/Fund Raising Expenses", "", True),
+            ("Bank Charges", "Other Expenses", "", True),
+            ("Other Administrative Expenses", "Other Expenses", "", True),
+            ("D & O Insurance", "Other Expenses", "", True),
+            ("E & O Policy", "Other Expenses", "", True),
+            ("Broadform Liability (CGL)", "Other Expenses", "", True),
+            ("Membership & Subscriptions", "Other Expenses", "", True),
+            ("Legal Fees", "Legal and Professional Charges", "", True),
+            ("Other Legal Expenses", "Legal and Professional Charges", "", True),
+            ("Professional Fees", "Legal and Professional Charges", "", True),
+            ("Audit Fees", "Legal and Professional Charges", "", True),
+            ("Training Events - Edventure", "Training & Capacity Building expenses", "", True),
+            ("Other Training Events - Internal", "Training & Capacity Building expenses", "", True),
+            ("Other Training Events - External", "Training & Capacity Building expenses", "", True),
+            ("Resource person fee", "Training & Capacity Building expenses", "", True),
+        ]
+
 class EPV(db.Model):
     """
     Model to store all expense voucher data
@@ -102,7 +309,7 @@ class EPV(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    epv_id = db.Column(db.String(30), unique=True, nullable=False)  # EPV-YYYYMMDD-XXXXXXXXXX format
+    epv_id = db.Column(db.String(60), unique=True, nullable=False)  # EPV-YYYYMMDD-CostCenterName-HASH format
 
     # Employee details
     email_id = db.Column(db.String(100), nullable=False, index=True)
@@ -371,84 +578,28 @@ def init_db(app):
 
         # Initialize cost centers if the table is empty
         if not inspector.has_table('costcenter') or CostCenter.query.count() == 0:
-            # List of cost centers to add
-            cost_centers = [
-                "SBP_BP",
-                "SBP_Moshi",
-                "PKGEMS",
-                "ANWEMS",
-                "LDRKEMS",
-                "LAPMEMS",
-                "KCTVN",
-                "CSMEMS",
-                "BOPEMS",
-                "MEMS",
-                "Late Baburaoji Bobade NMCPS",
-                "Late Gopalrao Moghare (Khadan)",
-                "Ramnagar NMCPS (Nagpur)",
-                "Rani Durgavati NMCPS (Nagpur)",
-                "Rambhau Mhalginagar NMCPS",
-                "Babhulban NMCPS (Nagpur)",
-                "PE - Pune",
-                "NST - Instruction Specialist - Pune",
-                "Counselling & Intervention Pune",
-                "Operations Pune",
-                "NST - Coaches - Nagpur",
-                "NST - Coaches - Pune",
-                "Operations Nagpur",
-                "PE - Nagpur",
-                "Counselling & Intervention Nagpur",
-                "NST - Instruction Specialist - Nagpur",
-                "Community Engagement Pune",
-                "Community Engagement Nagpur",
-                "Digital Literacy",
-                "Vocational Labs",
-                "Sports Program",
-                "School Management System",
-                "CSMEMS learning tour",
-                "Knowledge management",
-                "Alumni Management System",
-                "IT & Tech Infra - SETU",
-                "Leads Development & Training",
-                "SBP - Government School (Maharashtra)",
-                "Student Wellbeing COI Leads",
-                "Scholarship - Pune",
-                "IT & Tech Infra - MSP",
-                "ASE Pune",
-                "Art for Akanksha",
-                "IT & Tech Infra - ASE",
-                "IT & Tech Infra - Admin",
-                "Management - CEO",
-                "Management - COO",
-                "Impact & Research",
-                "Donor Relations & Communication",
-                "Finance - Central",
-                "Central Administration",
-                "Human Resources Central",
-                "Project Rise",
-                "ABC"
-            ]
+            print("Initializing cost centers with comprehensive data...")
 
-            # Add default city values based on name
-            for cc in cost_centers:
-                city = "Pune"  # Default city
-                if "Nagpur" in cc:
-                    city = "Nagpur"
+            # Get the default cost center data
+            cost_center_data = CostCenter.get_default_cost_centers()
 
-                # Add drive IDs for specific cost centers
-                drive_id = None
-                if cc == "SBP_BP":
-                    drive_id = "1Ku7ai51N19-p3nYViAa1eeooQjWPRUN1"
-                elif cc == "KCTVN":
-                    drive_id = "1w48U4Kv_zZUhf9-Bwx6df8su8vQEqKvV"
+            # Add each cost center to the database
+            for costcenter, approver_email, city, drive_id, is_active in cost_center_data:
+                # Handle empty city values
+                city_value = city if city.strip() else None
 
-                # Create and add the cost center to the database
-                cost_center = CostCenter(costcenter=cc, city=city, drive_id=drive_id)
+                cost_center = CostCenter(
+                    costcenter=costcenter,
+                    approver_email=approver_email,
+                    city=city_value,
+                    drive_id=drive_id,
+                    is_active=is_active
+                )
                 db.session.add(cost_center)
 
             # Commit the changes
             db.session.commit()
-            print("Database initialized with cost centers.")
+            print(f"Database initialized with {len(cost_center_data)} cost centers.")
 
         # Initialize employee details if the table is empty
         print("DEBUG: Checking employee_details table...")
@@ -460,53 +611,29 @@ def init_db(app):
             print(f"DEBUG: employee_details table exists and has {EmployeeDetails.query.count()} records.")
 
         if not inspector.has_table('employee_details') or EmployeeDetails.query.count() == 0:
-            # Employee data from the Google Sheet
-            employees = [
-                {"email": "nikhil.aher@akanksha.org", "employee_id": "NIKAHE160185", "manager": "3df.demo@akanksha.org", "name": "Nikhil Aher", "role": "admin"},
-                {"email": "anil.naik@akanksha.org", "employee_id": "CHAAHE", "manager": "fatima.sawant@akanksha.org", "name": "Chaitrali Aher", "role": "Central"},
-                {"email": "amit.kashid@akanksha.org", "employee_id": "SHAPAT", "manager": "shruti.das@akanksha.org", "name": "Sharad", "role": "Super Admin"},
-                {"email": "shubham.ambolikar@akanksha.org", "employee_id": "MAYGAnJ", "manager": "anchal.wasnik@akanksha.org", "name": "mayur", "role": "Mumbai_FInance"},
-                {"email": "ajay.hendre@akanksha.org", "employee_id": "TriDHha1112", "manager": "sushma.pathare@akanksha.org", "name": "Triveni Dhamdhere", "role": "Pune_Finance"},
-                {"email": "pramod.giri@akanksha.org", "employee_id": "", "manager": "parijat.prakash@akanksha.org", "name": "", "role": ""},
-                {"email": "rebecca.kamble@akanksha.org", "employee_id": "", "manager": "parijat.prakash@akanksha.org", "name": "", "role": ""},
-                {"email": "ashwini.mayekar@akanksha.org", "employee_id": "", "manager": "samina.quettawala@akanksha.org", "name": "", "role": ""},
-                {"email": "shraddha.morgaonkar@akanksha.org", "employee_id": "", "manager": "shalini.sachdev@akanksha.org", "name": "", "role": ""},
-                {"email": "ajay.sonawane@akanksha.org", "employee_id": "", "manager": "shruti.manerker@akanksha.org", "name": "", "role": ""},
-                {"email": "kiran.deogadkar@akanksha.org", "employee_id": "", "manager": "shivani.yadav@akanksha.org", "name": "", "role": ""},
-                {"email": "rekha.kolsure@akanksha.org", "employee_id": "", "manager": "ritu.pasricha@akanksha.org", "name": "", "role": ""},
-                {"email": "priyanka.pachpor@akanksha.org", "employee_id": "", "manager": "Simranjeet.sankat@akanksha.org", "name": "", "role": ""},
-                {"email": "aniket.mayekar@akanksha.org", "employee_id": "", "manager": "prachi.mangaonkar@akanksha.org", "name": "", "role": ""},
-                {"email": "rohit.talegaonkar@akanksha.org", "employee_id": "", "manager": "nilambari.nair@akanksha.org", "name": "", "role": ""},
-                {"email": "pramod.kamble@akanksha.org", "employee_id": "", "manager": "sima.jhaveri@akanksha.org", "name": "", "role": ""},
-                {"email": "aishwarya.mestry@akanksha.org", "employee_id": "", "manager": "bhima.jetty@akanksha.org", "name": "", "role": ""},
-                {"email": "sushil.joharkar@akanksha.org", "employee_id": "", "manager": "diana.isabel@akanksha.org", "name": "", "role": ""},
-                {"email": "santosh.shirwadkar@akanksha.org", "employee_id": "", "manager": "alsana.lakdawala@akanksha.org", "name": "", "role": ""},
-                {"email": "suyash.modak@akanksha.org", "employee_id": "", "manager": "nishant.singhania@akanksha.org", "name": "", "role": ""},
-                {"email": "lalit.barapatre@akanksha.org", "employee_id": "", "manager": "mamta.sylvester@akanksha.org", "name": "", "role": ""},
-                {"email": "chetan.telang@akanksha.org", "employee_id": "", "manager": "harshada.jadhav@akanksha.og", "name": "", "role": ""},
-                {"email": "vishnu.hiwale@akanksha.org", "employee_id": "", "manager": "harshada.jadhav@akanksha.org", "name": "", "role": ""},
-                {"email": "sunil.kamble@akanksha.org", "employee_id": "", "manager": "mohmmed.ahmedulla@akanksha.org", "name": "", "role": ""},
-                {"email": "umesh.shejul@akanksha.org", "employee_id": "", "manager": "merlin1.elias@akanksha.org", "name": "", "role": ""},
-                {"email": "Sushant.kesarkar@akanksha.org", "employee_id": "", "manager": "mandira.purohit@akanksha.org", "name": "", "role": ""},
-                {"email": "ankita.dawal@akanksha.org", "employee_id": "", "manager": "sakshi.bhatia@akanksha.org", "name": "", "role": ""},
-                {"email": "prakash.dhangar@akanksha.org", "employee_id": "", "manager": "prachi.sanghvi@akanksha.org", "name": "", "role": ""}
-            ]
+            print("Initializing employee details from CSV data...")
 
-            # Add employees to the database
-            for emp_data in employees:
-                # Convert email to lowercase for consistency
+            # Get the default employee data (loads from CSV if available)
+            employee_data = EmployeeDetails.get_default_employees()
+
+            # Add each employee to the database
+            for email, employee_id, manager, name, role, is_active in employee_data:
+                # Handle empty manager values
+                manager_value = manager.lower() if manager.strip() else None
+
                 employee = EmployeeDetails(
-                    email=emp_data["email"].lower(),
-                    employee_id=emp_data["employee_id"],
-                    manager=emp_data["manager"].lower() if emp_data["manager"] else None,
-                    name=emp_data["name"],
-                    role=emp_data["role"]
+                    email=email.lower(),
+                    employee_id=employee_id,
+                    manager=manager_value,
+                    name=name,
+                    role=role,
+                    is_active=is_active
                 )
                 db.session.add(employee)
 
             # Commit the changes
             db.session.commit()
-            print("Database initialized with employee details.")
+            print(f"Database initialized with {len(employee_data)} employees.")
 
         # User sync no longer needed - using EmployeeDetails directly for authentication
 
@@ -557,33 +684,48 @@ def init_db(app):
             print(f"DEBUG: expense_head table exists and has {ExpenseHead.query.count()} records.")
 
         if not inspector.has_table('expense_head') or ExpenseHead.query.count() == 0:
-            # Expense head data from the Google Sheet
-            expense_heads = [
-                {"head_name": "Travel", "head_code": "TRV", "description": "Travel expenses including airfare, train, bus, etc.", "is_active": True},
-                {"head_name": "Accommodation", "head_code": "ACC", "description": "Hotel and lodging expenses", "is_active": True},
-                {"head_name": "Meals", "head_code": "MEL", "description": "Food and beverage expenses during business trips", "is_active": True},
-                {"head_name": "Office Supplies", "head_code": "OFF", "description": "Stationery, printer ink, and other office consumables", "is_active": True},
-                {"head_name": "Communication", "head_code": "COM", "description": "Phone bills, internet charges, and other communication expenses", "is_active": True},
-                {"head_name": "Training", "head_code": "TRN", "description": "Costs related to workshops, seminars, and professional development", "is_active": True},
-                {"head_name": "Equipment", "head_code": "EQP", "description": "Purchase or rental of equipment and hardware", "is_active": True},
-                {"head_name": "Software", "head_code": "SFT", "description": "Software licenses and subscriptions", "is_active": True},
-                {"head_name": "Miscellaneous", "head_code": "MSC", "description": "Other expenses that don't fit into specific categories", "is_active": True},
-                {"head_name": "Transportation", "head_code": "TRN", "description": "Local transportation like taxis, buses, and fuel", "is_active": True}
-            ]
+            print("Initializing expense heads with comprehensive data...")
 
-            # Add expense heads to the database
-            for head_data in expense_heads:
+            # Get the default expense head data
+            expense_head_data = ExpenseHead.get_default_expense_heads()
+
+            # Add each expense head to the database
+            for head_name, head_code, description, is_active in expense_head_data:
+                # Handle empty description values
+                description_value = description if description.strip() else None
+
                 expense_head = ExpenseHead(
-                    head_name=head_data["head_name"],
-                    head_code=head_data["head_code"],
-                    description=head_data["description"],
-                    is_active=head_data["is_active"]
+                    head_name=head_name,
+                    head_code=head_code,
+                    description=description_value,
+                    is_active=is_active
                 )
                 db.session.add(expense_head)
 
             # Commit the changes
             db.session.commit()
-            print("Database initialized with expense heads.")
+            print(f"Database initialized with {len(expense_head_data)} expense heads.")
+
+        # Update epv_id column size if needed
+        if inspector.has_table('epv'):
+            columns = [col for col in inspector.get_columns('epv')]
+            epv_id_column = next((col for col in columns if col['name'] == 'epv_id'), None)
+
+            if epv_id_column:
+                # Check if the column size needs to be updated
+                current_length = epv_id_column.get('type').length if hasattr(epv_id_column.get('type'), 'length') else None
+                if current_length and current_length < 60:
+                    print(f"Updating epv_id column size from {current_length} to 60 characters")
+                    with db.engine.connect() as conn:
+                        conn.execute(db.text('ALTER TABLE epv MODIFY COLUMN epv_id VARCHAR(60) NOT NULL'))
+                        conn.commit()
+                    print("epv_id column size updated successfully")
+                else:
+                    print("epv_id column size is already adequate")
+            else:
+                print("epv_id column not found in epv table")
+        else:
+            print("epv table does not exist yet")
 
         # Add partial payment columns to finance_entry table if they don't exist
         if inspector.has_table('finance_entry'):
