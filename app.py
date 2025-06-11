@@ -2212,7 +2212,7 @@ def handle_split_invoice_submission(request, session, user_info):
 
         # Step 2: Process the uploaded files and merge with expense document
         result = process_files(
-            files=[receipt_files[0]],
+            files=receipt_files,  # <-- Pass all files, not just the first one
             drive_folder_id=primary_cost_center.drive_id,
             employee_name=employee_name,
             cost_center_name=primary_cost_center.costcenter,

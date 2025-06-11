@@ -1,0 +1,224 @@
+<!-- === User Scenarios and Step-by-Step Guide === -->
+<section id="user-scenarios" class="mb-5">
+  <h2 class="mb-3">Common Scenarios & Step-by-Step Guide</h2>
+  <div class="accordion" id="scenariosAccordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingStandard">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStandard" aria-expanded="true" aria-controls="collapseStandard">
+          1. Submitting a Standard Invoice with Multiple Pages
+        </button>
+      </h2>
+      <div id="collapseStandard" class="accordion-collapse collapse show" aria-labelledby="headingStandard" data-bs-parent="#scenariosAccordion">
+        <div class="accordion-body">
+          <ol>
+            <li>Choose <strong>Standard Invoice</strong> from the Invoice Type dropdown.</li>
+            <li>Fill in all required fields (marked with a red asterisk).</li>
+            <li>Upload your first receipt/invoice file.</li>
+            <li>To add more pages, click <strong>Add Page</strong> and upload additional files. Each page must have a file selected.</li>
+            <li>Click <strong>Submit Expense</strong>. Any missing or invalid fields will be highlighted in red with an error message.</li>
+            <li>After successful submission, you will see a confirmation and can view your record in the EPV Records page.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingSplit">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSplit" aria-expanded="false" aria-controls="collapseSplit">
+          2. Submitting a Split Invoice with Allocations
+        </button>
+      </h2>
+      <div id="collapseSplit" class="accordion-collapse collapse" aria-labelledby="headingSplit" data-bs-parent="#scenariosAccordion">
+        <div class="accordion-body">
+          <ol>
+            <li>Choose <strong>Split Invoice</strong> from the Invoice Type dropdown.</li>
+            <li>Fill in the master invoice details and upload all pages for the main invoice (all files will be merged).</li>
+            <li>Click <strong>Add Allocation</strong> to add cost center allocations. For each allocation, fill in the cost center, amount, expense head, and approver email.</li>
+            <li>Ensure the total allocated amount matches the master invoice amount (the system will warn you if not).</li>
+            <li>Click <strong>Submit Expense</strong>. All required fields and missing files will be highlighted in red if incomplete.</li>
+            <li>After submission, approval emails will be sent to the specified approvers for each allocation.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingPages">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
+          3. Adding and Removing Pages (Receipts/Invoices)
+        </button>
+      </h2>
+      <div id="collapsePages" class="accordion-collapse collapse" aria-labelledby="headingPages" data-bs-parent="#scenariosAccordion">
+        <div class="accordion-body">
+          <ul>
+            <li>To add more pages to any expense, click <strong>Add Page</strong> in that expense section.</li>
+            <li>Each page must have a file selected. If you try to submit without a file, the field will be highlighted in red.</li>
+            <li>To remove a page, click the <strong>red X</strong> next to the file input (only available if more than one page exists).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingValidation">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseValidation" aria-expanded="false" aria-controls="collapseValidation">
+          4. Required Fields & Validation Cues
+        </button>
+      </h2>
+      <div id="collapseValidation" class="accordion-collapse collapse" aria-labelledby="headingValidation" data-bs-parent="#scenariosAccordion">
+        <div class="accordion-body">
+          <ul>
+            <li>All required fields are marked with a <span style="color: #dc3545;">*</span> (red asterisk).</li>
+            <li>If a field is missing or invalid, it will be highlighted in red and an error message will appear below it.</li>
+            <li>For file uploads, every page must have a file selected. Missing files will be highlighted in red.</li>
+            <li>The form will scroll to the first error automatically when you try to submit.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingAfter">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAfter" aria-expanded="false" aria-controls="collapseAfter">
+          5. What Happens After Submission?
+        </button>
+      </h2>
+      <div id="collapseAfter" class="accordion-collapse collapse" aria-labelledby="headingAfter" data-bs-parent="#scenariosAccordion">
+        <div class="accordion-body">
+          <ul>
+            <li>For standard invoices, your expense will be submitted for approval as per your organization's workflow.</li>
+            <li>For split invoices, approval emails will be sent to the approvers you specified for each allocation.</li>
+            <li>You can track the status of your submission in the <strong>EPV Records</strong> page.</li>
+            <li>If there are any issues, you will see error messages and can correct them before resubmitting.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === Documentation Navigation Pills === -->
+<ul class="nav nav-pills mb-4" id="docTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="workflows-tab" data-bs-toggle="pill" data-bs-target="#workflows" type="button" role="tab" aria-controls="workflows" aria-selected="true">Workflows</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="user-journeys-tab" data-bs-toggle="pill" data-bs-target="#user-journeys" type="button" role="tab" aria-controls="user-journeys" aria-selected="false">User Journeys</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="user-guide-tab" data-bs-toggle="pill" data-bs-target="#user-guide" type="button" role="tab" aria-controls="user-guide" aria-selected="false">User Guide</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="scenarios-tab" data-bs-toggle="pill" data-bs-target="#scenarios" type="button" role="tab" aria-controls="scenarios" aria-selected="false">Scenarios</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="faq-tab" data-bs-toggle="pill" data-bs-target="#faq" type="button" role="tab" aria-controls="faq" aria-selected="false">FAQ</button>
+  </li>
+</ul>
+
+<div class="tab-content" id="docTabsContent">
+  <div class="tab-pane fade show active" id="workflows" role="tabpanel" aria-labelledby="workflows-tab">
+    <!-- Workflows content here -->
+  </div>
+  <div class="tab-pane fade" id="user-journeys" role="tabpanel" aria-labelledby="user-journeys-tab">
+    <!-- User Journeys content here -->
+  </div>
+  <div class="tab-pane fade" id="user-guide" role="tabpanel" aria-labelledby="user-guide-tab">
+    <!-- User Guide content here -->
+  </div>
+  <div class="tab-pane fade" id="scenarios" role="tabpanel" aria-labelledby="scenarios-tab">
+    <!-- === User Scenarios and Step-by-Step Guide === -->
+    <section id="user-scenarios" class="mb-5">
+      <h2 class="mb-3">Common Scenarios & Step-by-Step Guide</h2>
+      <div class="accordion" id="scenariosAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingStandard">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStandard" aria-expanded="true" aria-controls="collapseStandard">
+              1. Submitting a Standard Invoice with Multiple Pages
+            </button>
+          </h2>
+          <div id="collapseStandard" class="accordion-collapse collapse show" aria-labelledby="headingStandard" data-bs-parent="#scenariosAccordion">
+            <div class="accordion-body">
+              <ol>
+                <li>Choose <strong>Standard Invoice</strong> from the Invoice Type dropdown.</li>
+                <li>Fill in all required fields (marked with a red asterisk).</li>
+                <li>Upload your first receipt/invoice file.</li>
+                <li>To add more pages, click <strong>Add Page</strong> and upload additional files. Each page must have a file selected.</li>
+                <li>Click <strong>Submit Expense</strong>. Any missing or invalid fields will be highlighted in red with an error message.</li>
+                <li>After successful submission, you will see a confirmation and can view your record in the EPV Records page.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingSplit">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSplit" aria-expanded="false" aria-controls="collapseSplit">
+              2. Submitting a Split Invoice with Allocations
+            </button>
+          </h2>
+          <div id="collapseSplit" class="accordion-collapse collapse" aria-labelledby="headingSplit" data-bs-parent="#scenariosAccordion">
+            <div class="accordion-body">
+              <ol>
+                <li>Choose <strong>Split Invoice</strong> from the Invoice Type dropdown.</li>
+                <li>Fill in the master invoice details and upload all pages for the main invoice (all files will be merged).</li>
+                <li>Click <strong>Add Allocation</strong> to add cost center allocations. For each allocation, fill in the cost center, amount, expense head, and approver email.</li>
+                <li>Ensure the total allocated amount matches the master invoice amount (the system will warn you if not).</li>
+                <li>Click <strong>Submit Expense</strong>. All required fields and missing files will be highlighted in red if incomplete.</li>
+                <li>After submission, approval emails will be sent to the specified approvers for each allocation.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingPages">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
+              3. Adding and Removing Pages (Receipts/Invoices)
+            </button>
+          </h2>
+          <div id="collapsePages" class="accordion-collapse collapse" aria-labelledby="headingPages" data-bs-parent="#scenariosAccordion">
+            <div class="accordion-body">
+              <ul>
+                <li>To add more pages to any expense, click <strong>Add Page</strong> in that expense section.</li>
+                <li>Each page must have a file selected. If you try to submit without a file, the field will be highlighted in red.</li>
+                <li>To remove a page, click the <strong>red X</strong> next to the file input (only available if more than one page exists).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingValidation">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseValidation" aria-expanded="false" aria-controls="collapseValidation">
+              4. Required Fields & Validation Cues
+            </button>
+          </h2>
+          <div id="collapseValidation" class="accordion-collapse collapse" aria-labelledby="headingValidation" data-bs-parent="#scenariosAccordion">
+            <div class="accordion-body">
+              <ul>
+                <li>All required fields are marked with a <span style="color: #dc3545;">*</span> (red asterisk).</li>
+                <li>If a field is missing or invalid, it will be highlighted in red and an error message will appear below it.</li>
+                <li>For file uploads, every page must have a file selected. Missing files will be highlighted in red.</li>
+                <li>The form will scroll to the first error automatically when you try to submit.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingAfter">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAfter" aria-expanded="false" aria-controls="collapseAfter">
+              5. What Happens After Submission?
+            </button>
+          </h2>
+          <div id="collapseAfter" class="accordion-collapse collapse" aria-labelledby="headingAfter" data-bs-parent="#scenariosAccordion">
+            <div class="accordion-body">
+              <ul>
+                <li>For standard invoices, your expense will be submitted for approval as per your organization's workflow.</li>
+                <li>For split invoices, approval emails will be sent to the approvers you specified for each allocation.</li>
+                <li>You can track the status of your submission in the <strong>EPV Records</strong> page.</li>
+                <li>If there are any issues, you will see error messages and can correct them before resubmitting.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="tab-pane fade" id="faq" role="tabpanel" aria-labelledby="faq-tab">
+    <!-- FAQ content here -->
+  </div>
+</div> 

@@ -388,7 +388,8 @@ a:hover {
 
 .navbar-brand:hover, .navbar-brand:focus {
     text-decoration: none;
-    color: var(--text-light);
+    color: var(--text-light) !important;
+    background: none !important;
 }
 
 .navbar-nav {

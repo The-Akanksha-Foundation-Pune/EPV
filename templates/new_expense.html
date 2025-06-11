@@ -2424,6 +2424,20 @@
                 const expenseId = $(this).attr("id").split("-")[1];
                 let itemValid = true;
 
+                // --- NEW: Validate all file inputs (pages) for this expense ---
+                $(this).find('.expense-files input[type="file"]').each(function(idx) {
+                    if (!this.files || this.files.length === 0) {
+                        validationErrors.push(`Expense #${expenseId}: Page ${idx+1} is missing a file`);
+                        $(this).addClass('is-invalid'); // Highlight in red
+                        addFieldError($(this).attr('id'), "Please select a file for this page");
+                        if (!firstErrorField) firstErrorField = $(this);
+                        itemValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid'); // Remove red if valid
+                    }
+                });
+                // --- END NEW ---
+
                 // Check if this is an allocation item (has allocation fields)
                 const isAllocation = $(this).find('input[name="allocation_cost_center[]"]').length > 0;
 
@@ -3268,6 +3282,11 @@
                 $('#expenseHead-1').val(''); // Clear the value
                 $('#expenseHead-1').closest('.col-md-6').find('label').removeClass('required-field');
 
+                // --- FIX: Update file input names for split invoice ---
+                $('#expense-files-1 input[type="file"]').each(function() {
+                    $(this).attr('name', 'receipt[]');
+                });
+
                 // Update the expense items section for split invoice
                 updateExpenseItemsForSplitInvoice();
 
@@ -3290,6 +3309,11 @@
                 // Enable and make mandatory the main expense head for standard invoices
                 $('#expenseHead-1').prop('disabled', false).prop('required', true);
                 $('#expenseHead-1').closest('.col-md-6').find('label').addClass('required-field');
+
+                // --- FIX: Restore file input names for standard invoice ---
+                $('#expense-files-1 input[type="file"]').each(function() {
+                    $(this).attr('name', 'receipt[1][]');
+                });
 
                 // Reset to normal expense items
                 updateExpenseItemsForStandardInvoice();
@@ -3599,7 +3623,13 @@
 
             const input = document.createElement('input');
             input.type = 'file';
-            input.name = `receipt[${expenseId}][]`;
+            // --- FIX: Use correct name for split invoice master ---
+            const invoiceType = document.getElementById('invoiceType').value;
+            if (invoiceType === 'split' && expenseId == 1) {
+                input.name = 'receipt[]';
+            } else {
+                input.name = `receipt[${expenseId}][]`;
+            }
             input.className = 'form-control';
             input.accept = '.pdf,.jpg,.jpeg,.png';
             input.required = true;
