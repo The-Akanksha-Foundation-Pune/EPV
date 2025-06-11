@@ -538,10 +538,14 @@
                                     <div class="row">
                                         <div class="col-12">
                                             <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
-                                            <div class="input-group">
-                                                <input type="file" class="form-control" id="receipt-1" name="receipt[]" accept=".pdf,.jpg,.jpeg,.png" required>
-                                                <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
+                                            <div id="expense-files-1" class="expense-files mb-2">
+                                                <div class="input-group mb-2">
+                                                    <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" required>
+                                                    <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
+                                                </div>
                                             </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(1)">Add Page</button>
+                                            <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
                                             <div class="form-text">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                                         </div>
                                     </div>
@@ -951,8 +955,28 @@
             newExpense.find('.file-validation-error, .file-validation-success, .file-validation-loading').remove();
             newExpense.find('input[type="file"]').removeClass('has-error has-success');
 
+            // --- FIX: Only keep one file input in the new expense ---
+            // Find the file upload container
+            const expenseFilesContainer = newExpense.find('.expense-files');
+            if (expenseFilesContainer.length) {
+                // Remove all file input groups except the first one
+                expenseFilesContainer.find('.input-group').not(':first').remove();
+                // Clear the value of the remaining file input
+                expenseFilesContainer.find('input[type="file"]').val("");
+            }
+            // --- END FIX ---
+
             // Update IDs and attributes
             newExpense.attr("id", `expense-${expenseCount}`);
+
+            // Update the file upload container and file-limit-msg span IDs for the new expense
+            newExpense.find('.expense-files').attr('id', `expense-files-${expenseCount}`);
+            newExpense.find('span[id^="file-limit-msg-"]').attr('id', `file-limit-msg-${expenseCount}`);
+
+            // Update the name attribute of all file inputs in this expense to match the expenseCount
+            newExpense.find('.expense-files input[type="file"]').each(function() {
+                $(this).attr('name', `receipt[${expenseCount}][]`);
+            });
 
             // Update the header attributes
             newExpense.find(".expense-header").attr("data-bs-target", `#expense-${expenseCount}-content`);
@@ -1050,6 +1074,13 @@
 
             // Show the new expense item
             $(`#expense-${expenseCount}-content`).collapse('show');
+
+            // Update the Add Page button's onclick handler for the new expense
+            newExpense.find("button.btn-secondary").each(function() {
+                if ($(this).text().includes("Add Page")) {
+                    $(this).attr("onclick", `addPageInput(${expenseCount})`);
+                }
+            });
         });
 
         // Remove expense button
@@ -3558,5 +3589,46 @@
             }
         });
     });
+
+    function addPageInput(expenseId) {
+        const container = document.getElementById(`expense-files-${expenseId}`);
+        const currentInputs = container.querySelectorAll('input[type="file"]').length;
+        if (currentInputs < 30) {
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group mb-2';
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.name = `receipt[${expenseId}][]`;
+            input.className = 'form-control';
+            input.accept = '.pdf,.jpg,.jpeg,.png';
+            input.required = true;
+
+            const label = document.createElement('label');
+            label.className = 'input-group-text';
+            label.innerHTML = '<i class="fas fa-upload"></i>';
+
+            // Add remove button (not for the first input)
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-danger';
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.onclick = function() {
+                // Only remove if more than one file input remains
+                if (container.querySelectorAll('input[type="file"]').length > 1) {
+                    inputGroup.remove();
+                }
+            };
+
+            inputGroup.appendChild(input);
+            inputGroup.appendChild(label);
+            inputGroup.appendChild(removeBtn);
+
+            container.appendChild(inputGroup);
+            document.getElementById(`file-limit-msg-${expenseId}`).style.display = 'none';
+        } else {
+            document.getElementById(`file-limit-msg-${expenseId}`).style.display = 'inline';
+        }
+    }
 </script>
 {% endblock %}

@@ -844,12 +844,6 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
                 merge_error = f"Error merging PDFs: {str(e)}"
                 print(merge_error)
 
-            # Clean up individual PDF files if merging was successful
-            if merged_pdf and merged_pdf not in pdf_files:
-                for pdf in pdf_files:
-                    if os.path.exists(pdf):
-                        os.remove(pdf)
-
         # Upload to Google Drive if a folder ID is provided and the merged PDF exists
         drive_file_id = None
         drive_file_url = None
@@ -926,8 +920,9 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
         cleanup_files = []
         cleanup_files.extend(saved_files)
         cleanup_files.extend(pdf_files)
-        if merged_pdf:
-            cleanup_files.append(merged_pdf)
+        # Do NOT delete the merged PDF here
+        # if merged_pdf:
+        #     cleanup_files.append(merged_pdf)
 
         # Remove duplicates and clean up
         cleanup_files = list(set(cleanup_files))
@@ -939,12 +934,12 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
             except Exception as e:
                 print(f"⚠️ Could not clean up {temp_file}: {e}")
 
-        # Return the results (without local file paths since they're deleted)
+        # Return the results (return the merged PDF path)
         result = {
             'success': merged_pdf is not None,
             'saved_files': [],  # Don't return local paths since files are deleted
             'pdf_files': [],    # Don't return local paths since files are deleted
-            'merged_pdf': None, # Don't return local path since file is deleted
+            'merged_pdf': merged_pdf, # Return the merged PDF path
             'processing_results': processing_results,
             'drive_upload_attempted': drive_upload_attempted
         }

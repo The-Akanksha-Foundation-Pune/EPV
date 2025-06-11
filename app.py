@@ -2638,6 +2638,33 @@ def new_expense():
                 print(f"DEBUG: Adding file for expense {exp_idx}: {file.filename}")
                 expense_files.append(file)
 
+            # --- NEW LOGIC: Merge files per expense detail, then merge all details ---
+            from pdf_converter import process_files, merge_pdfs
+            import re
+
+            # Find all expense detail file groups (receipt[1][], receipt[2][], ...)
+            expense_file_groups = []
+            expense_detail_pattern = re.compile(r'^receipt\[(\d+)\]\[\]$')
+            for key in request.files:
+                match = expense_detail_pattern.match(key)
+                if match:
+                    expense_id = int(match.group(1))
+                    files = request.files.getlist(key)
+                    if files and any(f.filename for f in files):
+                        expense_file_groups.append((expense_id, files))
+
+            # Sort by expense_id to maintain order
+            expense_file_groups.sort(key=lambda x: x[0])
+
+            print("DEBUG: expense_file_groups", [(eid, [f.filename for f in files]) for eid, files in expense_file_groups])
+
+            per_detail_pdfs = []
+            for expense_id, files in expense_file_groups:
+                # Convert and merge all files for this expense detail into a single PDF
+                result = process_files(files)
+                if result and result.get('success') and result.get('merged_pdf'):
+                    per_detail_pdfs.append(result['merged_pdf'])
+
             # Step 1: Generate expense document PDF
             from pdf_converter import generate_expense_document, REPORTLAB_AVAILABLE
             expense_pdf_path = generate_expense_document(expense_data)
@@ -2651,108 +2678,34 @@ def new_expense():
                     'message': error_message
                 })
 
-            # Debug print expense type
-            print(f"DEBUG: expense_type from form: {request.form.get('expense_type')}")
+            # Merge the expense document with all per-detail PDFs
+            merge_inputs = [expense_pdf_path] + per_detail_pdfs if expense_pdf_path else per_detail_pdfs
+            final_merged_pdf = None
+            if merge_inputs:
+                final_merged_pdf = merge_pdfs(merge_inputs)
 
-            # Initialize variables to track file processing status
+            # Upload to Google Drive if needed, and continue with the rest of the logic
             file_url = None
             file_id = None
-            merged_pdf_path = None
-
-            # Step 2: Process the files if any were uploaded
-            result = None
-            if expense_files:
-                try:
-                    # Process the files: save, convert to PDF, merge with expense document, and upload to Google Drive
-                    result = process_files(
-                        files=expense_files,
-                        drive_folder_id=drive_folder_id,
-                        employee_name=employee_name,
-                        cost_center_name=cost_center_name,
-                        expense_pdf_path=expense_pdf_path
-                    )
-
-                    # Check if file processing was successful
-                    if not result['success']:
-                        error_msg = result.get('error') or "Failed to process files."
-                        user_msg = result.get('user_message') or "There was an issue with the file processing."
-                        return jsonify({
-                            'success': False,
-                            'message': user_msg,
-                            'error': error_msg
-                        })
-
-                    # Store merged PDF path if available
-                    if result.get('merged_pdf'):
-                        merged_pdf_path = result['merged_pdf']
-                        session['merged_pdf_path'] = merged_pdf_path
-
-                    # Check if Google Drive upload was successful
-                    if result.get('drive_file_id') and result.get('drive_file_url'):
-                        file_id = result['drive_file_id']
-                        file_url = result['drive_file_url']
-                        # Store drive file information in session for split invoices
-                        session['drive_file_id'] = file_id
-                        session['drive_file_url'] = file_url
-                        print(f"File uploaded to Google Drive: {file_url}")
-                        print(f"DEBUG: Stored drive file info in session - ID: {file_id}, URL: {file_url}")
-                    else:
-                        # If Drive upload failed, return error
-                        drive_error = result.get('drive_error') or "Failed to upload to Google Drive."
-                        return jsonify({
-                            'success': False,
-                            'message': "File processing completed but Google Drive upload failed.",
-                            'error': drive_error
-                        })
-                except Exception as e:
-                    print(f"Error processing files: {str(e)}")
-                    import traceback
-                    print(f"DEBUG: File processing error traceback: {traceback.format_exc()}")
+            merged_pdf_path = final_merged_pdf
+            if final_merged_pdf and drive_folder_id:
+                from drive_utils import upload_file_to_drive, get_file_url
+                download_filename = f"Expense_{employee_name}_{cost_center_name}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+                file_id = upload_file_to_drive(final_merged_pdf, download_filename, drive_folder_id)
+                if file_id and file_id != 'local_file':
+                    file_url = get_file_url(file_id)
+                    session['drive_file_id'] = file_id
+                    session['drive_file_url'] = file_url
+                    print(f"Expense document uploaded to Google Drive: {file_url}")
+                    print(f"DEBUG: Stored drive file info in session - ID: {file_id}, URL: {file_url}")
+                else:
                     return jsonify({
                         'success': False,
-                        'message': 'Error processing files.',
-                        'error': str(e)
+                        'message': 'Failed to upload expense document to Google Drive'
                     })
-            else:
-                # No files uploaded, just upload the expense document to Google Drive
-                try:
-                    # Generate a filename for download
-                    download_filename = f"Expense_{employee_name}_{cost_center_name}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
-
-                    # If drive_folder_id is provided, upload to Google Drive
-                    if drive_folder_id:
-                        from drive_utils import upload_file_to_drive, get_file_url
-                        file_id = upload_file_to_drive(expense_pdf_path, download_filename, drive_folder_id)
-
-                        if file_id and file_id != 'local_file':
-                            file_url = get_file_url(file_id)
-                            # Store drive file information in session for split invoices
-                            session['drive_file_id'] = file_id
-                            session['drive_file_url'] = file_url
-                            print(f"Expense document uploaded to Google Drive: {file_url}")
-                            print(f"DEBUG: Stored drive file info in session - ID: {file_id}, URL: {file_url}")
-                        else:
-                            return jsonify({
-                                'success': False,
-                                'message': 'Failed to upload expense document to Google Drive'
-                            })
-                    else:
-                        return jsonify({
-                            'success': False,
-                            'message': f"No Google Drive folder ID found for the selected cost center: {cost_center_name if cost_center_name else cost_center_id}"
-                        })
-
-                    # Store the PDF path in session for download
-                    session['merged_pdf_path'] = expense_pdf_path
-                    merged_pdf_path = expense_pdf_path
-                except Exception as e:
-                    print(f"Error uploading expense document: {str(e)}")
-                    import traceback
-                    print(f"DEBUG: Document upload error traceback: {traceback.format_exc()}")
-                    return jsonify({
-                        'success': False,
-                        'message': f"Error uploading expense document: {str(e)}"
-                    })
+                session['merged_pdf_path'] = final_merged_pdf
+            elif final_merged_pdf:
+                session['merged_pdf_path'] = final_merged_pdf
 
             # Step 3: Now that file processing and Google Drive upload are successful, save to database
             try:
@@ -4758,7 +4711,7 @@ def approve_expense(epv_id):
                     # If all sub-invoices are approved, update the master invoice status
                     if all_subs_approved and len(sub_invoices) > 0:
                         master_invoice.split_status = 'fully_approved'
-                        # Also update the master invoice's status to 'approved' so it shows up in finance dashboard
+                        # Also update the master invoice's status to 'approved' so it shows up in the finance dashboard
                         master_invoice.status = 'approved'
                         master_invoice.approved_by = approver_email
                         master_invoice.approved_on = datetime.now()
