@@ -3628,7 +3628,7 @@
             if (invoiceType === 'split' && expenseId == 1) {
                 input.name = 'receipt[]';
             } else {
-                input.name = `receipt[${expenseId}][]`;
+            input.name = `receipt[${expenseId}][]`;
             }
             input.className = 'form-control';
             input.accept = '.pdf,.jpg,.jpeg,.png';

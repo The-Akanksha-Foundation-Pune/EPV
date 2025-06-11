@@ -1100,6 +1100,7 @@ def update_finance_settings():
     # Get values from the form
     max_days_processing = request.form.get('max_days_processing')
     max_days_past = request.form.get('max_days_past')
+    max_reminder_days = request.form.get('max_reminder_days')
 
     # Validate max_days_processing
     try:
@@ -1119,6 +1120,16 @@ def update_finance_settings():
             return redirect(url_for('settings'))
     except (ValueError, TypeError):
         flash('Maximum days in past must be a valid number.', 'error')
+        return redirect(url_for('settings'))
+
+    # Validate max_reminder_days
+    try:
+        max_reminder_days_int = int(max_reminder_days)
+        if max_reminder_days_int < 1 or max_reminder_days_int > 30:
+            flash('Max reminder days must be between 1 and 30.', 'error')
+            return redirect(url_for('settings'))
+    except (ValueError, TypeError):
+        flash('Max reminder days must be a valid number.', 'error')
         return redirect(url_for('settings'))
 
     # Update max_days_processing setting
@@ -1180,6 +1191,29 @@ def update_finance_settings():
         db.session.commit()
 
         flash(f'Maximum days in past for claims set to {max_days_past}.', 'success')
+
+    # Update max_reminder_days setting
+    max_reminder_days_setting = SettingsFinance.query.filter_by(setting_name='max_reminder_days').first()
+    if max_reminder_days_setting:
+        previous_value = max_reminder_days_setting.setting_value
+        if previous_value != max_reminder_days:
+            max_reminder_days_setting.previous_value = previous_value
+            max_reminder_days_setting.setting_value = max_reminder_days
+            max_reminder_days_setting.updated_by = user_email
+            max_reminder_days_setting.updated_on = datetime.now()
+            db.session.commit()
+            flash(f'Max reminder days updated from {previous_value} to {max_reminder_days}.', 'success')
+    else:
+        max_reminder_days_setting = SettingsFinance(
+            setting_name='max_reminder_days',
+            setting_value=max_reminder_days,
+            description='Number of days after which a reminder is sent to manager if approval is pending',
+            updated_by=user_email,
+            updated_on=datetime.now()
+        )
+        db.session.add(max_reminder_days_setting)
+        db.session.commit()
+        flash(f'Max reminder days set to {max_reminder_days}.', 'success')
 
     return redirect(url_for('settings'))
 
@@ -7088,6 +7122,42 @@ def toggle_city_assignment(assignment_id):
         flash(f'Assignment has been deactivated.', 'success')
 
     return redirect(url_for('city_assignments'))
+
+# === Manager Approval Reminder Job ===
+from datetime import datetime, timedelta
+from smtp_email_utils import send_approval_email
+from models import EPV, EPVApproval, SettingsFinance
+
+def send_manager_approval_reminders():
+    """Send reminder emails to managers for expenses pending approval beyond max_reminder_days."""
+    # Get max_reminder_days from settings, default to 2
+    setting = SettingsFinance.query.filter_by(setting_name='max_reminder_days').first()
+    try:
+        max_reminder_days = int(setting.setting_value) if setting else 2
+    except Exception:
+        max_reminder_days = 2
+    threshold_date = datetime.now() - timedelta(days=max_reminder_days)
+
+    # Find all pending approvals where the EPV is still pending_approval and submission_date is old
+    pending_approvals = EPVApproval.query.join(EPV).filter(
+        EPVApproval.status == 'pending',
+        EPV.status == 'pending_approval',
+        EPV.submission_date <= threshold_date
+    ).all()
+
+    print(f"[ReminderJob] Found {len(pending_approvals)} pending approvals older than {max_reminder_days} days.")
+    base_url = 'https://your-app-domain.com'  # TODO: Set your base URL or get from config
+    for approval in pending_approvals:
+        epv = approval.epv
+        print(f"[ReminderJob] Sending reminder for EPV {epv.epv_id} to {approval.approver_email}")
+        try:
+            success, msg = send_approval_email(epv, approval.approver_email, base_url, approval.token)
+            if success:
+                print(f"[ReminderJob] Reminder sent to {approval.approver_email} for EPV {epv.epv_id}")
+            else:
+                print(f"[ReminderJob] Failed to send reminder to {approval.approver_email}: {msg}")
+        except Exception as e:
+            print(f"[ReminderJob] Exception sending reminder: {e}")
 
 if __name__ == '__main__':
     # Allow OAuth without HTTPS for local development

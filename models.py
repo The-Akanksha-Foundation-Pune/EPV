@@ -658,6 +658,11 @@ def init_db(app):
                     "setting_name": "max_days_processing",
                     "setting_value": "5",
                     "description": "Maximum number of days for processing expenses (SOP)"
+                },
+                {
+                    "setting_name": "max_reminder_days",
+                    "setting_value": "2",
+                    "description": "Number of days after which a reminder is sent to manager if approval is pending"
                 }
             ]
 

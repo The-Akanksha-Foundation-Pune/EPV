@@ -302,6 +302,18 @@
                                             <div class="form-text">Set the maximum number of days in the past for expense claims. Value must be between 1 and 365.</div>
                                         </div>
 
+                                        <div class="mb-3">
+                                            <label for="maxReminderDays" class="form-label">Max Reminder Days for Manager Approval</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="maxReminderDays" name="max_reminder_days"
+                                                    min="1" max="30"
+                                                    value="{{ finance_settings.get('max_reminder_days', '2') }}"
+                                                    required>
+                                                <span class="input-group-text">days</span>
+                                            </div>
+                                            <div class="form-text">Set the number of days after which a reminder email is sent to the manager if approval is pending. Value must be between 1 and 30.</div>
+                                        </div>
+
                                         <button type="submit" class="btn btn-primary">Save Settings</button>
                                     </form>
                                 </div>
