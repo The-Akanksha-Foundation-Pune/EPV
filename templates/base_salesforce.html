@@ -305,6 +305,12 @@
             background-color: var(--sf-blue);
         }
 
+        /* --- FIX: Ensure brand name stays visible on hover --- */
+        .navbar-brand:hover, .navbar-brand:focus {
+            color: var(--sf-blue) !important;
+            background: none !important;
+        }
+
         {% block additional_styles %}{% endblock %}
     </style>
 </head>
