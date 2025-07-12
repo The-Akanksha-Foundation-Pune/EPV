@@ -276,31 +276,153 @@
                             <li>Review all information and click "Submit"</li>
                             <li>Your expense will be sent to the appropriate approver</li>
                         </ol>
-
+                        <h4>Submitting a Split Invoice</h4>
+                        <ol>
+                            <li>Select <strong>Split Invoice</strong> as the invoice type in the expense form.</li>
+                            <li>Enter the master invoice details and upload the main invoice document.</li>
+                            <li>Add allocations for each cost center, specifying the amount and approver for each.</li>
+                            <li>Ensure the total allocated amount matches the invoice total (system will validate).</li>
+                            <li>Submit the split invoice. Each allocation will be sent to its respective approver.</li>
+                            <li>Track the status of each sub-invoice in the EPV Records page.</li>
+                        </ol>
                         <h4>Tracking Your Expenses</h4>
                         <ol>
                             <li>From the dashboard, click "EPV Records"</li>
-                            <li>View the status of all your submitted expenses</li>
-                            <li>Click on any EPV ID to view detailed information</li>
+                            <li>View the status of all your submitted expenses, including split and standard invoices</li>
+                            <li>Click on any EPV ID to view detailed information, including sub-invoice status for splits</li>
                             <li>Status badges indicate where your expense is in the workflow</li>
                         </ol>
-
-                        <h4>Handling Rejected Expenses</h4>
+                        <h4>Handling Rejected Expenses & Supplementary Documents</h4>
                         <ol>
                             <li>If your expense is rejected, you'll receive an email notification</li>
                             <li>Log in to the EPV system and view the rejected expense</li>
                             <li>Read the rejection reason provided by the approver or finance team</li>
-                            <li>If rejected by Finance with "Upload missing document" option:</li>
+                            <li>If Finance requests additional documents:
                             <ul>
                                 <li>Click "Upload Missing Documents" button</li>
-                                <li>Upload the requested documents</li>
-                                <li>The expense will be resubmitted to Finance for review</li>
+                                    <li>Upload the requested documents and add a description for each</li>
+                                    <li>The system will merge your new documents with the original PDF and resubmit to Finance</li>
                             </ul>
-                            <li>If rejected with "Restart the whole process" option:</li>
+                            </li>
+                            <li>If rejected with "Restart the whole process" option:
                             <ul>
                                 <li>Create a new EPV with corrected information</li>
                             </ul>
+                            </li>
                         </ol>
+                    </div>
+                </div>
+
+                <!-- Split Invoice Guide -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="mb-0"><i class="fas fa-share-alt me-2"></i>Split Invoice Guide</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>What is a Split Invoice?</h4>
+                        <p>A split invoice allows you to allocate a single invoice across multiple cost centers, each with its own approver and allocation amount. This is useful for shared expenses.</p>
+                        <h4>How to Submit a Split Invoice</h4>
+                        <ol>
+                            <li>Choose <strong>Split Invoice</strong> in the expense form.</li>
+                            <li>Enter the master invoice details and upload the invoice file.</li>
+                            <li>Add allocations for each cost center, specifying the amount and approver.</li>
+                            <li>Ensure the total allocated matches the invoice total (system will validate).</li>
+                            <li>Submit the split invoice. Each allocation is routed to its approver.</li>
+                        </ol>
+                        <h4>Tracking Split Invoices</h4>
+                        <ul>
+                            <li>View the master invoice and all sub-invoices in EPV Records.</li>
+                            <li>Each sub-invoice shows its cost center, amount, and approval status.</li>
+                            <li>Notifications are sent for each approval or rejection.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Supplementary Documents Guide -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="mb-0"><i class="fas fa-file-upload me-2"></i>Supplementary Documents Guide</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>When are Supplementary Documents Needed?</h4>
+                        <ul>
+                            <li>Finance may request additional documents if the original submission is incomplete or unclear.</li>
+                            <li>You will receive an email and see a prompt in the EPV record.</li>
+                        </ul>
+                        <h4>How to Upload Supplementary Documents</h4>
+                        <ol>
+                            <li>Click the "Upload Missing Documents" button in the EPV record.</li>
+                            <li>Upload the requested files and add a description for each.</li>
+                            <li>Click "Submit". The system merges your new documents with the original PDF and resubmits to Finance.</li>
+                            <li>Finance is notified and will review the updated submission.</li>
+                        </ol>
+                        <h4>Tracking Supplementary Documents</h4>
+                        <ul>
+                            <li>All supplementary documents are listed in the EPV record for reference.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Partial Payment Guide for Finance -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Partial Payment Guide (Finance)</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>What is a Partial Payment?</h4>
+                        <p>Partial payment allows Finance to split a payment into two parts, each with its own details and FCRA status. This is useful for complex or staged payments.</p>
+                        <h4>How to Process a Partial Payment</h4>
+                        <ol>
+                            <li>In the Finance Entry form, check the "Partial Payment" box.</li>
+                            <li>Enter details for both payments: journal entry, payment voucher, amount, and FCRA status.</li>
+                            <li>Ensure the sum of both amounts matches the EPV total (system will validate).</li>
+                            <li>Submit the entry. Both payments will be tracked and must be completed for full processing.</li>
+                        </ol>
+                        <h4>Tracking Partial Payments</h4>
+                        <ul>
+                            <li>Partial payment details are visible in the EPV record and finance approval screens.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Settings Management Guide -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="mb-0"><i class="fas fa-cogs me-2"></i>Settings Management</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>Who Can Update Settings?</h4>
+                        <ul>
+                            <li>Only Super Admins and Finance Approvers can update finance settings.</li>
+                        </ul>
+                        <h4>How to Update Settings</h4>
+                        <ol>
+                            <li>Go to the Settings page from the main menu.</li>
+                            <li>Update values such as maximum days past, max reminder days, and academic year.</li>
+                            <li>All changes are logged in the Settings Change Log for audit purposes.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Dashboard & Validation Tips -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Dashboard & Validation Tips</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4>Using the Dashboard</h4>
+                        <ul>
+                            <li>Finance dashboard has tabs for pending, resubmitted, rejected, and processed expenses.</li>
+                            <li>Use filters for city, cost center, and status to find records quickly.</li>
+                            <li>Click "Reset Filters" to clear all filters and show all records.</li>
+                        </ul>
+                        <h4>Validation & Error Handling</h4>
+                        <ul>
+                            <li>All forms have built-in validation. Follow on-screen messages to correct errors.</li>
+                            <li>For split invoices, allocation amounts must match the invoice total.</li>
+                            <li>For partial payments, both payment amounts must add up to the EPV total.</li>
+                            <li>File uploads must be valid and within size/type limits.</li>
+                        </ul>
                     </div>
                 </div>
 

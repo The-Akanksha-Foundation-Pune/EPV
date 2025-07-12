@@ -1,6 +1,6 @@
 # EPV (Expense Processing Voucher) System Requirements
 # Compatible with Python 3.13+
-# Last updated: June 23, 2025
+# Last updated: May 31, 2025
 #
 # Installation: pip install -r requirements.txt
 #
@@ -10,11 +10,11 @@
 # - Updated all dependencies to latest stable versions
 
 # Flask and extensions (REQUIRED)
-Flask==3.1.1
+Flask==3.0.3
 Flask-Dance==7.0.0
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
-Werkzeug==3.1.3
+Werkzeug==3.0.3
 
 # Database (REQUIRED) - Updated for Python 3.13 compatibility
 SQLAlchemy==2.0.41
@@ -26,20 +26,15 @@ cryptography==43.0.1  # Required for PyMySQL with SSL
 python-dotenv==1.0.0
 
 # Google API (REQUIRED)
-google-auth==2.40.3
-google-api-python-client==2.173.0
-google-auth-oauthlib==1.2.2
+google-auth==2.35.0
+google-api-python-client==2.150.0
+google-auth-oauthlib==1.2.1
 google-auth-httplib2==0.2.0
 
 # PDF processing (REQUIRED)
-reportlab==4.4.2
+reportlab==4.2.5
 PyPDF2==3.0.1
 pdfkit==1.0.0
-img2pdf==0.6.1  # Required for PDF merging
-pikepdf==9.9.0  # Required for advanced PDF operations
-
-# Image processing (REQUIRED)
-Pillow==11.2.1
 
 # Template engine (REQUIRED)
 Jinja2==3.1.6
@@ -49,14 +44,14 @@ MarkupSafe==3.0.2
 blinker==1.9.0
 click==8.2.1
 itsdangerous==2.2.0
-typing_extensions==4.14.0
+typing_extensions==4.13.2
 
 # HTTP and networking (REQUIRED)
-urllib3==2.4.0
+urllib3==1.26.20  # Compatible with google-auth
 certifi==2025.4.26
 charset-normalizer==3.4.2
 idna==3.10
-requests==2.32.4
+requests==2.32.3
 httplib2==0.22.0
 
 # OAuth and authentication (REQUIRED for production)
@@ -66,11 +61,11 @@ requests-oauthlib==2.0.0
 URLObject==2.4.3
 
 # Google API dependencies
-google-api-core==2.25.1
+google-api-core==2.25.0rc1
 googleapis-common-protos==1.70.0
 proto-plus==1.26.1
 protobuf==6.31.1
-uritemplate==4.2.0
+uritemplate==4.1.1
 cachetools==5.5.2
 pyasn1==0.6.1
 pyasn1-modules==0.4.2
@@ -79,15 +74,15 @@ rsa==4.9.1
 # Additional utilities
 pyparsing==3.2.3
 pycparser==2.22
-lxml==5.4.0  # Required for PDF processing
-Deprecated==1.2.18  # Required for PDF processing
-wrapt==1.17.2  # Required for PDF processing
-packaging==25.0  # Required for PDF processing
+
+# Image processing (now included as it's being used)
+Pillow==11.2.1
 
 # Windows compatibility
 colorama==0.4.6  # For colored terminal output on Windows
 
-# The following sections are optional packages that can be uncommented if needed
+# Optional: Image to PDF conversion (uncomment if needed)
+# img2pdf==0.5.1  # Alternative to PIL for image conversion
 
 # Optional: Database migrations (uncomment if needed)
 # Flask-Migrate==4.0.5
@@ -100,8 +95,15 @@ colorama==0.4.6  # For colored terminal output on Windows
 # Optional: Enhanced environment parsing (uncomment if needed)
 # environs==9.5.0
 
+# Optional: HTTP client (uncomment if needed)
+# requests==2.31.0
+# httpx==0.25.2
+
 # Optional: Retry logic (uncomment if needed)
 # tenacity==8.2.3
+
+# Optional: Image processing (uncomment if needed)
+# Pillow>=10.0.0
 
 # Optional: Alternative PDF converter (uncomment if needed)
 # weasyprint==60.1
@@ -113,9 +115,23 @@ colorama==0.4.6  # For colored terminal output on Windows
 # Optional: Data validation (uncomment if needed)
 # pydantic==2.5.2
 
+# Optional: String utilities (uncomment if needed)
+# python-slugify==8.0.1
+# humanize==4.8.0
+
+# Optional: Error tracking (uncomment if needed)
+# sentry-sdk[flask]==1.38.0
+
 # Optional: Production server (uncomment if needed)
 # gunicorn==21.2.0
 # gevent==23.9.1
+
+# Optional: Session storage (uncomment if needed)
+# redis==5.0.0
+# Flask-Session==0.5.0
+
+# Optional: System monitoring (uncomment if needed)
+# psutil==5.9.5
 
 # Optional: Testing (uncomment if needed)
 # pytest==7.4.3

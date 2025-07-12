@@ -103,12 +103,17 @@ def generate_expense_document(expense_data):
         Path to the generated PDF file, or None if generation failed
     """
     try:
+        print(f"DEBUG: generate_expense_document called with data: {expense_data}")
+        print(f"DEBUG: Number of expenses: {len(expense_data.get('expenses', []))}")
+        
         # Create a unique filename for the expense document
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         unique_id = uuid.uuid4().hex[:8]
         # Use a temporary file instead of saving to UPLOAD_DIR
         temp_dir = tempfile.gettempdir()
         output_pdf = os.path.join(temp_dir, f"{timestamp}_{unique_id}_expense_document.pdf")
+        
+        print(f"DEBUG: Will generate expense document at: {output_pdf}")
 
         # Prepare data for the PDF
         data = expense_data.copy()
@@ -137,6 +142,9 @@ def generate_expense_document(expense_data):
         if not REPORTLAB_AVAILABLE:
             print("ReportLab is not available. Cannot generate expense document.")
             return None
+
+        print(f"DEBUG: ReportLab is available, proceeding with PDF generation")
+        print(f"DEBUG: Expense data for PDF: {data}")
 
         try:
             # Import required modules
@@ -547,8 +555,19 @@ def generate_expense_document(expense_data):
 
             # Build the PDF
             doc.build(elements)
-            print(f"Generated expense document PDF using ReportLab: {output_pdf}")
-            return output_pdf
+            print(f"✅ Generated expense document PDF using ReportLab: {output_pdf}")
+            
+            # Verify the PDF was created successfully
+            if os.path.exists(output_pdf) and os.path.getsize(output_pdf) > 0:
+                print(f"✅ Expense document PDF verified: {output_pdf} (size: {os.path.getsize(output_pdf)} bytes)")
+                return output_pdf
+            else:
+                print(f"❌ Expense document PDF was not created successfully: {output_pdf}")
+                if os.path.exists(output_pdf):
+                    print(f"DEBUG: File exists but is empty: {os.path.getsize(output_pdf)} bytes")
+                else:
+                    print(f"DEBUG: File does not exist")
+                return None
 
         except Exception as e:
             print(f"Error generating PDF with ReportLab: {str(e)}")
@@ -572,10 +591,22 @@ def convert_to_pdf(file_path):
         print(f"File not found: {file_path}")
         return None
 
-    # If the file is already a PDF, just return it
+    # If the file is already a PDF, validate it first
     if file_path.lower().endswith('.pdf'):
         print(f"File is already a PDF: {file_path}")
-        return file_path
+        
+        # Validate that it's a real PDF
+        try:
+            from PyPDF2 import PdfReader
+            with open(file_path, 'rb') as f:
+                reader = PdfReader(f)
+                page_count = len(reader.pages)
+                print(f"✅ Valid PDF with {page_count} pages: {file_path}")
+                return file_path
+        except Exception as e:
+            print(f"❌ Invalid PDF file: {file_path} - {str(e)}")
+            # Try to convert it using other methods
+            print(f"Attempting to convert invalid PDF using alternative methods...")
 
     # Get the file extension
     file_ext = os.path.splitext(file_path)[1].lower()
@@ -588,6 +619,29 @@ def convert_to_pdf(file_path):
         if IMG2PDF_AVAILABLE and file_ext in ['.jpg', '.jpeg', '.png']:
             try:
                 print(f"Converting {file_path} to PDF using img2pdf")
+                
+                # Handle EXIF orientation before img2pdf conversion
+                if PIL_AVAILABLE:
+                    try:
+                        # Open image with PIL to check EXIF
+                        with Image.open(file_path) as img:
+                            # Check if image has EXIF data
+                            if hasattr(img, '_getexif') and img._getexif() is not None:
+                                exif = img._getexif()
+                                if exif is not None:
+                                    orientation = exif.get(274)
+                                    if orientation is not None and orientation in [3, 6, 8]:
+                                        print(f"Found EXIF orientation: {orientation} - img2pdf will handle this automatically")
+                                    else:
+                                        print("No rotation needed based on EXIF")
+                                else:
+                                    print("No EXIF data found")
+                            else:
+                                print("Image does not support EXIF data")
+                    except Exception as exif_error:
+                        print(f"Error checking EXIF data: {exif_error}")
+                
+                # img2pdf automatically handles EXIF orientation, so we can use it directly
                 with open(file_path, "rb") as image_file:
                     pdf_bytes = img2pdf.convert(image_file.read())
                     with open(pdf_path, "wb") as pdf_file:
@@ -604,6 +658,38 @@ def convert_to_pdf(file_path):
             try:
                 print(f"Converting {file_path} to PDF using PIL")
                 image = Image.open(file_path)
+
+                # Handle EXIF orientation for mobile photos
+                try:
+                    # Check if image has EXIF data
+                    if hasattr(image, '_getexif') and image._getexif() is not None:
+                        exif = image._getexif()
+                        if exif is not None:
+                            # Get orientation tag (274 is the orientation tag)
+                            orientation = exif.get(274)
+                            if orientation is not None:
+                                print(f"Found EXIF orientation: {orientation}")
+                                
+                                # Apply rotation based on EXIF orientation
+                                if orientation == 3:
+                                    image = image.rotate(180, expand=True)
+                                    print("Applied 180° rotation")
+                                elif orientation == 6:
+                                    image = image.rotate(270, expand=True)
+                                    print("Applied 270° rotation")
+                                elif orientation == 8:
+                                    image = image.rotate(90, expand=True)
+                                    print("Applied 90° rotation")
+                                else:
+                                    print(f"Orientation {orientation} - no rotation needed")
+                            else:
+                                print("No orientation data in EXIF")
+                        else:
+                            print("No EXIF data found")
+                    else:
+                        print("Image does not support EXIF data")
+                except Exception as exif_error:
+                    print(f"Error handling EXIF data: {exif_error}")
 
                 # Convert to RGB if the image is in RGBA mode (e.g., PNG with transparency)
                 if image.mode == 'RGBA':
@@ -652,42 +738,100 @@ def merge_pdfs(pdf_files):
     try:
         # Create a merger object
         merger = PdfMerger()
+        
+        print(f"DEBUG: Starting PDF merge with {len(pdf_files)} files:")
+        for i, pdf in enumerate(pdf_files):
+            print(f"DEBUG: File {i+1}: {pdf}")
 
         # Add each PDF to the merger
-        for pdf in pdf_files:
+        successful_adds = 0
+        failed_files = []
+        for i, pdf in enumerate(pdf_files):
             if os.path.exists(pdf) and os.path.getsize(pdf) > 0:
                 try:
-                    print(f"Attempting to add {pdf} to merger...")
+                    print(f"DEBUG: Attempting to add file {i+1} ({pdf}) to merger...")
+                    print(f"DEBUG: File size: {os.path.getsize(pdf)} bytes")
+                    
+                    # Try to get page count for debugging
+                    try:
+                        from PyPDF2 import PdfReader
+                        reader = PdfReader(pdf)
+                        page_count = len(reader.pages)
+                        print(f"DEBUG: File {i+1} has {page_count} pages")
+                    except Exception as page_error:
+                        print(f"DEBUG: Could not determine page count for {pdf}: {page_error}")
+                        # If we can't read the PDF, skip it
+                        print(f"⚠️ Skipping invalid PDF: {pdf}")
+                        failed_files.append((pdf, f"Invalid PDF: {page_error}"))
+                        continue
+                    
                     merger.append(pdf)
-                    print(f"✅ Successfully added {pdf} to merger")
+                    successful_adds += 1
+                    print(f"✅ Successfully added {pdf} to merger (file {i+1})")
                 except Exception as e:
                     print(f"❌ Error adding {pdf} to merger: {str(e)}")
                     print(f"Error type: {type(e).__name__}")
                     import traceback
                     print(f"Traceback: {traceback.format_exc()}")
+                    failed_files.append((pdf, str(e)))
                     # Continue with other files even if one fails
                     continue
             else:
                 print(f"⚠️ Skipping {pdf} - file doesn't exist or is empty")
+                if not os.path.exists(pdf):
+                    print(f"DEBUG: File does not exist: {pdf}")
+                else:
+                    print(f"DEBUG: File exists but is empty: {pdf} (size: {os.path.getsize(pdf)})")
+                failed_files.append((pdf, "File doesn't exist or is empty"))
+
+        print(f"DEBUG: Successfully added {successful_adds} out of {len(pdf_files)} files to merger")
+        
+        if failed_files:
+            print(f"DEBUG: Failed files:")
+            for pdf, error in failed_files:
+                print(f"  - {pdf}: {error}")
+
+        if successful_adds == 0:
+            print("ERROR: No files were successfully added to the merger")
+            return None
 
         # Create a unique filename for the merged PDF
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         merged_filename = f"merged_{timestamp}_{uuid.uuid4().hex[:8]}.pdf"
         merged_path = os.path.join(UPLOAD_DIR, merged_filename)
 
+        print(f"DEBUG: Writing merged PDF to: {merged_path}")
+
         # Write the merged PDF to file
         merger.write(merged_path)
         merger.close()
 
         if os.path.exists(merged_path) and os.path.getsize(merged_path) > 0:
-            print(f"Successfully merged PDFs: {merged_path}")
+            print(f"✅ Successfully merged PDFs: {merged_path}")
+            print(f"DEBUG: Merged PDF size: {os.path.getsize(merged_path)} bytes")
+            
+            # Check final page count
+            try:
+                from PyPDF2 import PdfReader
+                reader = PdfReader(merged_path)
+                final_page_count = len(reader.pages)
+                print(f"DEBUG: Final merged PDF has {final_page_count} pages")
+            except Exception as page_error:
+                print(f"DEBUG: Could not determine final page count: {page_error}")
+            
             return merged_path
         else:
-            print(f"Failed to create merged PDF: {merged_path}")
+            print(f"❌ Failed to create merged PDF: {merged_path}")
+            if os.path.exists(merged_path):
+                print(f"DEBUG: File exists but is empty: {os.path.getsize(merged_path)} bytes")
+            else:
+                print(f"DEBUG: File does not exist")
             return None
 
     except Exception as e:
-        print(f"Error merging PDFs: {str(e)}")
+        print(f"❌ Error merging PDFs: {str(e)}")
+        import traceback
+        print(f"DEBUG: Merge error traceback: {traceback.format_exc()}")
         return None
 
 def process_files(files, drive_folder_id=None, employee_name=None, cost_center_name=None, expense_pdf_path=None):
@@ -712,9 +856,13 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
             'user_message': 'No files were uploaded. Please select at least one file.'
         }
 
-    print(f"Processing {len(files)} files in process_files function")
+    print(f"DEBUG: process_files called with {len(files)} files")
     for i, file in enumerate(files):
-        print(f"File {i+1}: {file.filename if hasattr(file, 'filename') else 'No filename'}")
+        print(f"DEBUG: File {i+1}: {file.filename if hasattr(file, 'filename') else 'No filename'}")
+        if hasattr(file, 'filename') and file.filename:
+            print(f"DEBUG:   File type: {type(file)}")
+            print(f"DEBUG:   File size: {len(file.read()) if hasattr(file, 'read') else 'Unknown'} bytes")
+            file.seek(0)  # Reset file pointer
 
     # Track processing results for each file
     processing_results = []
@@ -727,7 +875,12 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
         # If expense_pdf_path is provided, add it to the beginning of pdf_files
         if expense_pdf_path and os.path.exists(expense_pdf_path):
             pdf_files.append(expense_pdf_path)
-            print(f"Added expense document PDF to the beginning: {expense_pdf_path}")
+            print(f"✅ Added expense document PDF to the beginning: {expense_pdf_path}")
+            print(f"DEBUG: Expense PDF size: {os.path.getsize(expense_pdf_path)} bytes")
+        elif expense_pdf_path:
+            print(f"⚠️ Expense PDF path provided but file does not exist: {expense_pdf_path}")
+        else:
+            print("DEBUG: No expense PDF path provided")
 
         for file in files:
             # Skip the expense PDF path if it's already in pdf_files
@@ -829,6 +982,42 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
                 'processing_results': processing_results
             }
 
+        # Validate that all PDF files are actually valid PDFs
+        valid_pdfs = []
+        invalid_pdfs = []
+        for pdf_path in pdf_files:
+            try:
+                from PyPDF2 import PdfReader
+                with open(pdf_path, 'rb') as f:
+                    reader = PdfReader(f)
+                    page_count = len(reader.pages)
+                    print(f"✅ Valid PDF: {pdf_path} ({page_count} pages)")
+                    valid_pdfs.append(pdf_path)
+            except Exception as e:
+                print(f"❌ Invalid PDF: {pdf_path} - {str(e)}")
+                invalid_pdfs.append((pdf_path, str(e)))
+
+        if not valid_pdfs:
+            error_message = "No valid PDF files were created"
+            if invalid_pdfs:
+                error_message += ". All files were invalid or corrupted."
+            
+            return {
+                'success': False,
+                'error': error_message,
+                'user_message': 'All uploaded files were invalid or corrupted. Please upload valid files.',
+                'processing_results': processing_results
+            }
+
+        if invalid_pdfs:
+            print(f"⚠️ Warning: {len(invalid_pdfs)} invalid PDFs were skipped")
+            for pdf_path, error in invalid_pdfs:
+                print(f"  - {pdf_path}: {error}")
+
+        # Use only valid PDFs for merging
+        pdf_files = valid_pdfs
+        print(f"DEBUG: Using {len(pdf_files)} valid PDFs for merging")
+
         # No need to generate expense document here anymore
         # It's now handled in the app.py route
 
@@ -923,6 +1112,10 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
         # Do NOT delete the merged PDF here
         # if merged_pdf:
         #     cleanup_files.append(merged_pdf)
+
+        # Remove the merged PDF from cleanup_files if present
+        if merged_pdf and merged_pdf in cleanup_files:
+            cleanup_files.remove(merged_pdf)
 
         # Remove duplicates and clean up
         cleanup_files = list(set(cleanup_files))

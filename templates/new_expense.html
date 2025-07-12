@@ -2825,6 +2825,19 @@
                     LoadingScreen.show(5); // Show loading screen for 5 seconds
                 }
 
+                // Add this before the AJAX form submission:
+                console.log('==== FILE INPUTS BEFORE SUBMIT ====');
+                $('input[type="file"]').each(function() {
+                    const files = this.files;
+                    if (files && files.length > 0) {
+                        for (let i = 0; i < files.length; i++) {
+                            console.log('Input name:', this.name, 'File:', files[i].name);
+                        }
+                    } else {
+                        console.log('Input name:', this.name, 'No file selected');
+                    }
+                });
+
                 // Submit the form using AJAX
                 $.ajax({
                     url: $("#expenseForm").attr("action"),
@@ -3623,13 +3636,8 @@
 
             const input = document.createElement('input');
             input.type = 'file';
-            // --- FIX: Use correct name for split invoice master ---
-            const invoiceType = document.getElementById('invoiceType').value;
-            if (invoiceType === 'split' && expenseId == 1) {
-                input.name = 'receipt[]';
-            } else {
+            // Always use receipt[<expenseId>][] for all expense sections
             input.name = `receipt[${expenseId}][]`;
-            }
             input.className = 'form-control';
             input.accept = '.pdf,.jpg,.jpeg,.png';
             input.required = true;

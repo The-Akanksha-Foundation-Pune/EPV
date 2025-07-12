@@ -2235,13 +2235,30 @@ def handle_split_invoice_submission(request, session, user_info):
         }
 
         # Step 1: Generate expense document PDF
-        from pdf_converter import generate_expense_document
+        from pdf_converter import generate_expense_document, REPORTLAB_AVAILABLE
+        print(f"DEBUG: About to generate expense document with data: {expense_data}")
         expense_pdf_path = generate_expense_document(expense_data)
 
         if not expense_pdf_path:
+            error_message = 'Failed to generate expense document'
+            if not REPORTLAB_AVAILABLE:
+                error_message = 'ReportLab library is not available for PDF generation. Please contact your administrator.'
             return jsonify({
                 'success': False,
-                'message': 'Failed to generate expense document'
+                'message': error_message
+            })
+        
+        print(f"✅ Expense document generated successfully: {expense_pdf_path}")
+        
+        # Verify the expense document exists and has content
+        import os
+        if os.path.exists(expense_pdf_path) and os.path.getsize(expense_pdf_path) > 0:
+            print(f"✅ Expense document verified: {expense_pdf_path} (size: {os.path.getsize(expense_pdf_path)} bytes)")
+        else:
+            print(f"❌ Expense document verification failed: {expense_pdf_path}")
+            return jsonify({
+                'success': False,
+                'message': 'Expense document was generated but appears to be empty or invalid.'
             })
 
         # Step 2: Process the uploaded files and merge with expense document
@@ -2679,28 +2696,51 @@ def new_expense():
             # Find all expense detail file groups (receipt[1][], receipt[2][], ...)
             expense_file_groups = []
             expense_detail_pattern = re.compile(r'^receipt\[(\d+)\]\[\]$')
+            
+            print(f"DEBUG: All request.files keys: {list(request.files.keys())}")
+            
             for key in request.files:
+                print(f"DEBUG: Checking key: {key}")
                 match = expense_detail_pattern.match(key)
                 if match:
                     expense_id = int(match.group(1))
                     files = request.files.getlist(key)
+                    print(f"DEBUG: Found expense detail {expense_id} with {len(files)} files")
+                    for i, file in enumerate(files):
+                        print(f"DEBUG:   File {i+1}: {file.filename}")
+                    
                     if files and any(f.filename for f in files):
                         expense_file_groups.append((expense_id, files))
+                        print(f"DEBUG: Added expense detail {expense_id} to groups")
+                    else:
+                        print(f"DEBUG: Skipped expense detail {expense_id} - no valid files")
 
             # Sort by expense_id to maintain order
             expense_file_groups.sort(key=lambda x: x[0])
-
-            print("DEBUG: expense_file_groups", [(eid, [f.filename for f in files]) for eid, files in expense_file_groups])
+            print(f"DEBUG: Final expense_file_groups: {[(eid, [f.filename for f in files]) for eid, files in expense_file_groups]}")
 
             per_detail_pdfs = []
             for expense_id, files in expense_file_groups:
+                print(f"DEBUG: Processing expense detail {expense_id} with {len(files)} files")
                 # Convert and merge all files for this expense detail into a single PDF
                 result = process_files(files)
+                print(f"DEBUG: process_files result for expense {expense_id}: {result}")
+                
                 if result and result.get('success') and result.get('merged_pdf'):
                     per_detail_pdfs.append(result['merged_pdf'])
+                    print(f"✅ Added merged PDF for expense detail {expense_id}: {result['merged_pdf']}")
+                else:
+                    print(f"❌ Failed to process files for expense detail {expense_id}")
+                    if result:
+                        print(f"DEBUG: Error details: {result.get('error', 'Unknown error')}")
+
+            print(f"DEBUG: Total per_detail_pdfs created: {len(per_detail_pdfs)}")
+            for i, pdf in enumerate(per_detail_pdfs):
+                print(f"DEBUG: Per-detail PDF {i+1}: {pdf}")
 
             # Step 1: Generate expense document PDF
             from pdf_converter import generate_expense_document, REPORTLAB_AVAILABLE
+            print(f"DEBUG: About to generate expense document with data: {expense_data}")
             expense_pdf_path = generate_expense_document(expense_data)
 
             if not expense_pdf_path:
@@ -2711,12 +2751,51 @@ def new_expense():
                     'success': False,
                     'message': error_message
                 })
+            
+            print(f"✅ Expense document generated successfully: {expense_pdf_path}")
+            
+            # Verify the expense document exists and has content
+            import os
+            if os.path.exists(expense_pdf_path) and os.path.getsize(expense_pdf_path) > 0:
+                print(f"✅ Expense document verified: {expense_pdf_path} (size: {os.path.getsize(expense_pdf_path)} bytes)")
+            else:
+                print(f"❌ Expense document verification failed: {expense_pdf_path}")
+                return jsonify({
+                    'success': False,
+                    'message': 'Expense document was generated but appears to be empty or invalid.'
+                })
 
             # Merge the expense document with all per-detail PDFs
             merge_inputs = [expense_pdf_path] + per_detail_pdfs if expense_pdf_path else per_detail_pdfs
+            print(f"DEBUG: Merge inputs: {merge_inputs}")
+            print(f"DEBUG: Expense document path: {expense_pdf_path}")
+            print(f"DEBUG: Number of per-detail PDFs: {len(per_detail_pdfs)}")
+            
+            # Verify each file exists before merging
+            print(f"DEBUG: Verifying all merge inputs exist:")
+            for i, file_path in enumerate(merge_inputs):
+                if os.path.exists(file_path):
+                    file_size = os.path.getsize(file_path)
+                    print(f"DEBUG:   File {i+1}: {file_path} - EXISTS (size: {file_size} bytes)")
+                else:
+                    print(f"DEBUG:   File {i+1}: {file_path} - MISSING!")
+            
             final_merged_pdf = None
             if merge_inputs:
+                print(f"DEBUG: Starting PDF merge with {len(merge_inputs)} files")
                 final_merged_pdf = merge_pdfs(merge_inputs)
+                if final_merged_pdf:
+                    print(f"✅ PDF merge completed successfully: {final_merged_pdf}")
+                    # Verify the final merged PDF
+                    if os.path.exists(final_merged_pdf):
+                        final_size = os.path.getsize(final_merged_pdf)
+                        print(f"✅ Final merged PDF verified: {final_merged_pdf} (size: {final_size} bytes)")
+                    else:
+                        print(f"❌ Final merged PDF does not exist: {final_merged_pdf}")
+                else:
+                    print(f"❌ PDF merge failed")
+            else:
+                print(f"⚠️ No files to merge")
 
             # Upload to Google Drive if needed, and continue with the rest of the logic
             file_url = None
@@ -2817,6 +2896,18 @@ def new_expense():
 
             # Add manager email to the response
             success_response['manager_email'] = manager_email
+
+            # Add debugging summary to the response
+            debug_summary = {
+                'expense_file_groups_count': len(expense_file_groups),
+                'per_detail_pdfs_count': len(per_detail_pdfs),
+                'final_merge_inputs_count': len(merge_inputs) if merge_inputs else 0,
+                'expense_document_generated': expense_pdf_path is not None,
+                'final_merged_pdf_created': final_merged_pdf is not None
+            }
+            success_response['debug_summary'] = debug_summary
+            
+            print(f"DEBUG SUMMARY: {debug_summary}")
 
             # No need for additional code here, approval record is created above
 
@@ -3365,12 +3456,31 @@ def new_split_invoice_disabled():
                             print(f"DEBUG: Allocation {i+1}: {alloc}")
 
                         # Step 1: Generate expense document PDF
-                        from pdf_converter import generate_expense_document
+                        from pdf_converter import generate_expense_document, REPORTLAB_AVAILABLE
+                        print(f"DEBUG: About to generate expense document with data: {expense_data}")
                         expense_pdf_path = generate_expense_document(expense_data)
 
                         if not expense_pdf_path:
-                            flash('Failed to generate expense document', 'error')
-                            return redirect(request.url)
+                            error_message = 'Failed to generate expense document'
+                            if not REPORTLAB_AVAILABLE:
+                                error_message = 'ReportLab library is not available for PDF generation. Please contact your administrator.'
+                            return jsonify({
+                                'success': False,
+                                'message': error_message
+                            })
+                        
+                        print(f"✅ Expense document generated successfully: {expense_pdf_path}")
+                        
+                        # Verify the expense document exists and has content
+                        import os
+                        if os.path.exists(expense_pdf_path) and os.path.getsize(expense_pdf_path) > 0:
+                            print(f"✅ Expense document verified: {expense_pdf_path} (size: {os.path.getsize(expense_pdf_path)} bytes)")
+                        else:
+                            print(f"❌ Expense document verification failed: {expense_pdf_path}")
+                            return jsonify({
+                                'success': False,
+                                'message': 'Expense document was generated but appears to be empty or invalid.'
+                            })
 
                         # Step 2: Process the uploaded files and merge with expense document
                         # Use the SAME process_files function as standard invoices
