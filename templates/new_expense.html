@@ -776,9 +776,13 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Store Jinja values as data attributes on a hidden div -->
+<div id="allowance-data" style="display:none;"
+     data-car-allowance="{% if car_allowance is defined %}{{ car_allowance|tojson|safe }}{% else %}0.0{% endif %}"
+     data-bike-allowance="{% if bike_allowance is defined %}{{ bike_allowance|tojson|safe }}{% else %}0.0{% endif %}"></div>
 <script>
-    var CAR_ALLOWANCE = {% if car_allowance is defined %}{{ car_allowance|tojson|safe }}{% else %}0.0{% endif %};
-    var BIKE_ALLOWANCE = {% if bike_allowance is defined %}{{ bike_allowance|tojson|safe }}{% else %}0.0{% endif %};
+    var CAR_ALLOWANCE = parseFloat(document.getElementById('allowance-data').getAttribute('data-car-allowance'));
+    var BIKE_ALLOWANCE = parseFloat(document.getElementById('allowance-data').getAttribute('data-bike-allowance'));
 
     document.addEventListener('DOMContentLoaded', function() {
         // Clean up any stale validation messages from previous forms
@@ -2705,6 +2709,11 @@
 
                 // --- NEW: Validate all file inputs (pages) for this expense ---
                 $(this).find('.expense-files input[type="file"]').each(function(idx) {
+                    if (this.disabled) {
+                        // Skip validation for disabled file inputs
+                        $(this).removeClass('is-invalid');
+                        return;
+                    }
                     if (!this.files || this.files.length === 0) {
                         validationErrors.push(`Expense #${expenseId}: Page ${idx+1} is missing a file`);
                         $(this).addClass('is-invalid'); // Highlight in red
@@ -4235,6 +4244,21 @@
         const mode = $(`#travelMode-${expenseId}`).val();
         const km = parseFloat($(`#travelKm-${expenseId}`).val());
         const amountInput = $(`#amount-${expenseId}`);
+        const expenseHead = $(`#expenseHead-${expenseId}`).val();
+        if (expenseHead && expenseHead.trim().toLowerCase() === 'local conveyance') {
+            if ((mode === 'car' || mode === 'bike') && !isNaN(km) && km > 0) {
+                let rate = 0;
+                if (mode === 'car') rate = CAR_ALLOWANCE;
+                if (mode === 'bike') rate = BIKE_ALLOWANCE;
+                const amt = (rate * km).toFixed(2);
+                amountInput.val(amt).prop('readonly', true);
+            } else if (mode && mode !== 'car' && mode !== 'bike') {
+                amountInput.val('').prop('readonly', false);
+            } else {
+                amountInput.val('').prop('readonly', true);
+            }
+            return;
+        }
         if ((mode === 'car' || mode === 'bike') && !isNaN(km) && km > 0) {
             let rate = 0;
             if (mode === 'car') rate = CAR_ALLOWANCE;
@@ -4276,5 +4300,36 @@
         const calcAmount = (!isNaN(parseFloat(kmValue)) && parseFloat(kmValue) > 0) ? (rate * parseFloat(kmValue)).toFixed(2) : 0;
         console.log(`DEBUG: Distance (KM) field for expense #${expenseId} lost focus. Value: ${kmValue}, Mode: ${mode}, Rate: ${rate}, Calculated Amount: ${calcAmount}`);
     });
+
+    $(document).on('change', "select[name='expense_head[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const selectedHead = $(this).val();
+        const amountInput = $(`#amount-${expenseId}`);
+        if (selectedHead && selectedHead.trim().toLowerCase() === 'local conveyance') {
+            amountInput.prop('readonly', true);
+            amountInput.val(''); // Optionally clear the value
+        } else {
+            amountInput.prop('readonly', false);
+        }
+        // ... existing code ...
+    });
+    // ... existing code ...
+
+    $(document).on('change', "select[name='travel_mode[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const travelMode = $(this).val();
+        const receiptInput = $(`#receipt-${expenseId}`);
+        if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
+            receiptInput.prop('disabled', false).prop('required', true);
+            receiptInput.removeClass('exclude-from-merge');
+            receiptInput.removeAttr('data-exclude-from-merge');
+        } else {
+            receiptInput.prop('disabled', true).prop('required', false);
+            receiptInput.addClass('exclude-from-merge');
+            receiptInput.attr('data-exclude-from-merge', 'true');
+            receiptInput.val(''); // Optionally clear the file input
+        }
+    });
+    // ... existing code ...
 </script>
 {% endblock %}
