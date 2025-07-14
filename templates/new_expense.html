@@ -557,165 +557,166 @@
                                         <div id="expense-1-content" class="collapse show">
                                         <div class="row mb-3">
                                             <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="expenseHead-1" class="form-label required-field">Expense Head</label>
+                                                <select class="form-select" id="expenseHead-1" name="expense_head[]" required>
+                                                    <option value="">Select Expense Head</option>
+                                                    {% for head in expense_heads %}
+                                                    <option value="{{ head.head_name }}">{{ head.head_name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label for="invoiceDate-1" class="form-label required-field">Invoice Date</label>
                                                 <div class="input-group">
                                                     <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                                                     <input type="date" class="form-control datepicker-only" id="invoiceDate-1" name="invoice_date[]" required>
                                                 </div>
                                             </div>
-                                        <div class="col-md-6">
-                                            <label for="expenseHead-1" class="form-label required-field">Expense Head</label>
-                                            <select class="form-select" id="expenseHead-1" name="expense_head[]" required>
-                                                <option value="">Select Expense Head</option>
-                                                {% for head in expense_heads %}
-                                                <option value="{{ head.head_name }}">{{ head.head_name }}</option>
-                                                {% endfor %}
-                                            </select>
                                         </div>
-                                    </div>
-                                    <!-- Standard Amount field (shown by default, hidden for Domestic Travel) -->
-                                    <div class="row mb-3" id="standard-amount-row-1">
-                                        <div class="col-12">
-                                            <label for="amount-1" class="form-label required-field">Amount (₹)</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">₹</span>
-                                                <input type="number" class="form-control amount-input" id="amount-1" name="amount[]" placeholder="Enter amount" min="0" step="any" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <label for="description-1" class="form-label required-field">Description</label>
-                                            <textarea class="form-control" id="description-1" name="description[]" rows="2" placeholder="Enter description" required></textarea>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Travel Fields (initially hidden) -->
-                                    <div class="travel-fields" id="travel-fields-1" style="display: none;">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                <label for="travelType-1" class="form-label required-field">Travel Type</label>
-                                                <select class="form-select travel-type-select" id="travelType-1" name="travel_type[]">
-                                                    <option value="">Select Travel Type</option>
-                                                    <option value="local">Local Travel</option>
-                                                    <option value="domestic">Domestic Travel</option>
-                                                    <option value="international">International Travel</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="travelMode-1" class="form-label required-field">Mode of Travel</label>
-                                                <select class="form-select travel-mode-select" id="travelMode-1" name="travel_mode[]">
-                                                    <option value="">Select Mode</option>
-                                                    <option value="car">Car</option>
-                                                    <option value="bike">Bike</option>
-                                                    <option value="bus">Bus</option>
-                                                    <option value="train">Train</option>
-                                                    <option value="flight">Flight</option>
-                                                    <option value="taxi">Taxi</option>
-                                                    <option value="auto">Auto</option>
-                                                    <option value="other">Other</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                <label for="travelFrom-1" class="form-label required-field">From</label>
-                                                <input type="text" class="form-control" id="travelFrom-1" name="travel_from[]" placeholder="Enter source location">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="travelTo-1" class="form-label required-field">To</label>
-                                                <input type="text" class="form-control" id="travelTo-1" name="travel_to[]" placeholder="Enter destination location">
-                                            </div>
-                                        </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-6 mb-3 mb-md-0">
-                                                <label for="travelDate-1" class="form-label required-field">Travel Date</label>
-                                                <input type="date" class="form-control datepicker-only" id="travelDate-1" name="travel_date[]">
-                                            </div>
-                                            <div class="col-md-6" id="km-container-1">
-                                                <label for="travelKm-1" class="form-label required-field">Distance (KM)</label>
-                                                <input type="number" class="form-control" id="travelKm-1" name="travel_km[]" placeholder="Enter distance in KM" min="0" step="0.1">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
-                                            <div id="expense-files-1" class="expense-files mb-2">
-                                                <div class="input-group mb-2">
-                                                    <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" required>
-                                                    <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
+                                        <!-- Standard Amount field (shown by default, hidden for Domestic Travel) -->
+                                        <div class="row mb-3" id="standard-amount-row-1">
+                                            <div class="col-12">
+                                                <label for="amount-1" class="form-label required-field">Amount (₹)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control amount-input" id="amount-1" name="amount[]" placeholder="Enter amount" min="0" step="any" required>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(1)">Add Page</button>
-                                            <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
-                                            <div class="form-text" id="receipt-help-1">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                                         </div>
-                                    </div>
-                                    <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-1" style="display: none;">
-                                        <div class="col-12">
-                                            <div class="form-check">
-                                                <input class="form-check-input split-invoice-check" type="checkbox" id="splitInvoice-1" data-expense-id="1">
-                                                <input type="hidden" name="split_invoice[]" id="splitInvoiceHidden-1" value="0">
-                                                <label class="form-check-label" for="splitInvoice-1">
-                                                    This is a split from the same invoice as above
-                                                </label>
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <label for="description-1" class="form-label required-field">Description</label>
+                                                <textarea class="form-control" id="description-1" name="description[]" rows="2" placeholder="Enter description" required></textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Travel Fields (initially hidden) -->
+                                        <div class="travel-fields" id="travel-fields-1" style="display: none;">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6 mb-3 mb-md-0">
+                                                    <label for="travelType-1" class="form-label required-field">Travel Type</label>
+                                                    <select class="form-select travel-type-select" id="travelType-1" name="travel_type[]">
+                                                        <option value="">Select Travel Type</option>
+                                                        <option value="local">Local Travel</option>
+                                                        <option value="domestic">Domestic Travel</option>
+                                                        <option value="international">International Travel</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="travelMode-1" class="form-label required-field">Mode of Travel</label>
+                                                    <select class="form-select travel-mode-select" id="travelMode-1" name="travel_mode[]">
+                                                        <option value="">Select Mode</option>
+                                                        <option value="car">Car</option>
+                                                        <option value="bike">Bike</option>
+                                                        <option value="bus">Bus</option>
+                                                        <option value="train">Train</option>
+                                                        <option value="flight">Flight</option>
+                                                        <option value="taxi">Taxi</option>
+                                                        <option value="auto">Auto</option>
+                                                        <option value="other">Other</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6 mb-3 mb-md-0">
+                                                    <label for="travelFrom-1" class="form-label required-field">From</label>
+                                                    <input type="text" class="form-control" id="travelFrom-1" name="travel_from[]" placeholder="Enter source location">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="travelTo-1" class="form-label required-field">To</label>
+                                                    <input type="text" class="form-control" id="travelTo-1" name="travel_to[]" placeholder="Enter destination location">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-3">
+                                                <div class="col-md-6 mb-3 mb-md-0">
+                                                    <label for="travelDate-1" class="form-label required-field">Travel Date</label>
+                                                    <input type="date" class="form-control datepicker-only" id="travelDate-1" name="travel_date[]">
+                                                </div>
+                                                <div class="col-md-6" id="km-container-1">
+                                                    <label for="travelKm-1" class="form-label required-field">Distance (KM)</label>
+                                                    <input type="number" class="form-control" id="travelKm-1" name="travel_km[]" placeholder="Enter distance in KM" min="0" step="0.1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
+                                                <div id="expense-files-1" class="expense-files mb-2">
+                                                    <div class="input-group mb-2">
+                                                        <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" required>
+                                                        <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(1)">Add Page</button>
+                                                <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
+                                                <div class="form-text" id="receipt-help-1">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-1" style="display: none;">
+                                            <div class="col-12">
+                                                <div class="form-check">
+                                                    <input class="form-check-input split-invoice-check" type="checkbox" id="splitInvoice-1" data-expense-id="1">
+                                                    <input type="hidden" name="split_invoice[]" id="splitInvoiceHidden-1" value="0">
+                                                    <label class="form-check-label" for="splitInvoice-1">
+                                                        This is a split from the same invoice as above
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Add Expense Button -->
+                                    <div id="addExpenseButtonContainer" class="d-flex justify-content-start mb-3 mt-3">
+                                        <button type="button" class="btn btn-primary" id="addExpenseBtn">
+                                            <i class="fas fa-plus"></i> Add Expense
+                                        </button>
+                                    </div>
+
+                                    <!-- Acknowledgement Checkbox -->
+                                    <div class="form-check mb-4 mt-2">
+                                        <input class="form-check-input" type="checkbox" id="acknowledgementCheck" name="acknowledgement" required>
+                                        <label class="form-check-label" for="acknowledgementCheck">
+                                            I declare that I have verified the invoice against the vendor contract.
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Split Validation Section (only shown for split invoices) -->
+                                <div id="splitValidationSection" class="alert alert-info mt-4" style="display: none;">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i id="splitValidationIcon" class="fas fa-info-circle me-2"></i>
+                                        <strong id="splitValidationTitle">Split Validation</strong>
+                                    </div>
+                                    <div id="splitValidationMessage">Checking allocation amounts...</div>
+
+                                    <!-- Progress Bar -->
+                                    <div class="progress mt-3 mb-2" style="height: 8px;">
+                                        <div id="splitProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+
+                                    <!-- Allocation Breakdown -->
+                                    <div id="allocationBreakdown" style="display: none;"></div>
+                                </div>
+
+                                <!-- Total Amount Section -->
+                                <div class="total-section mt-5 pt-3 border-top">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="total-amount">Total Amount: ₹<span id="totalAmount">0.00</span></div>
+                                            <div class="amount-words mt-2">Amount in words: <span id="amountInWords">Zero rupees only</span></div>
+                                            <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
+                                            <input type="hidden" name="amount_in_words" id="amountInWordsInput" value="Zero rupees only">
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Add Expense Button -->
-                                <div id="addExpenseButtonContainer" class="d-flex justify-content-start mb-3 mt-3">
-                                    <button type="button" class="btn btn-primary" id="addExpenseBtn">
-                                        <i class="fas fa-plus"></i> Add Expense
-                                    </button>
-                                </div>
-
-                                <!-- Acknowledgement Checkbox -->
-                                <div class="form-check mb-4 mt-2">
-                                    <input class="form-check-input" type="checkbox" id="acknowledgementCheck" name="acknowledgement" required>
-                                    <label class="form-check-label" for="acknowledgementCheck">
-                                        I declare that I have verified the invoice against the vendor contract.
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Split Validation Section (only shown for split invoices) -->
-                            <div id="splitValidationSection" class="alert alert-info mt-4" style="display: none;">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i id="splitValidationIcon" class="fas fa-info-circle me-2"></i>
-                                    <strong id="splitValidationTitle">Split Validation</strong>
-                                </div>
-                                <div id="splitValidationMessage">Checking allocation amounts...</div>
-
-                                <!-- Progress Bar -->
-                                <div class="progress mt-3 mb-2" style="height: 8px;">
-                                    <div id="splitProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
-                                </div>
-
-                                <!-- Allocation Breakdown -->
-                                <div id="allocationBreakdown" style="display: none;"></div>
-                            </div>
-
-                            <!-- Total Amount Section -->
-                            <div class="total-section mt-5 pt-3 border-top">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="total-amount">Total Amount: ₹<span id="totalAmount">0.00</span></div>
-                                        <div class="amount-words mt-2">Amount in words: <span id="amountInWords">Zero rupees only</span></div>
-                                        <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
-                                        <input type="hidden" name="amount_in_words" id="amountInWordsInput" value="Zero rupees only">
-                                    </div>
-                                    <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                                        <button type="button" class="btn btn-primary" id="submitBtn">
-                                            <i class="fas fa-paper-plane me-2"></i> Submit Expense
-                                        </button>
-                                        <button type="reset" class="btn btn-secondary ms-2">
-                                            <i class="fas fa-redo me-2"></i> Reset
-                                        </button>
+                                        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                                            <button type="button" class="btn btn-primary" id="submitBtn">
+                                                <i class="fas fa-paper-plane me-2"></i> Submit Expense
+                                            </button>
+                                            <button type="reset" class="btn btn-secondary ms-2">
+                                                <i class="fas fa-redo me-2"></i> Reset
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -4303,13 +4304,16 @@
 
     $(document).on('change', "select[name='expense_head[]']", function() {
         const expenseId = $(this).attr('id').split('-')[1];
-        const selectedHead = $(this).val();
-        const amountInput = $(`#amount-${expenseId}`);
-        if (selectedHead && selectedHead.trim().toLowerCase() === 'local conveyance') {
-            amountInput.prop('readonly', true);
-            amountInput.val(''); // Optionally clear the value
+        const selectedHead = $(this).val() ? $(this).val().trim().toLowerCase() : '';
+        const amountRow = $(`#standard-amount-row-${expenseId}`);
+        const travelFields = $(`#travel-fields-${expenseId}`);
+        const receiptRow = $(`#receipt-${expenseId}`).closest('.row');
+        if (selectedHead === 'local conveyance' || selectedHead === 'domestic travel') {
+            // Move Amount field below travel details
+            travelFields.after(amountRow);
         } else {
-            amountInput.prop('readonly', false);
+            // Move Amount field above Upload Receipt
+            receiptRow.before(amountRow);
         }
         // ... existing code ...
     });
@@ -4328,6 +4332,37 @@
             receiptInput.addClass('exclude-from-merge');
             receiptInput.attr('data-exclude-from-merge', 'true');
             receiptInput.val(''); // Optionally clear the file input
+        }
+    });
+    // ... existing code ...
+
+    // Update travel mode change handler to show/hide Distance (KM) field only for Car, Bike, Auto, or Taxi
+    $(document).on('change', '.travel-mode-select', function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const travelMode = $(this).val();
+        const kmContainer = $(`#km-container-${expenseId}`);
+        const kmInput = $(`#travelKm-${expenseId}`);
+        if (['car', 'bike', 'auto', 'taxi'].includes(travelMode)) {
+            kmContainer.show();
+            kmInput.prop('required', true);
+        } else {
+            kmContainer.hide();
+            kmInput.prop('required', false).val('');
+        }
+    });
+    // ... existing code ...
+    // Also, on travel type change, re-run the above logic to ensure correct state
+    $(document).on('change', '.travel-type-select', function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const travelMode = $(`#travelMode-${expenseId}`).val();
+        const kmContainer = $(`#km-container-${expenseId}`);
+        const kmInput = $(`#travelKm-${expenseId}`);
+        if (['car', 'bike', 'auto', 'taxi'].includes(travelMode)) {
+            kmContainer.show();
+            kmInput.prop('required', true);
+        } else {
+            kmContainer.hide();
+            kmInput.prop('required', false).val('');
         }
     });
     // ... existing code ...
