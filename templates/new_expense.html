@@ -374,9 +374,62 @@
     .file-validation-loading {
         animation: fadeInUp 0.3s ease-in-out;
     }
+
+    /* Travel fields styling */
+    .travel-fields {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        position: relative;
+    }
+
+    .travel-fields::before {
+        content: "🚗 Travel Details";
+        position: absolute;
+        top: -10px;
+        left: 15px;
+        background-color: #fff;
+        padding: 0 10px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .travel-fields.show {
+        animation: slideDown 0.3s ease-in-out;
+    }
+
+    .travel-fields.hide {
+        animation: slideUp 0.3s ease-in-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+    }
 {% endblock %}
 
 {% block content %}
+
 <div class="container mt-4 pt-3">
     <div class="row">
         <div class="col-12">
@@ -520,7 +573,8 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="row mb-3">
+                                    <!-- Standard Amount field (shown by default, hidden for Domestic Travel) -->
+                                    <div class="row mb-3" id="standard-amount-row-1">
                                         <div class="col-12">
                                             <label for="amount-1" class="form-label required-field">Amount (₹)</label>
                                             <div class="input-group">
@@ -535,6 +589,55 @@
                                             <textarea class="form-control" id="description-1" name="description[]" rows="2" placeholder="Enter description" required></textarea>
                                         </div>
                                     </div>
+                                    
+                                    <!-- Travel Fields (initially hidden) -->
+                                    <div class="travel-fields" id="travel-fields-1" style="display: none;">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="travelType-1" class="form-label required-field">Travel Type</label>
+                                                <select class="form-select travel-type-select" id="travelType-1" name="travel_type[]">
+                                                    <option value="">Select Travel Type</option>
+                                                    <option value="local">Local Travel</option>
+                                                    <option value="domestic">Domestic Travel</option>
+                                                    <option value="international">International Travel</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="travelMode-1" class="form-label required-field">Mode of Travel</label>
+                                                <select class="form-select travel-mode-select" id="travelMode-1" name="travel_mode[]">
+                                                    <option value="">Select Mode</option>
+                                                    <option value="car">Car</option>
+                                                    <option value="bike">Bike</option>
+                                                    <option value="bus">Bus</option>
+                                                    <option value="train">Train</option>
+                                                    <option value="flight">Flight</option>
+                                                    <option value="taxi">Taxi</option>
+                                                    <option value="auto">Auto</option>
+                                                    <option value="other">Other</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="travelFrom-1" class="form-label required-field">From</label>
+                                                <input type="text" class="form-control" id="travelFrom-1" name="travel_from[]" placeholder="Enter source location">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="travelTo-1" class="form-label required-field">To</label>
+                                                <input type="text" class="form-control" id="travelTo-1" name="travel_to[]" placeholder="Enter destination location">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6 mb-3 mb-md-0">
+                                                <label for="travelDate-1" class="form-label required-field">Travel Date</label>
+                                                <input type="date" class="form-control datepicker-only" id="travelDate-1" name="travel_date[]">
+                                            </div>
+                                            <div class="col-md-6" id="km-container-1">
+                                                <label for="travelKm-1" class="form-label required-field">Distance (KM)</label>
+                                                <input type="number" class="form-control" id="travelKm-1" name="travel_km[]" placeholder="Enter distance in KM" min="0" step="0.1">
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="row">
                                         <div class="col-12">
                                             <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
@@ -546,7 +649,7 @@
                                             </div>
                                             <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(1)">Add Page</button>
                                             <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
-                                            <div class="form-text">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
+                                            <div class="form-text" id="receipt-help-1">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                                         </div>
                                     </div>
                                     <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-1" style="display: none;">
@@ -674,6 +777,9 @@
 
 {% block scripts %}
 <script>
+    var CAR_ALLOWANCE = {% if car_allowance is defined %}{{ car_allowance|tojson|safe }}{% else %}0.0{% endif %};
+    var BIKE_ALLOWANCE = {% if bike_allowance is defined %}{{ bike_allowance|tojson|safe }}{% else %}0.0{% endif %};
+
     document.addEventListener('DOMContentLoaded', function() {
         // Clean up any stale validation messages from previous forms
         $('.file-validation-error, .file-validation-success, .file-validation-loading').remove();
@@ -978,6 +1084,17 @@
                 $(this).attr('name', `receipt[${expenseCount}][]`);
             });
 
+            // Update travel fields IDs and names
+            newExpense.find('.travel-fields').attr('id', `travel-fields-${expenseCount}`);
+            newExpense.find('#travelType-1').attr('id', `travelType-${expenseCount}`).attr('name', `travel_type[]`);
+            newExpense.find('#travelMode-1').attr('id', `travelMode-${expenseCount}`).attr('name', `travel_mode[]`);
+            newExpense.find('#travelFrom-1').attr('id', `travelFrom-${expenseCount}`).attr('name', `travel_from[]`);
+            newExpense.find('#travelTo-1').attr('id', `travelTo-${expenseCount}`).attr('name', `travel_to[]`);
+            newExpense.find('#travelDate-1').attr('id', `travelDate-${expenseCount}`).attr('name', `travel_date[]`);
+            newExpense.find('#km-container-1').attr('id', `km-container-${expenseCount}`);
+            newExpense.find('#travelKm-1').attr('id', `travelKm-${expenseCount}`).attr('name', `travel_km[]`);
+            newExpense.find('#receipt-help-1').attr('id', `receipt-help-${expenseCount}`);
+
             // Update the header attributes
             newExpense.find(".expense-header").attr("data-bs-target", `#expense-${expenseCount}-content`);
 
@@ -1024,6 +1141,10 @@
             // Collapse all existing expense items except the first one
             $(".expense-item:not(#expense-1) .collapse").collapse('hide');
 
+            // Check if first expense has domestic travel selected
+            const firstExpenseTravelType = $('#travelType-1').val();
+            const isDomesticTravelMode = firstExpenseTravelType === 'domestic';
+            
             // Insert the new expense item
             $("#expenseItems").append(newExpense);
 
@@ -1040,6 +1161,30 @@
             } else {
                 // Update header for standard expense
                 newExpense.find("h6").text(`Expense #${expenseCount}`);
+                
+                // If first expense is domestic travel, show only travel details for new expenses
+                if (isDomesticTravelMode) {
+                    // Hide standard expense fields and show only travel fields
+                    newExpense.find('#standard-amount-row-' + expenseCount).hide();
+                    newExpense.find('#domestic-amount-row-' + expenseCount).show();
+                    newExpense.find('#amount-' + expenseCount).prop('required', false);
+                    newExpense.find('#domestic-amount-' + expenseCount).prop('required', true);
+                    
+                    // Show travel fields by default
+                    newExpense.find('#travel-fields-' + expenseCount).show();
+                    newExpense.find('#travel-fields-' + expenseCount + ' select, #travel-fields-' + expenseCount + ' input').prop('required', true);
+                    
+                    // Set travel type to domestic by default
+                    newExpense.find('#travelType-' + expenseCount).val('domestic');
+                    
+                    // Hide KM field for domestic travel
+                    newExpense.find('#km-container-' + expenseCount).hide();
+                    newExpense.find('#travelKm-' + expenseCount).prop('required', false);
+                    
+                    // Make receipt required for domestic travel
+                    newExpense.find('#receipt-' + expenseCount).prop('required', true);
+                    newExpense.find('#receipt-help-' + expenseCount).text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                }
             }
 
             // Datepicker will be initialized separately by our initializeNewExpenseDatepicker function
@@ -1070,7 +1215,7 @@
             });
 
             // Add event listener for the new amount input (works for both expense and allocation amounts)
-            $(`#amount-${expenseCount}, #allocationAmount-${expenseCount}`).on("input", updateTotalAmount);
+            $(`#amount-${expenseCount}, #allocationAmount-${expenseCount}, #domestic-amount-${expenseCount}`).on("input", updateTotalAmount);
 
             // Show the new expense item
             $(`#expense-${expenseCount}-content`).collapse('show');
@@ -1120,6 +1265,140 @@
         $(document).on("input", ".amount-input, input[name='allocation_amount[]']", function() {
             updateTotalAmount();
             updateSplitValidation();
+        });
+
+        // Travel expense functionality
+        $(document).on("change", "select[name='expense_head[]']", function() {
+            const expenseId = $(this).attr('id').split('-')[1];
+            const selectedHead = $(this).val();
+            const travelFields = $(`#travel-fields-${expenseId}`);
+            const head = selectedHead ? selectedHead.trim().toLowerCase() : '';
+            if (head.includes('travel') || head === 'local conveyance') {
+                // Show travel fields with animation
+                travelFields.addClass('show').show();
+                // Make travel fields required
+                travelFields.find('select, input').prop('required', true);
+                // Update receipt help text for travel
+                $(`#receipt-help-${expenseId}`).text('Receipt upload is mandatory for travel expenses. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                // If Local Conveyance or Domestic Travel, set and disable Travel Type
+                const travelTypeSelect = $(`#travelType-${expenseId}`);
+                // Always remove any existing hidden travel_type input for this row
+                $(`#hidden-travel-type-${expenseId}`).remove();
+                if (head === 'local conveyance') {
+                    travelTypeSelect.val('local').prop('disabled', true).trigger('change');
+                    travelTypeSelect.after(`<input type="hidden" id="hidden-travel-type-${expenseId}" name="travel_type[]" value="local">`);
+                } else if (head === 'domestic travel') {
+                    travelTypeSelect.val('domestic').prop('disabled', true).trigger('change');
+                    travelTypeSelect.after(`<input type="hidden" id="hidden-travel-type-${expenseId}" name="travel_type[]" value="domestic">`);
+                } else if (head === 'international travel') {
+                    travelTypeSelect.val('international').prop('disabled', true).trigger('change');
+                    travelTypeSelect.after(`<input type="hidden" id="hidden-travel-type-${expenseId}" name="travel_type[]" value="international">`);
+                } else {
+                    travelTypeSelect.prop('disabled', false);
+                }
+                // Scroll to travel fields for better UX
+                setTimeout(() => {
+                    $('html, body').animate({
+                        scrollTop: travelFields.offset().top - 100
+                    }, 500);
+                }, 300);
+            } else {
+                // Hide travel fields with animation
+                travelFields.addClass('hide');
+                setTimeout(() => {
+                    travelFields.hide().removeClass('show hide');
+                    travelFields.find('select, input').prop('required', false);
+                    // Re-enable travel type select and clear value
+                    $(`#travelType-${expenseId}`).prop('disabled', false).val('');
+                }, 300);
+                // Reset receipt help text
+                $(`#receipt-help-${expenseId}`).text('Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+            }
+        });
+
+        // Handle travel type change
+        $(document).on("change", ".travel-type-select", function() {
+            const expenseId = $(this).attr('id').split('-')[1];
+            const travelType = $(this).val();
+            const kmContainer = $(`#km-container-${expenseId}`);
+            const kmInput = $(`#travelKm-${expenseId}`);
+            const receiptInput = $(`#receipt-${expenseId}`);
+            const receiptHelp = $(`#receipt-help-${expenseId}`);
+            const standardAmountRow = $(`#standard-amount-row-${expenseId}`);
+            const domesticAmountRow = $(`#domestic-amount-row-${expenseId}`);
+            const standardAmountInput = $(`#amount-${expenseId}`);
+            const domesticAmountInput = $(`#domestic-amount-${expenseId}`);
+            
+            if (travelType === 'local') {
+                // Show KM field for local travel
+                kmContainer.show();
+                kmInput.prop('required', true);
+                
+                // Show standard amount field, hide domestic amount field
+                standardAmountRow.show();
+                domesticAmountRow.hide();
+                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
+                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
+                
+                // Check mode to determine receipt requirement
+                const travelMode = $(`#travelMode-${expenseId}`).val();
+                if (travelMode && (travelMode === 'car' || travelMode === 'bike')) {
+                    // For car/bike, receipt is not required
+                    receiptInput.prop('required', false);
+                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                } else {
+                    // For other modes, receipt is required
+                    receiptInput.prop('required', true);
+                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                }
+            } else if (travelType === 'domestic') {
+                // Hide KM field for domestic travel
+                kmContainer.hide();
+                kmInput.prop('required', false);
+                kmInput.val(''); // Clear KM value
+                
+                // Show standard amount field, hide domestic amount field
+                standardAmountRow.show();
+                domesticAmountRow.hide();
+                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
+                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
+                
+                // Receipt is always mandatory for domestic travel
+                receiptInput.prop('required', true);
+                receiptHelp.text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+            } else {
+                // Reset to default state
+                kmContainer.hide();
+                kmInput.prop('required', false);
+                standardAmountRow.show();
+                domesticAmountRow.hide();
+                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
+                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
+                receiptInput.prop('required', true);
+                receiptHelp.text('Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+            }
+        });
+
+        // Handle travel mode change
+        $(document).on("change", ".travel-mode-select", function() {
+            const expenseId = $(this).attr('id').split('-')[1];
+            const travelMode = $(this).val();
+            const travelType = $(`#travelType-${expenseId}`).val();
+            const receiptInput = $(`#receipt-${expenseId}`);
+            const receiptHelp = $(`#receipt-help-${expenseId}`);
+            
+            if (travelType === 'local') {
+                if (travelMode === 'car' || travelMode === 'bike') {
+                    // For car/bike in local travel, receipt is not required
+                    receiptInput.prop('required', false);
+                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                } else {
+                    // For other modes in local travel, receipt is required
+                    receiptInput.prop('required', true);
+                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                }
+            }
+            // For domestic travel, receipt is always required regardless of mode
         });
 
         // File validation on file input change
@@ -2551,11 +2830,84 @@
                     const isSplitFromSameInvoice = $(`#splitInvoiceHidden-${expenseId}`).val() === "1";
                     if (!isSplitFromSameInvoice) {
                         const receipt = $(`#receipt-${expenseId}`)[0];
-                        if (!receipt || !receipt.files || receipt.files.length === 0) {
+                        const expenseHead = $(`#expenseHead-${expenseId}`).val();
+                        const isTravelExpense = expenseHead && expenseHead.toLowerCase().includes('travel');
+                        
+                        // Check if receipt is required based on travel type and mode
+                        let receiptRequired = true;
+                        if (isTravelExpense) {
+                            const travelType = $(`#travelType-${expenseId}`).val();
+                            const travelMode = $(`#travelMode-${expenseId}`).val();
+                            
+                            if (travelType === 'local' && (travelMode === 'car' || travelMode === 'bike')) {
+                                receiptRequired = false; // Optional for car/bike in local travel
+                            }
+                        }
+                        
+                        if (receiptRequired && (!receipt || !receipt.files || receipt.files.length === 0)) {
                             validationErrors.push(`Expense #${expenseId}: Receipt is required`);
                             addFieldError(`receipt-${expenseId}`, "Please upload a receipt");
                             if (!firstErrorField) firstErrorField = $(`#receipt-${expenseId}`);
                             itemValid = false;
+                        }
+                    }
+                    
+                    // Validate travel fields if this is a travel expense
+                    const expenseHead = $(`#expenseHead-${expenseId}`).val();
+                    if (expenseHead && expenseHead.toLowerCase().includes('travel')) {
+                        // Validate travel type
+                        const travelType = $(`#travelType-${expenseId}`).val();
+                        if (!travelType) {
+                            validationErrors.push(`Expense #${expenseId}: Travel Type is required`);
+                            addFieldError(`travelType-${expenseId}`, "Please select travel type");
+                            if (!firstErrorField) firstErrorField = $(`#travelType-${expenseId}`);
+                            itemValid = false;
+                        }
+                        
+                        // Validate travel mode
+                        const travelMode = $(`#travelMode-${expenseId}`).val();
+                        if (!travelMode) {
+                            validationErrors.push(`Expense #${expenseId}: Mode of Travel is required`);
+                            addFieldError(`travelMode-${expenseId}`, "Please select mode of travel");
+                            if (!firstErrorField) firstErrorField = $(`#travelMode-${expenseId}`);
+                            itemValid = false;
+                        }
+                        
+                        // Validate travel date
+                        const travelDate = $(`#travelDate-${expenseId}`).val();
+                        if (!travelDate) {
+                            validationErrors.push(`Expense #${expenseId}: Travel Date is required`);
+                            addFieldError(`travelDate-${expenseId}`, "Please select travel date");
+                            if (!firstErrorField) firstErrorField = $(`#travelDate-${expenseId}`);
+                            itemValid = false;
+                        }
+                        
+                        // Validate from and to locations
+                        const travelFrom = $(`#travelFrom-${expenseId}`).val();
+                        if (!travelFrom || travelFrom.trim() === "") {
+                            validationErrors.push(`Expense #${expenseId}: From location is required`);
+                            addFieldError(`travelFrom-${expenseId}`, "Please enter source location");
+                            if (!firstErrorField) firstErrorField = $(`#travelFrom-${expenseId}`);
+                            itemValid = false;
+                        }
+                        
+                        const travelTo = $(`#travelTo-${expenseId}`).val();
+                        if (!travelTo || travelTo.trim() === "") {
+                            validationErrors.push(`Expense #${expenseId}: To location is required`);
+                            addFieldError(`travelTo-${expenseId}`, "Please enter destination location");
+                            if (!firstErrorField) firstErrorField = $(`#travelTo-${expenseId}`);
+                            itemValid = false;
+                        }
+                        
+                        // Validate KM for local travel
+                        if (travelType === 'local') {
+                            const travelKm = $(`#travelKm-${expenseId}`).val();
+                            if (!travelKm || parseFloat(travelKm) <= 0) {
+                                validationErrors.push(`Expense #${expenseId}: Distance (KM) is required for local travel`);
+                                addFieldError(`travelKm-${expenseId}`, "Please enter distance in KM");
+                                if (!firstErrorField) firstErrorField = $(`#travelKm-${expenseId}`);
+                                itemValid = false;
+                            }
                         }
                     }
                 }
@@ -3461,7 +3813,8 @@
                         </select>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <!-- Standard Amount field (shown by default) -->
+                <div class="row mb-3" id="standard-amount-row-${expenseId}">
                     <div class="col-12">
                         <label for="amount-${expenseId}" class="form-label required-field">Amount (₹)</label>
                         <div class="input-group">
@@ -3476,14 +3829,68 @@
                         <textarea class="form-control" id="description-${expenseId}" name="description[]" rows="2" placeholder="Enter description" required></textarea>
                     </div>
                 </div>
+                
+                <!-- Travel Fields (initially hidden) -->
+                <div class="travel-fields" id="travel-fields-${expenseId}" style="display: none;">
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="travelType-${expenseId}" class="form-label required-field">Travel Type</label>
+                            <select class="form-select travel-type-select" id="travelType-${expenseId}" name="travel_type[]">
+                                <option value="">Select Travel Type</option>
+                                <option value="local">Local Travel</option>
+                                <option value="domestic">Domestic Travel</option>
+                                <option value="international">International Travel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="travelMode-${expenseId}" class="form-label required-field">Mode of Travel</label>
+                            <select class="form-select travel-mode-select" id="travelMode-${expenseId}" name="travel_mode[]">
+                                <option value="">Select Mode</option>
+                                <option value="car">Car</option>
+                                <option value="bike">Bike</option>
+                                <option value="bus">Bus</option>
+                                <option value="train">Train</option>
+                                <option value="flight">Flight</option>
+                                <option value="taxi">Taxi</option>
+                                <option value="auto">Auto</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="travelFrom-${expenseId}" class="form-label required-field">From</label>
+                            <input type="text" class="form-control" id="travelFrom-${expenseId}" name="travel_from[]" placeholder="Enter source location">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="travelTo-${expenseId}" class="form-label required-field">To</label>
+                            <input type="text" class="form-control" id="travelTo-${expenseId}" name="travel_to[]" placeholder="Enter destination location">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="travelDate-${expenseId}" class="form-label required-field">Travel Date</label>
+                            <input type="date" class="form-control datepicker-only" id="travelDate-${expenseId}" name="travel_date[]">
+                        </div>
+                        <div class="col-md-6" id="km-container-${expenseId}">
+                            <label for="travelKm-${expenseId}" class="form-label required-field">Distance (KM)</label>
+                            <input type="number" class="form-control" id="travelKm-${expenseId}" name="travel_km[]" placeholder="Enter distance in KM" min="0" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-12">
                         <label for="receipt-${expenseId}" class="form-label required-field">Upload Receipt</label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[]" accept=".pdf,.jpg,.jpeg,.png" required>
-                            <label class="input-group-text" for="receipt-${expenseId}"><i class="fas fa-upload"></i></label>
+                        <div id="expense-files-${expenseId}" class="expense-files mb-2">
+                            <div class="input-group mb-2">
+                                <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[${expenseId}][]" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <label class="input-group-text" for="receipt-${expenseId}"><i class="fas fa-upload"></i></label>
+                            </div>
                         </div>
-                        <div class="form-text">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
+                        <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(${expenseId})">Add Page</button>
+                        <span id="file-limit-msg-${expenseId}" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
+                        <div class="form-text" id="receipt-help-${expenseId}">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                     </div>
                 </div>
                 <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-${expenseId}" style="display: none;">
@@ -3625,6 +4032,60 @@
                 $('label[for="acknowledgementCheck"]').text('I declare that I have verified the invoice against the vendor contract.');
             }
         });
+
+        // On page load, check if Domestic Travel is already selected and adjust Amount fields
+        function adjustAmountFieldOnLoad() {
+            const travelType = document.getElementById('travelType-1');
+            if (travelType && travelType.value === 'domestic') {
+                document.getElementById('standard-amount-row-1').style.display = 'none';
+                document.getElementById('domestic-amount-row-1').style.display = '';
+            } else {
+                document.getElementById('standard-amount-row-1').style.display = '';
+                document.getElementById('domestic-amount-row-1').style.display = 'none';
+            }
+        }
+        adjustAmountFieldOnLoad();
+        // Also run this whenever the travel type changes
+        $(document).on('change', '#travelType-1', function() {
+            adjustAmountFieldOnLoad();
+        });
+
+        // Add this helper function in the JS section
+        function updateExpenseHeadOptionsForAll() {
+            const allowedHeads = ['Local Conveyance', 'Domestic Travel'];
+            const firstHead = $('#expenseHead-1').val();
+            const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
+            $("select[name='expense_head[]']").each(function(idx) {
+                if (idx === 0) return; // Skip the first
+                const currentVal = $(this).val();
+                if (restrict) {
+                    $(this).empty();
+                    $(this).append('<option value="">Select Expense Head</option>');
+                    allowedHeads.forEach(h => {
+                        $(this).append(`<option value="${h}">${h}</option>`);
+                    });
+                    if (allowedHeads.includes(currentVal)) {
+                        $(this).val(currentVal);
+                    } else {
+                        $(this).val('');
+                    }
+                } else {
+                    // Restore all options from the first dropdown
+                    const allOptions = $('#expenseHead-1 option').clone();
+                    $(this).empty().append(allOptions);
+                    $(this).val(currentVal);
+                }
+            });
+        }
+        // Save the full set of options on page load
+        $(document).ready(function() {
+            window.allExpenseHeadOptions = $('#expenseHead-1').html();
+        });
+        // ... existing code ...
+        // After appending a new expense item:
+        $("#expenseItems").append(newExpense);
+        updateExpenseHeadOptionsForAll();
+        // ... existing code ...
     });
 
     function addPageInput(expenseId) {
@@ -3668,5 +4129,152 @@
             document.getElementById(`file-limit-msg-${expenseId}`).style.display = 'inline';
         }
     }
+
+    // ... existing code ...
+    function updateExpenseHeadOptionsForAll() {
+        const allowedHeads = ['Local Conveyance', 'Domestic Travel'];
+        const firstHead = $('#expenseHead-1').val();
+        const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
+        $("select[name='expense_head[]']").each(function(idx) {
+            if (idx === 0) return; // Skip the first
+            const currentVal = $(this).val();
+            if (restrict) {
+                $(this).empty();
+                $(this).append('<option value="">Select Expense Head</option>');
+                allowedHeads.forEach(h => {
+                    $(this).append(`<option value="${h}">${h}</option>`);
+                });
+                if (allowedHeads.includes(currentVal)) {
+                    $(this).val(currentVal);
+                } else {
+                    $(this).val('');
+                }
+            } else {
+                // Restore all options from the first dropdown
+                const allOptions = $('#expenseHead-1 option').clone();
+                $(this).empty().append(allOptions);
+                $(this).val(currentVal);
+            }
+        });
+    }
+    // ... existing code ...
+    // Call updateExpenseHeadOptionsForAll() whenever the first expense head changes or a new row is added
+    $(document).on('change', '#expenseHead-1', updateExpenseHeadOptionsForAll);
+    $('#addExpenseBtn').on('click', function() {
+        setTimeout(updateExpenseHeadOptionsForAll, 150);
+    });
+    // ... existing code ...
+
+    $(document).on('change', '.travel-type-select', function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const travelType = $(this).val();
+        const travelModeSelect = $(`#travelMode-${expenseId}`);
+        // Save current value
+        const currentVal = travelModeSelect.val();
+        // Define allowed options
+        const localOptions = [
+            { value: 'car', label: 'Car' },
+            { value: 'bike', label: 'Bike' },
+            { value: 'ola_uber', label: 'Ola / Uber' },
+            { value: 'auto', label: 'Auto' },
+            { value: 'train', label: 'Train' },
+            { value: 'taxi', label: 'Taxi' }
+        ];
+        const domesticOptions = [
+            { value: 'ola_uber', label: 'Ola / Uber' },
+            { value: 'auto', label: 'Auto' },
+            { value: 'train', label: 'Train' },
+            { value: 'taxi', label: 'Taxi' }
+        ];
+        const allOptions = [
+            { value: '', label: 'Select Mode' },
+            { value: 'car', label: 'Car' },
+            { value: 'bike', label: 'Bike' },
+            { value: 'ola_uber', label: 'Ola / Uber' },
+            { value: 'auto', label: 'Auto' },
+            { value: 'bus', label: 'Bus' },
+            { value: 'train', label: 'Train' },
+            { value: 'flight', label: 'Flight' },
+            { value: 'taxi', label: 'Taxi' },
+            { value: 'other', label: 'Other' }
+        ];
+        // Update options based on travel type
+        if (travelType === 'local') {
+            travelModeSelect.empty();
+            travelModeSelect.append('<option value="">Select Mode</option>');
+            localOptions.forEach(opt => {
+                travelModeSelect.append(`<option value="${opt.value}">${opt.label}</option>`);
+            });
+        } else if (travelType === 'domestic') {
+            travelModeSelect.empty();
+            travelModeSelect.append('<option value="">Select Mode</option>');
+            domesticOptions.forEach(opt => {
+                travelModeSelect.append(`<option value="${opt.value}">${opt.label}</option>`);
+            });
+        } else {
+            // Restore all options
+            travelModeSelect.empty();
+            allOptions.forEach(opt => {
+                travelModeSelect.append(`<option value="${opt.value}">${opt.label}</option>`);
+            });
+        }
+        // Restore value if still allowed
+        if (travelModeSelect.find(`option[value='${currentVal}']`).length) {
+            travelModeSelect.val(currentVal);
+        } else {
+            travelModeSelect.val('');
+        }
+    });
+    // ... existing code ...
+
+    // Inject car and bike allowance values from backend as numbers
+    
+
+    // Function to auto-calculate amount for Car/Bike
+    function autoCalculateAmount(expenseId) {
+        const mode = $(`#travelMode-${expenseId}`).val();
+        const km = parseFloat($(`#travelKm-${expenseId}`).val());
+        const amountInput = $(`#amount-${expenseId}`);
+        if ((mode === 'car' || mode === 'bike') && !isNaN(km) && km > 0) {
+            let rate = 0;
+            if (mode === 'car') rate = CAR_ALLOWANCE;
+            if (mode === 'bike') rate = BIKE_ALLOWANCE;
+            const amt = (rate * km).toFixed(2);
+            amountInput.val(amt).prop('readonly', true);
+        } else {
+            amountInput.val('').prop('readonly', false);
+        }
+    }
+
+    // Listen for changes to mode or distance
+    $(document).on('change input', "select[name='travel_mode[]'], input[name='travel_km[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        autoCalculateAmount(expenseId);
+    });
+
+    // Also, when travel type changes, re-run calculation (in case mode resets)
+    $(document).on('change', '.travel-type-select', function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        autoCalculateAmount(expenseId);
+    });
+
+    // When a new expense row is added, ensure calculation is set up
+    $('#addExpenseBtn').on('click', function() {
+        setTimeout(function() {
+            const expenseId = $('.expense-item').length;
+            autoCalculateAmount(expenseId);
+        }, 200);
+    });
+
+    $(document).on('blur', "input[name='travel_km[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const kmValue = $(this).val();
+        const mode = $(`#travelMode-${expenseId}`).val();
+        let rate = 0;
+        if (mode === 'car') rate = CAR_ALLOWANCE;
+        if (mode === 'bike') rate = BIKE_ALLOWANCE;
+        const calcAmount = (!isNaN(parseFloat(kmValue)) && parseFloat(kmValue) > 0) ? (rate * parseFloat(kmValue)).toFixed(2) : 0;
+        console.log(`DEBUG: Distance (KM) field for expense #${expenseId} lost focus. Value: ${kmValue}, Mode: ${mode}, Rate: ${rate}, Calculated Amount: ${calcAmount}`);
+    });
 </script>
 {% endblock %}

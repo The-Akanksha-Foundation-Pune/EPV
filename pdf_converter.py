@@ -345,7 +345,7 @@ def generate_expense_document(expense_data):
             elements.append(Paragraph("Expense Details", subtitle_style))
             elements.append(Spacer(1, 0.25*inch))
 
-            # Add expenses table with improved styling
+            # Always use the table without the 'Travel Details' column
             expense_data = [['#', 'Date', 'Expense Head', 'Description', 'Amount (Rs.)']]
 
             for i, expense in enumerate(data.get('expenses', [])):
@@ -385,13 +385,12 @@ def generate_expense_document(expense_data):
                     expense_head_para,
                     description_para,
                     expense.get('amount', '')
-                ])
+                ])  # type: ignore
 
             # Add total row
             expense_data.append(['', '', '', 'Total:', data.get('total_amount', '')])
 
-            # Use fixed column widths optimized for text wrapping
-            # Total available width is approximately 7.5 inches (8.5 - 1 for margins)
+            # Use fixed column widths optimized for text wrapping (without Travel Details column)
             col_widths = [
                 0.4*inch,   # # column - narrow
                 0.9*inch,   # Date column - adequate for dates
@@ -441,6 +440,61 @@ def generate_expense_document(expense_data):
             ]))
             elements.append(expense_table)
             elements.append(Spacer(1, 0.25*inch))
+
+            # Add Travel Details table if there are any travel expenses
+            travel_expenses = [
+                expense for expense in data.get('expenses', [])
+                if expense.get('travel_type') or expense.get('travel_mode') or expense.get('travel_from') or expense.get('travel_to') or expense.get('travel_date') or expense.get('travel_km')
+            ]
+
+            if travel_expenses:
+                elements.append(Paragraph("Travel Details", subtitle_style))
+                elements.append(Spacer(1, 0.15*inch))
+
+                travel_data = [['#', 'Type', 'Mode', 'From', 'To', 'Date', 'KM']]
+                for i, expense in enumerate(travel_expenses):
+                    travel_date = expense.get('travel_date', '')
+                    try:
+                        if isinstance(travel_date, datetime):
+                            travel_date = travel_date.strftime('%d-%m-%Y')
+                        elif isinstance(travel_date, str) and travel_date and '-' in travel_date:
+                            if len(travel_date.split('-')[0]) == 4:
+                                date_obj = datetime.strptime(travel_date, '%Y-%m-%d')
+                                travel_date = date_obj.strftime('%d-%m-%Y')
+                    except Exception as e:
+                        print(f"Error formatting travel date: {e}")
+                    # Ensure all values are strings and not Paragraph or datetime
+                    row = [
+                        str(i+1),
+                        str(expense.get('travel_type', '') or ''),
+                        str(expense.get('travel_mode', '') or ''),
+                        str(expense.get('travel_from', '') or ''),
+                        str(expense.get('travel_to', '') or ''),
+                        str(travel_date or ''),
+                        str(expense.get('travel_km', '') or '')
+                    ]
+                    row = [str(x) if not isinstance(x, str) else x for x in row]
+                    travel_data.append(row)
+
+                travel_table = Table(
+                    travel_data,
+                    colWidths=[0.4*inch, 1*inch, 1*inch, 1.2*inch, 1.2*inch, 1*inch, 0.7*inch],
+                    rowHeights=[0.4*inch] + [0.3*inch] * (len(travel_data) - 1),
+                    repeatRows=1
+                )
+                travel_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                    ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    *[(('BACKGROUND', (0, i), (-1, i), colors.lightgrey)) for i in range(2, len(travel_data), 2)],
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('PADDING', (0, 0), (-1, -1), 4),
+                ]))
+                elements.append(travel_table)
+                elements.append(Spacer(1, 0.25*inch))
 
             # Add split invoice allocation details if this is a split invoice
             if data.get('is_split_invoice') and data.get('split_allocations'):
@@ -625,8 +679,7 @@ def convert_to_pdf(file_path):
                     try:
                         # Open image with PIL to check EXIF
                         with Image.open(file_path) as img:
-                            # Check if image has EXIF data
-                            if hasattr(img, '_getexif') and img._getexif() is not None:
+                            if hasattr(img, '_getexif') and callable(getattr(img, '_getexif', None)):
                                 exif = img._getexif()
                                 if exif is not None:
                                     orientation = exif.get(274)
@@ -662,7 +715,7 @@ def convert_to_pdf(file_path):
                 # Handle EXIF orientation for mobile photos
                 try:
                     # Check if image has EXIF data
-                    if hasattr(image, '_getexif') and image._getexif() is not None:
+                    if hasattr(image, '_getexif') and callable(getattr(image, '_getexif', None)):
                         exif = image._getexif()
                         if exif is not None:
                             # Get orientation tag (274 is the orientation tag)
@@ -858,11 +911,23 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
 
     print(f"DEBUG: process_files called with {len(files)} files")
     for i, file in enumerate(files):
-        print(f"DEBUG: File {i+1}: {file.filename if hasattr(file, 'filename') else 'No filename'}")
-        if hasattr(file, 'filename') and file.filename:
+        if hasattr(file, 'filename'):
+            print(f"DEBUG: File {i+1}: {file.filename}")
             print(f"DEBUG:   File type: {type(file)}")
-            print(f"DEBUG:   File size: {len(file.read()) if hasattr(file, 'read') else 'Unknown'} bytes")
-            file.seek(0)  # Reset file pointer
+            try:
+                if hasattr(file, 'read'):
+                    file_size = len(file.read())
+                    print(f"DEBUG:   File size: {file_size} bytes")
+                    if hasattr(file, 'seek'):
+                        file.seek(0)
+                else:
+                    print(f"DEBUG:   File size: Unknown (no read method)")
+            except Exception as e:
+                print(f"DEBUG: Error reading file size: {e}")
+        elif isinstance(file, str):
+            print(f"DEBUG: File {i+1}: {file}")
+        else:
+            print(f"DEBUG: File {i+1}: No filename")
 
     # Track processing results for each file
     processing_results = []
@@ -930,9 +995,12 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
                     temp_file.close()
 
                     # Save the file to temporary location
-                    file.save(file_path)
-                    saved_files.append(file_path)
-                    file_result['saved_path'] = file_path
+                    if hasattr(file, 'save'):
+                        file.save(file_path)
+                        saved_files.append(file_path)
+                        file_result['saved_path'] = file_path
+                    else:
+                        raise Exception('File object does not have save method')
 
                     # Convert to PDF
                     pdf_path = convert_to_pdf(file_path)
@@ -948,15 +1016,16 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
                         file_result['error'] = 'Failed to convert file to PDF'
 
                 except Exception as e:
-                    error_msg = f"Error processing file {file.filename}: {str(e)}"
+                    error_msg = f"Error processing file {file.filename if hasattr(file, 'filename') else 'Unknown'}: {str(e)}"
                     print(error_msg)
                     file_result['error'] = error_msg
 
                 processing_results.append(file_result)
             else:
                 # Invalid file
+                filename = file.filename if hasattr(file, 'filename') and file.filename else (file if isinstance(file, str) else 'Unknown file')
                 processing_results.append({
-                    'filename': file.filename if hasattr(file, 'filename') and file.filename else 'Unknown file',
+                    'filename': filename,
                     'success': False,
                     'error': 'Invalid file or file type not allowed',
                     'saved_path': None,

@@ -6,7 +6,7 @@ This will create all EPV tables and populate them with initial data
 import os
 import sys
 from flask import Flask
-from dotenv import load_dotenv
+import urllib.parse
 
 # Add current directory to path so we can import models
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -14,30 +14,29 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import our models and init_db function
 from models import db, init_db
 
+# Fetch DB credentials from environment variables
+DB_HOST = os.environ.get('DB_HOST')
+DB_USER = os.environ.get('DB_USER')
+DB_PASSWORD = os.environ.get('DB_PASSWORD')
+DB_NAME = os.environ.get('DB_NAME')
+DB_PORT = os.environ.get('DB_PORT')
+
+# Example for SQLAlchemy URI (adjust as needed for your DB type)
+if DB_HOST and DB_USER and DB_PASSWORD and DB_NAME:
+    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT or 3306}/{DB_NAME}"
+else:
+    # Fallback to SQLite for local dev if env vars are not set
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///epv.db'
+
+
 def create_app_for_server():
     """Create Flask app configured for server database"""
     
     # Create Flask app
     app = Flask(__name__)
     
-    # Server database configuration
-    server_db_config = {
-        'host': '190.92.174.212',
-        'port': 3306,
-        'user': 'webappor_IT',
-        'password': 'Motoming@123',
-        'database': 'webappor_AFDW'
-    }
-
-    # URL encode the password to handle special characters like @
-    import urllib.parse
-    encoded_password = urllib.parse.quote_plus(server_db_config['password'])
-
-    # Construct database URI for server
-    db_uri = f"mysql+pymysql://{server_db_config['user']}:{encoded_password}@{server_db_config['host']}:{server_db_config['port']}/{server_db_config['database']}"
-    
     # Configure Flask app
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.secret_key = 'temp-secret-for-init'
     
@@ -45,9 +44,9 @@ def create_app_for_server():
     db.init_app(app)
     
     print(f"✅ Flask app configured for server database")
-    print(f"   Host: {server_db_config['host']}")
-    print(f"   Database: {server_db_config['database']}")
-    print(f"   User: {server_db_config['user']}")
+    print(f"   Host: {DB_HOST}")
+    print(f"   Database: {DB_NAME}")
+    print(f"   User: {DB_USER}")
     
     return app
 

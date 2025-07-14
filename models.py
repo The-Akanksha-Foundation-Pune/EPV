@@ -531,6 +531,14 @@ class EPVItem(db.Model):
 
     # Split invoice flag
     split_invoice = db.Column(db.Boolean, default=False)
+    
+    # Travel expense fields
+    travel_type = db.Column(db.String(20), nullable=True)  # 'local', 'domestic'
+    travel_mode = db.Column(db.String(50), nullable=True)  # 'car', 'bike', 'bus', 'train', 'flight', 'taxi', 'auto', 'other'
+    travel_from = db.Column(db.String(100), nullable=True)  # Source location
+    travel_to = db.Column(db.String(100), nullable=True)    # Destination location
+    travel_date = db.Column(db.Date, nullable=True)         # Travel date
+    travel_km = db.Column(db.Float, nullable=True)          # Distance in kilometers (for local travel)
 
     def __repr__(self):
         return f"<EPVItem {self.id} for EPV {self.epv_id}>"

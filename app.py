@@ -2581,6 +2581,54 @@ def new_expense():
                             'description': descriptions[i],
                             'split_invoice': is_split
                         }
+                        
+                        # Add travel data if this is a travel expense
+                        if expense_heads[i] and (
+                            'travel' in expense_heads[i].lower() or
+                            expense_heads[i].strip().lower() == 'local conveyance' or
+                            expense_heads[i].strip().lower() == 'domestic travel' or
+                            expense_heads[i].strip().lower() == 'international travel'
+                        ):
+                            # Get travel fields from form data
+                            travel_types = request.form.getlist('travel_type[]')
+                            travel_modes = request.form.getlist('travel_mode[]')
+                            travel_froms = request.form.getlist('travel_from[]')
+                            travel_tos = request.form.getlist('travel_to[]')
+                            travel_dates = request.form.getlist('travel_date[]')
+                            travel_kms = request.form.getlist('travel_km[]')
+                            
+                            print(f"DEBUG: Processing travel expense #{i+1} - Head: {expense_heads[i]}")
+                            print(f"DEBUG: Travel form data for expense #{i+1}:")
+                            print(f"  - travel_types: {travel_types}")
+                            print(f"  - travel_modes: {travel_modes}")
+                            print(f"  - travel_froms: {travel_froms}")
+                            print(f"  - travel_tos: {travel_tos}")
+                            print(f"  - travel_dates: {travel_dates}")
+                            print(f"  - travel_kms: {travel_kms}")
+                            print(f"  - Current index i: {i}")
+                            print(f"  - Length of travel_types: {len(travel_types)}")
+                            
+                            if i < len(travel_types):
+                                expense['travel_type'] = travel_types[i]
+                                expense['travel_mode'] = travel_modes[i] if i < len(travel_modes) else ''
+                                expense['travel_from'] = travel_froms[i] if i < len(travel_froms) else ''
+                                expense['travel_to'] = travel_tos[i] if i < len(travel_tos) else ''
+                                expense['travel_date'] = travel_dates[i] if i < len(travel_dates) else ''
+                                expense['travel_km'] = travel_kms[i] if i < len(travel_kms) else ''
+                                
+                                print(f"DEBUG: Successfully added travel data for expense #{i+1}:")
+                                print(f"  - travel_type: {expense['travel_type']}")
+                                print(f"  - travel_mode: {expense['travel_mode']}")
+                                print(f"  - travel_from: {expense['travel_from']}")
+                                print(f"  - travel_to: {expense['travel_to']}")
+                                print(f"  - travel_date: {expense['travel_date']}")
+                                print(f"  - travel_km: {expense['travel_km']}")
+                            else:
+                                print(f"DEBUG: Index {i} is out of range for travel_types (length: {len(travel_types)})")
+                                print(f"DEBUG: No travel data will be added for expense #{i+1}")
+                        else:
+                            print(f"DEBUG: Expense #{i+1} is not a travel expense (head: {expense_heads[i]})")
+                        
                         expense_data['expenses'].append(expense)
                         print(f"DEBUG: Added expense item: {expense}")
             # Old format (expenses[i][field])
@@ -2594,6 +2642,23 @@ def new_expense():
                         'description': request.form.get(f'expenses[{i}][description]'),
                         'split_invoice': request.form.get(f'expenses[{i}][split_invoice]') == '1'
                     }
+                    
+                    # Add travel data if this is a travel expense
+                    if expense['expense_head'] and (
+                        'travel' in expense['expense_head'].lower() or
+                        expense['expense_head'].strip().lower() == 'local conveyance' or
+                        expense['expense_head'].strip().lower() == 'domestic travel' or
+                        expense['expense_head'].strip().lower() == 'international travel'
+                    ):
+                        expense['travel_type'] = request.form.get(f'expenses[{i}][travel_type]', '')
+                        expense['travel_mode'] = request.form.get(f'expenses[{i}][travel_mode]', '')
+                        expense['travel_from'] = request.form.get(f'expenses[{i}][travel_from]', '')
+                        expense['travel_to'] = request.form.get(f'expenses[{i}][travel_to]', '')
+                        expense['travel_date'] = request.form.get(f'expenses[{i}][travel_date]', '')
+                        expense['travel_km'] = request.form.get(f'expenses[{i}][travel_km]', '')
+                        
+                        print(f"DEBUG: Added travel data for expense #{i+1} (old format): {expense['travel_type']} - {expense['travel_mode']}")
+                    
                     expense_data['expenses'].append(expense)
                     i += 1
 
@@ -2848,15 +2913,60 @@ def new_expense():
                 db.session.flush()  # Get the ID without committing
 
                 # Add expense items
-                for expense in expense_data['expenses']:
+                for idx, expense in enumerate(expense_data['expenses']):
+                    try:
+                        amount = float(expense['amount'])
+                    except (ValueError, TypeError):
+                        db.session.rollback()
+                        error_msg = f"Amount for expense #{idx+1} ('{expense.get('expense_head', '')}') is missing or invalid. Please enter a valid number."
+                        print(f"ERROR: {error_msg}")
+                        return jsonify({
+                            'success': False,
+                            'message': error_msg,
+                            'error': error_msg
+                        })
+
+                    # Debug: Print travel fields for this expense
+                    print(f"DEBUG: Expense #{idx+1} - Head: {expense.get('expense_head', '')}")
+                    print(f"DEBUG: Travel fields for expense #{idx+1}:")
+                    print(f"  - travel_type: {expense.get('travel_type', 'NOT_FOUND')}")
+                    print(f"  - travel_mode: {expense.get('travel_mode', 'NOT_FOUND')}")
+                    print(f"  - travel_from: {expense.get('travel_from', 'NOT_FOUND')}")
+                    print(f"  - travel_to: {expense.get('travel_to', 'NOT_FOUND')}")
+                    print(f"  - travel_date: {expense.get('travel_date', 'NOT_FOUND')}")
+                    print(f"  - travel_km: {expense.get('travel_km', 'NOT_FOUND')}")
+                    print(f"DEBUG: All expense keys: {list(expense.keys())}")
+
+                    travel_date = expense.get('travel_date')
+                    if travel_date:
+                        try:
+                            travel_date = datetime.strptime(travel_date, '%Y-%m-%d')
+                        except Exception:
+                            travel_date = None
+                    else:
+                        travel_date = None
+                    travel_km = expense.get('travel_km')
+                    if travel_km not in (None, ''):
+                        try:
+                            travel_km = float(travel_km)
+                        except Exception:
+                            travel_km = None
+                    else:
+                        travel_km = None
                     item = EPVItem(
                         epv_id=new_epv.id,
                         expense_invoice_date=datetime.strptime(expense['invoice_date'], '%Y-%m-%d'),
                         expense_head=expense['expense_head'],
                         description=expense['description'],
-                        amount=float(expense['amount']),
+                        amount=amount,
                         gst=0.0,  # Default value, can be updated later
-                        split_invoice=expense.get('split_invoice', False)  # Include the split invoice flag
+                        split_invoice=expense.get('split_invoice', False),  # Include the split invoice flag
+                        travel_type=expense.get('travel_type'),
+                        travel_mode=expense.get('travel_mode'),
+                        travel_from=expense.get('travel_from'),
+                        travel_to=expense.get('travel_to'),
+                        travel_date=travel_date,
+                        travel_km=travel_km
                     )
                     db.session.add(item)
 
@@ -2922,6 +3032,13 @@ def new_expense():
             }), 500
 
     # For GET requests, render the form
+    # Fetch car and bike allowance from SettingsFinance
+    car_setting = SettingsFinance.query.filter_by(setting_name='car_allowance').first()
+    bike_setting = SettingsFinance.query.filter_by(setting_name='bike_allowance').first()
+    car_allowance = float(car_setting.setting_value) if car_setting else 0.0
+    bike_allowance = float(bike_setting.setting_value) if bike_setting else 0.0
+    print(f"DEBUG: Car allowance: {car_allowance}");
+    print(f"DEBUG: Bike allowance: {bike_allowance}");
     return render_template('new_expense.html',
                            user=user_info,
                            employee_role=employee_role,
@@ -2929,7 +3046,9 @@ def new_expense():
                            employee_id=employee_id,
                            cost_centers=cost_centers,
                            employees=employees,
-                           expense_heads=expense_heads)
+                           expense_heads=expense_heads,
+                           car_allowance=car_allowance,
+                           bike_allowance=bike_allowance)
 
 # DISABLED: Old split invoice allocation route - functionality moved to main expense form
 # @app.route('/split-invoice-allocation', methods=['GET', 'POST'])
