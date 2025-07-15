@@ -647,7 +647,7 @@
                                                         <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
                                                     </div>
                                                 </div>
-                                                <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(1)">Add Page</button>
+                                                <button type="button" class="btn btn-secondary btn-sm mb-2" id="addPageBtn-1" onclick="addPageInput(1)">Add Page</button>
                                                 <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
                                                 <div class="form-text" id="receipt-help-1">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                                             </div>
@@ -3898,7 +3898,7 @@
                                 <label class="input-group-text" for="receipt-${expenseId}"><i class="fas fa-upload"></i></label>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="addPageInput(${expenseId})">Add Page</button>
+                        <button type="button" class="btn btn-secondary btn-sm mb-2" id="addPageBtn-${expenseId}" onclick="addPageInput(${expenseId})">Add Page</button>
                         <span id="file-limit-msg-${expenseId}" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
                         <div class="form-text" id="receipt-help-${expenseId}">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
                     </div>
@@ -4365,6 +4365,32 @@
             kmInput.prop('required', false).val('');
         }
     });
+    // ... existing code ...
+
+    // Hide/show Add Page button based on expense head
+    function updateAddPageButton(expenseId) {
+        const head = $(`#expenseHead-${expenseId}`).val();
+        if (!head) return;
+        const headLower = head.trim().toLowerCase();
+        if (headLower === 'local conveyance' || headLower === 'domestic travel') {
+            $(`#addPageBtn-${expenseId}`).hide();
+        } else {
+            $(`#addPageBtn-${expenseId}`).show();
+        }
+    }
+
+    // Initial check for first expense
+    updateAddPageButton(1);
+
+    // On expense head change
+    $(document).on('change', "select[name='expense_head[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        updateAddPageButton(expenseId);
+    });
+
+    // When adding a new expense item, also check the Add Page button
+    // (Assuming you have a function or code block where new expenses are added)
+    // After rendering the new expense item, call updateAddPageButton(newExpenseId);
     // ... existing code ...
 </script>
 {% endblock %}
