@@ -4147,12 +4147,15 @@
             { value: 'bike', label: 'Bike' },
             { value: 'ola_uber', label: 'Ola / Uber' },
             { value: 'auto', label: 'Auto' },
+            { value: 'bus', label: 'Bus' },
             { value: 'train', label: 'Train' },
             { value: 'taxi', label: 'Taxi' }
         ];
         const domesticOptions = [
+            { value: 'car', label: 'Car' },
             { value: 'ola_uber', label: 'Ola / Uber' },
             { value: 'auto', label: 'Auto' },
+            { value: 'bus', label: 'Bus' },
             { value: 'train', label: 'Train' },
             { value: 'taxi', label: 'Taxi' }
         ];
@@ -4282,16 +4285,47 @@
     $(document).on('change', "select[name='travel_mode[]']", function() {
         const expenseId = $(this).attr('id').split('-')[1];
         const travelMode = $(this).val();
+        const travelType = $(`#travelType-${expenseId}`).val();
+        const kmContainer = $(`#km-container-${expenseId}`);
+        const kmInput = $(`#travelKm-${expenseId}`);
         const receiptInput = $(`#receipt-${expenseId}`);
-        if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
-            receiptInput.prop('disabled', false).prop('required', true);
-            receiptInput.removeClass('exclude-from-merge');
-            receiptInput.removeAttr('data-exclude-from-merge');
+        const amountInput = $(`#amount-${expenseId}`);
+        if ((travelType === 'local' || travelType === 'domestic') && ['car', 'bike'].includes(travelMode)) {
+            kmContainer.show();
+            kmInput.prop('required', true);
+            amountInput.prop('readonly', true); // Make Amount readonly for Car/Bike
         } else {
-            receiptInput.prop('disabled', true).prop('required', false);
-            receiptInput.addClass('exclude-from-merge');
-            receiptInput.attr('data-exclude-from-merge', 'true');
-            receiptInput.val(''); // Optionally clear the file input
+            kmContainer.hide();
+            kmInput.prop('required', false).val('');
+            amountInput.prop('readonly', false); // Editable for other modes
+        }
+        if (travelType === 'local') {
+            if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
+                receiptInput.prop('disabled', false)
+                           .prop('required', true);
+            } else {
+                receiptInput.prop('disabled', true)
+                           .prop('required', false)
+                           .val('');
+            }
+        } else if (travelType === 'domestic') {
+            if (['car', 'auto', 'taxi'].includes(travelMode)) {
+                receiptInput.prop('disabled', true)
+                           .prop('required', false)
+                           .val('');
+            } else {
+                receiptInput.prop('disabled', false)
+                           .prop('required', true);
+            }
+        } else {
+            if (['car', 'bike'].includes(travelMode)) {
+                receiptInput.prop('disabled', true)
+                           .prop('required', false)
+                           .val('');
+            } else {
+                receiptInput.prop('disabled', false)
+                           .prop('required', true);
+            }
         }
         // Clear any validation errors when mode changes
         clearFieldError(`receipt-${expenseId}`);
