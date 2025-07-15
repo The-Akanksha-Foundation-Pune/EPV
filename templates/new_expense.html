@@ -643,7 +643,7 @@
                                                 <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
                                                 <div id="expense-files-1" class="expense-files mb-2">
                                                     <div class="input-group mb-2">
-                                                        <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" required>
+                                                        <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" >
                                                         <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
                                                     </div>
                                                 </div>
@@ -1333,53 +1333,39 @@
             const domesticAmountRow = $(`#domestic-amount-row-${expenseId}`);
             const standardAmountInput = $(`#amount-${expenseId}`);
             const domesticAmountInput = $(`#domestic-amount-${expenseId}`);
-            
+            const travelMode = $(`#travelMode-${expenseId}`).val();
             if (travelType === 'local') {
-                // Show KM field for local travel
                 kmContainer.show();
                 kmInput.prop('required', true);
-                
-                // Show standard amount field, hide domestic amount field
                 standardAmountRow.show();
                 domesticAmountRow.hide();
-                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
-                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
-                
-                // Check mode to determine receipt requirement
-                const travelMode = $(`#travelMode-${expenseId}`).val();
-                if (travelMode && (travelMode === 'car' || travelMode === 'bike')) {
-                    // For car/bike, receipt is not required
-                    receiptInput.prop('required', false);
+                standardAmountInput.prop('required', true).prop('disabled', false);
+                domesticAmountInput.prop('required', false).prop('disabled', true);
+                if (travelMode === 'car' || travelMode === 'bike') {
+                    receiptInput.prop('disabled', true).prop('required', false);
                     receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
                 } else {
-                    // For other modes, receipt is required
-                    receiptInput.prop('required', true);
+                    receiptInput.prop('disabled', false).prop('required', true);
                     receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
                 }
             } else if (travelType === 'domestic') {
-                // Hide KM field for domestic travel
                 kmContainer.hide();
                 kmInput.prop('required', false);
-                kmInput.val(''); // Clear KM value
-                
-                // Show standard amount field, hide domestic amount field
+                kmInput.val('');
                 standardAmountRow.show();
                 domesticAmountRow.hide();
-                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
-                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
-                
-                // Receipt is always mandatory for domestic travel
-                receiptInput.prop('required', true);
+                standardAmountInput.prop('required', true).prop('disabled', false);
+                domesticAmountInput.prop('required', false).prop('disabled', true);
+                receiptInput.prop('disabled', false).prop('required', true);
                 receiptHelp.text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
             } else {
-                // Reset to default state
                 kmContainer.hide();
                 kmInput.prop('required', false);
                 standardAmountRow.show();
                 domesticAmountRow.hide();
-                standardAmountInput.prop('required', true).prop('disabled', false); // ENABLE standard
-                domesticAmountInput.prop('required', false).prop('disabled', true); // DISABLE domestic
-                receiptInput.prop('required', true);
+                standardAmountInput.prop('required', true).prop('disabled', false);
+                domesticAmountInput.prop('required', false).prop('disabled', true);
+                receiptInput.prop('disabled', false).prop('required', true);
                 receiptHelp.text('Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
             }
         });
@@ -1391,19 +1377,17 @@
             const travelType = $(`#travelType-${expenseId}`).val();
             const receiptInput = $(`#receipt-${expenseId}`);
             const receiptHelp = $(`#receipt-help-${expenseId}`);
-            
             if (travelType === 'local') {
                 if (travelMode === 'car' || travelMode === 'bike') {
-                    // For car/bike in local travel, receipt is not required
-                    receiptInput.prop('required', false);
+                    receiptInput.prop('disabled', true).prop('required', false).val('');
                     receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
                 } else {
-                    // For other modes in local travel, receipt is required
-                    receiptInput.prop('required', true);
+                    receiptInput.prop('disabled', false).prop('required', true);
                     receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
                 }
+            } else {
+                receiptInput.prop('disabled', false).prop('required', true);
             }
-            // For domestic travel, receipt is always required regardless of mode
         });
 
         // File validation on file input change
@@ -2619,6 +2603,7 @@
         }
 
         function addFieldError(fieldId, message) {
+            console.log('DEBUG: addFieldError called for', fieldId, 'with message:', message);
             const field = $(`#${fieldId}`);
             if (field.length) {
                 // Add error styling
@@ -2707,25 +2692,6 @@
             $(".expense-item").each(function() {
                 const expenseId = $(this).attr("id").split("-")[1];
                 let itemValid = true;
-
-                // --- NEW: Validate all file inputs (pages) for this expense ---
-                $(this).find('.expense-files input[type="file"]').each(function(idx) {
-                    if (this.disabled) {
-                        // Skip validation for disabled file inputs
-                        $(this).removeClass('is-invalid');
-                        return;
-                    }
-                    if (!this.files || this.files.length === 0) {
-                        validationErrors.push(`Expense #${expenseId}: Page ${idx+1} is missing a file`);
-                        $(this).addClass('is-invalid'); // Highlight in red
-                        addFieldError($(this).attr('id'), "Please select a file for this page");
-                        if (!firstErrorField) firstErrorField = $(this);
-                        itemValid = false;
-                    } else {
-                        $(this).removeClass('is-invalid'); // Remove red if valid
-                    }
-                });
-                // --- END NEW ---
 
                 // Check if this is an allocation item (has allocation fields)
                 const isAllocation = $(this).find('input[name="allocation_cost_center[]"]').length > 0;
@@ -2836,25 +2802,22 @@
                         itemValid = false;
                     }
 
-                    // Check receipt upload (only required if not a split from same invoice)
+                    // Check receipt upload (only required if not a split from same invoice AND not disabled)
                     const isSplitFromSameInvoice = $(`#splitInvoiceHidden-${expenseId}`).val() === "1";
-                    if (!isSplitFromSameInvoice) {
-                        const receipt = $(`#receipt-${expenseId}`)[0];
+                    const receiptInput = $(`#receipt-${expenseId}`)[0];
+
+                    if (!isSplitFromSameInvoice && receiptInput && !receiptInput.disabled) {  // Only validate if input is enabled
                         const expenseHead = $(`#expenseHead-${expenseId}`).val();
                         const isTravelExpense = expenseHead && expenseHead.toLowerCase().includes('travel');
-                        
-                        // Check if receipt is required based on travel type and mode
                         let receiptRequired = true;
                         if (isTravelExpense) {
                             const travelType = $(`#travelType-${expenseId}`).val();
                             const travelMode = $(`#travelMode-${expenseId}`).val();
-                            
                             if (travelType === 'local' && (travelMode === 'car' || travelMode === 'bike')) {
                                 receiptRequired = false; // Optional for car/bike in local travel
                             }
                         }
-                        
-                        if (receiptRequired && (!receipt || !receipt.files || receipt.files.length === 0)) {
+                        if (receiptRequired && (!receiptInput.files || receiptInput.files.length === 0)) {
                             validationErrors.push(`Expense #${expenseId}: Receipt is required`);
                             addFieldError(`receipt-${expenseId}`, "Please upload a receipt");
                             if (!firstErrorField) firstErrorField = $(`#receipt-${expenseId}`);
@@ -3894,7 +3857,7 @@
                         <label for="receipt-${expenseId}" class="form-label required-field">Upload Receipt</label>
                         <div id="expense-files-${expenseId}" class="expense-files mb-2">
                             <div class="input-group mb-2">
-                                <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[${expenseId}][]" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[${expenseId}][]" accept=".pdf,.jpg,.jpeg,.png">
                                 <label class="input-group-text" for="receipt-${expenseId}"><i class="fas fa-upload"></i></label>
                             </div>
                         </div>
@@ -4062,28 +4025,26 @@
 
         // Add this helper function in the JS section
         function updateExpenseHeadOptionsForAll() {
-            const allowedHeads = ['Local Conveyance', 'Domestic Travel'];
             const firstHead = $('#expenseHead-1').val();
-            const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
+            const restrict = ['local conveyance', 'domestic travel'].includes((firstHead || '').trim().toLowerCase());
             $("select[name='expense_head[]']").each(function(idx) {
-                if (idx === 0) return; // Skip the first
-                const currentVal = $(this).val();
+                if (idx === 0) {
+                    $(this).prop('disabled', false); // Always enable the first
+                    return;
+                }
                 if (restrict) {
+                    // Only allow the selected head, set value, and disable
                     $(this).empty();
-                    $(this).append('<option value="">Select Expense Head</option>');
-                    allowedHeads.forEach(h => {
-                        $(this).append(`<option value="${h}">${h}</option>`);
-                    });
-                    if (allowedHeads.includes(currentVal)) {
-                        $(this).val(currentVal);
-                    } else {
-                        $(this).val('');
+                    if (firstHead) {
+                        $(this).append(`<option value="${firstHead}">${firstHead}</option>`);
+                        $(this).val(firstHead);
                     }
+                    $(this).prop('disabled', true);
                 } else {
-                    // Restore all options from the first dropdown
+                    // Restore all options from the first dropdown and enable
                     const allOptions = $('#expenseHead-1 option').clone();
                     $(this).empty().append(allOptions);
-                    $(this).val(currentVal);
+                    $(this).prop('disabled', false);
                 }
             });
         }
@@ -4111,7 +4072,6 @@
             input.name = `receipt[${expenseId}][]`;
             input.className = 'form-control';
             input.accept = '.pdf,.jpg,.jpeg,.png';
-            input.required = true;
 
             const label = document.createElement('label');
             label.className = 'input-group-text';
@@ -4333,6 +4293,8 @@
             receiptInput.attr('data-exclude-from-merge', 'true');
             receiptInput.val(''); // Optionally clear the file input
         }
+        // Clear any validation errors when mode changes
+        clearFieldError(`receipt-${expenseId}`);
     });
     // ... existing code ...
 
