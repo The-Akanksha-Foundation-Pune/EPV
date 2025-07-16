@@ -471,8 +471,8 @@ def generate_expense_document(expense_data):
                 elements.append(Paragraph("Travel Details", subtitle_style))
                 elements.append(Spacer(1, 0.15*inch))
 
-                # New header: #, Date, From, To, Description, Mode, KM, Amount (Rs.)
-                travel_data = [['#', 'Date', 'From', 'To', 'Description', 'Mode', 'KM', 'Amount (Rs.)']]
+                # New header: #, Date, From, To, Purpose, Mode, KM, Amount (Rs.)
+                travel_data = [['#', 'Date', 'From', 'To', 'Purpose', 'Mode', 'KM', 'Amount (Rs.)']]
                 total_travel_amount = 0.0
                 for i, expense in enumerate(travel_expenses):
                     travel_date = expense.get('travel_date', '')
@@ -490,25 +490,26 @@ def generate_expense_document(expense_data):
                         total_travel_amount += float(amount) if amount else 0.0
                     except Exception:
                         pass
+                    # Use Paragraph for From, To, and Purpose columns to enable wrapping
+                    wrap_style = ParagraphStyle('WrapStyle', parent=normal_style, fontSize=8, leading=10, wordWrap='CJK')
                     row = [
                         str(i+1),
                         str(travel_date or ''),
-                        str(expense.get('travel_from', '') or ''),
-                        str(expense.get('travel_to', '') or ''),
-                        str(expense.get('description', '') or ''),
+                        Paragraph(str(expense.get('travel_from', '') or ''), wrap_style),
+                        Paragraph(str(expense.get('travel_to', '') or ''), wrap_style),
+                        Paragraph(str(expense.get('description', '') or ''), wrap_style),
                         str(expense.get('travel_mode', '') or ''),
                         str(expense.get('travel_km', '') or ''),
                         str(amount)
                     ]
-                    row = [str(x) if not isinstance(x, str) else x for x in row]
                     travel_data.append(row)
                 # Add total row
                 travel_data.append(['', '', '', '', '', '', 'Total:', f"{total_travel_amount:.2f}"])
 
                 travel_table = Table(
                     travel_data,
-                    colWidths=[0.4*inch, 0.9*inch, 1*inch, 1*inch, 1.6*inch, 0.8*inch, 0.6*inch, 0.9*inch],
-                    rowHeights=[0.4*inch] + [0.3*inch] * (len(travel_data) - 1),
+                    colWidths=[0.4*inch, 0.9*inch, None, None, None, 0.8*inch, 0.6*inch, 0.9*inch],
+                    # Remove rowHeights to allow dynamic height
                     repeatRows=1
                 )
                 travel_table.setStyle(TableStyle([

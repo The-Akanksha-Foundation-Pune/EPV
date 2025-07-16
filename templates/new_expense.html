@@ -4399,5 +4399,39 @@
     // (Assuming you have a function or code block where new expenses are added)
     // After rendering the new expense item, call updateAddPageButton(newExpenseId);
     // ... existing code ...
+
+    // Add this function to update the Description label to 'Purpose' if travel type is selected, else 'Description'
+    function updateDescriptionLabel(expenseId) {
+        const travelType = $(`#travelType-${expenseId}`).val();
+        const label = $(`label[for='description-${expenseId}']`);
+        const textarea = $(`#description-${expenseId}`);
+        if (travelType === 'local' || travelType === 'domestic' || travelType === 'international') {
+            label.text('Purpose');
+            textarea.attr('placeholder', 'Enter Purpose');
+            // Update help text if present
+            const helpText = textarea.siblings('.form-text');
+            if (helpText.length) helpText.text('Enter Purpose');
+        } else {
+            label.text('Description');
+            textarea.attr('placeholder', 'Enter Description');
+            const helpText = textarea.siblings('.form-text');
+            if (helpText.length) helpText.text('Enter Description');
+        }
+    }
+
+    // Call this function whenever the travel type changes
+    $(document).on('change', ".travel-type-select", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        updateDescriptionLabel(expenseId);
+    });
+
+    // Also call it on page load for all existing expense rows
+    $(document).ready(function() {
+        $(".travel-type-select").each(function() {
+            const expenseId = $(this).attr('id').split('-')[1];
+            updateDescriptionLabel(expenseId);
+        });
+    });
+    // ... existing code ...
 </script>
 {% endblock %}
