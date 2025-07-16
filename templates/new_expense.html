@@ -4024,30 +4024,7 @@
         });
 
         // Add this helper function in the JS section
-        function updateExpenseHeadOptionsForAll() {
-            const firstHead = $('#expenseHead-1').val();
-            const restrict = ['local conveyance', 'domestic travel'].includes((firstHead || '').trim().toLowerCase());
-            $("select[name='expense_head[]']").each(function(idx) {
-                if (idx === 0) {
-                    $(this).prop('disabled', false); // Always enable the first
-                    return;
-                }
-                if (restrict) {
-                    // Only allow the selected head, set value, and disable
-                    $(this).empty();
-                    if (firstHead) {
-                        $(this).append(`<option value="${firstHead}">${firstHead}</option>`);
-                        $(this).val(firstHead);
-                    }
-                    $(this).prop('disabled', true);
-                } else {
-                    // Restore all options from the first dropdown and enable
-                    const allOptions = $('#expenseHead-1 option').clone();
-                    $(this).empty().append(allOptions);
-                    $(this).prop('disabled', false);
-                }
-            });
-        }
+   
         // Save the full set of options on page load
         $(document).ready(function() {
             window.allExpenseHeadOptions = $('#expenseHead-1').html();
@@ -4101,34 +4078,41 @@
     }
 
     // ... existing code ...
-    function updateExpenseHeadOptionsForAll() {
-        const allowedHeads = ['Local Conveyance', 'Domestic Travel'];
-        const firstHead = $('#expenseHead-1').val();
-        const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
-        $("select[name='expense_head[]']").each(function(idx) {
-            if (idx === 0) return; // Skip the first
-            const currentVal = $(this).val();
-            if (restrict) {
-                $(this).empty();
-                $(this).append('<option value="">Select Expense Head</option>');
-                allowedHeads.forEach(h => {
-                    $(this).append(`<option value="${h}">${h}</option>`);
-                });
-                if (allowedHeads.includes(currentVal)) {
-                    $(this).val(currentVal);
-                } else {
-                    $(this).val('');
-                }
-            } else {
-                // Restore all options from the first dropdown
-                const allOptions = $('#expenseHead-1 option').clone();
-                $(this).empty().append(allOptions);
-                $(this).val(currentVal);
-            }
-        });
-    }
+ 
     // ... existing code ...
     // Call updateExpenseHeadOptionsForAll() whenever the first expense head changes or a new row is added
+    function updateExpenseHeadOptionsForAll() {
+            const firstHead = $('#expenseHead-1').val();
+            const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
+            $("select[name='expense_head[]']").each(function(idx) {
+                if (idx === 0) {
+                    $(this).prop('disabled', false); // Always enable the first
+                    return;
+                }
+                if (restrict) {
+                    // Only allow the selected head, set value, and disable
+                    $(this).empty();
+                    if (firstHead) {
+                        $(this).append(`<option value="${firstHead}">${firstHead}</option>`);
+                        $(this).val(firstHead);
+                    }
+                    $(this).prop('disabled', true);
+                    // Also set and trigger the travel type to match the expense head
+                    const expenseId = $(this).attr('id').split('-')[1];
+                    const travelTypeSelect = $(`#travelType-${expenseId}`);
+                    if (firstHead && firstHead.trim().toLowerCase() === 'local conveyance') {
+                        travelTypeSelect.val('local').prop('disabled', true).trigger('change');
+                    } else if (firstHead && firstHead.trim().toLowerCase() === 'domestic travel') {
+                        travelTypeSelect.val('domestic').prop('disabled', true).trigger('change');
+                    }
+                } else {
+                    // Restore all options from the first dropdown and enable
+                    const allOptions = $('#expenseHead-1 option').clone();
+                    $(this).empty().append(allOptions);
+                    $(this).prop('disabled', false);
+                }
+            });
+        }
     $(document).on('change', '#expenseHead-1', updateExpenseHeadOptionsForAll);
     $('#addExpenseBtn').on('click', function() {
         setTimeout(updateExpenseHeadOptionsForAll, 150);
