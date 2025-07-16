@@ -4215,11 +4215,11 @@
                 if (mode === 'car') rate = CAR_ALLOWANCE;
                 if (mode === 'bike') rate = BIKE_ALLOWANCE;
                 const amt = (rate * km).toFixed(2);
-                amountInput.val(amt).prop('readonly', true);
+                amountInput.val(amt).prop('readonly', true).trigger('input');
             } else if (mode && mode !== 'car' && mode !== 'bike') {
-                amountInput.val('').prop('readonly', false);
+                amountInput.val('').prop('readonly', false).trigger('input');
             } else {
-                amountInput.val('').prop('readonly', true);
+                amountInput.val('').prop('readonly', true).trigger('input');
             }
             return;
         }
@@ -4228,9 +4228,9 @@
             if (mode === 'car') rate = CAR_ALLOWANCE;
             if (mode === 'bike') rate = BIKE_ALLOWANCE;
             const amt = (rate * km).toFixed(2);
-            amountInput.val(amt).prop('readonly', true);
+            amountInput.val(amt).prop('readonly', true).trigger('input');
         } else {
-            amountInput.val('').prop('readonly', false);
+            amountInput.val('').prop('readonly', false).trigger('input');
         }
     }
 
@@ -4284,49 +4284,49 @@
 
     $(document).on('change', "select[name='travel_mode[]']", function() {
         const expenseId = $(this).attr('id').split('-')[1];
-        const travelMode = $(this).val();
+        const travelMode = $(`#travelMode-${expenseId}`).val();
         const travelType = $(`#travelType-${expenseId}`).val();
         const kmContainer = $(`#km-container-${expenseId}`);
         const kmInput = $(`#travelKm-${expenseId}`);
         const receiptInput = $(`#receipt-${expenseId}`);
         const amountInput = $(`#amount-${expenseId}`);
+
+        // Show/hide and require Distance (KM) for Car/Bike (Local or Domestic)
         if ((travelType === 'local' || travelType === 'domestic') && ['car', 'bike'].includes(travelMode)) {
             kmContainer.show();
             kmInput.prop('required', true);
-            amountInput.prop('readonly', true); // Make Amount readonly for Car/Bike
+            amountInput.prop('readonly', true); // Always readonly for Car/Bike
         } else {
             kmContainer.hide();
             kmInput.prop('required', false).val('');
             amountInput.prop('readonly', false); // Editable for other modes
         }
+
+        // Receipt logic for Local
         if (travelType === 'local') {
             if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
-                receiptInput.prop('disabled', false)
-                           .prop('required', true);
+                receiptInput.prop('disabled', false).prop('required', true);
             } else {
-                receiptInput.prop('disabled', true)
-                           .prop('required', false)
-                           .val('');
-            }
-        } else if (travelType === 'domestic') {
-            if (['car', 'auto', 'taxi'].includes(travelMode)) {
-                receiptInput.prop('disabled', true)
-                           .prop('required', false)
-                           .val('');
-            } else {
-                receiptInput.prop('disabled', false)
-                           .prop('required', true);
-            }
-        } else {
-            if (['car', 'bike'].includes(travelMode)) {
-                receiptInput.prop('disabled', true)
-                           .prop('required', false)
-                           .val('');
-            } else {
-                receiptInput.prop('disabled', false)
-                           .prop('required', true);
+                receiptInput.prop('disabled', true).prop('required', false).val('');
             }
         }
+        // Receipt logic for Domestic
+        else if (travelType === 'domestic') {
+            if (['car', 'bike', 'auto', 'taxi'].includes(travelMode)) {
+                receiptInput.prop('disabled', true).prop('required', false).val('');
+            } else {
+                receiptInput.prop('disabled', false).prop('required', true);
+            }
+        }
+        // Other travel types
+        else {
+            if (['car', 'bike'].includes(travelMode)) {
+                receiptInput.prop('disabled', true).prop('required', false).val('');
+            } else {
+                receiptInput.prop('disabled', false).prop('required', true);
+            }
+        }
+
         // Clear any validation errors when mode changes
         clearFieldError(`receipt-${expenseId}`);
     });
