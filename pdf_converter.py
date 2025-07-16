@@ -34,7 +34,8 @@ try:
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch, cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    from reportlab.platypus import PageBreak
     REPORTLAB_AVAILABLE = True
     print("ReportLab successfully imported")
 except ImportError as e:
@@ -357,9 +358,10 @@ def generate_expense_document(expense_data):
             if all_travel and data.get('expenses'):
                 # Use the actual expense head from the first expense
                 actual_head = data['expenses'][0].get('expense_head', '') if data.get('expenses') else ''
+                submission_date = data.get('current_date', '')
                 expense_data.append([
                     '1',
-                    '',  # Or from_date - to_date
+                    submission_date,
                     actual_head,
                     'Travel Expenses',
                     data.get('total_amount', '')
@@ -465,10 +467,13 @@ def generate_expense_document(expense_data):
             ]
 
             if travel_expenses:
+                elements.append(PageBreak())
                 elements.append(Paragraph("Travel Details", subtitle_style))
                 elements.append(Spacer(1, 0.15*inch))
 
-                travel_data = [['#', 'Type', 'Mode', 'From', 'To', 'Date', 'KM', 'Amount (Rs.)']]
+                # New header: #, Date, From, To, Description, Mode, KM, Amount (Rs.)
+                travel_data = [['#', 'Date', 'From', 'To', 'Description', 'Mode', 'KM', 'Amount (Rs.)']]
+                total_travel_amount = 0.0
                 for i, expense in enumerate(travel_expenses):
                     travel_date = expense.get('travel_date', '')
                     try:
@@ -480,23 +485,29 @@ def generate_expense_document(expense_data):
                                 travel_date = date_obj.strftime('%d-%m-%Y')
                     except Exception as e:
                         print(f"Error formatting travel date: {e}")
-                    # Ensure all values are strings and not Paragraph or datetime
+                    amount = expense.get('amount', '') or ''
+                    try:
+                        total_travel_amount += float(amount) if amount else 0.0
+                    except Exception:
+                        pass
                     row = [
                         str(i+1),
-                        str(expense.get('travel_type', '') or ''),
-                        str(expense.get('travel_mode', '') or ''),
+                        str(travel_date or ''),
                         str(expense.get('travel_from', '') or ''),
                         str(expense.get('travel_to', '') or ''),
-                        str(travel_date or ''),
+                        str(expense.get('description', '') or ''),
+                        str(expense.get('travel_mode', '') or ''),
                         str(expense.get('travel_km', '') or ''),
-                        str(expense.get('amount', '') or '')
+                        str(amount)
                     ]
                     row = [str(x) if not isinstance(x, str) else x for x in row]
                     travel_data.append(row)
+                # Add total row
+                travel_data.append(['', '', '', '', '', '', 'Total:', f"{total_travel_amount:.2f}"])
 
                 travel_table = Table(
                     travel_data,
-                    colWidths=[0.4*inch, 1*inch, 1*inch, 1.2*inch, 1.2*inch, 1*inch, 0.7*inch, 1*inch],
+                    colWidths=[0.4*inch, 0.9*inch, 1*inch, 1*inch, 1.6*inch, 0.8*inch, 0.6*inch, 0.9*inch],
                     rowHeights=[0.4*inch] + [0.3*inch] * (len(travel_data) - 1),
                     repeatRows=1
                 )
@@ -505,11 +516,16 @@ def generate_expense_document(expense_data):
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                     ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
                     ('FONT', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                    *[(('BACKGROUND', (0, i), (-1, i), colors.lightgrey)) for i in range(2, len(travel_data), 2)],
+                    ('BACKGROUND', (0, 1), (-1, -2), colors.white),
+                    *[(('BACKGROUND', (0, i), (-1, i), colors.lightgrey)) for i in range(2, len(travel_data)-1, 2)],
                     ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                     ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                     ('PADDING', (0, 0), (-1, -1), 4),
+                    # Total row styling
+                    ('BACKGROUND', (-2, -1), (-1, -1), colors.lightblue),
+                    ('TEXTCOLOR', (-2, -1), (-1, -1), colors.darkblue),
+                    ('FONT', (-2, -1), (-1, -1), 'Helvetica-Bold'),
+                    ('ALIGN', (-1, -1), (-1, -1), 'RIGHT'),
                 ]))
                 elements.append(travel_table)
                 elements.append(Spacer(1, 0.25*inch))
