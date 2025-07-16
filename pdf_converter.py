@@ -345,47 +345,64 @@ def generate_expense_document(expense_data):
             elements.append(Paragraph("Expense Details", subtitle_style))
             elements.append(Spacer(1, 0.25*inch))
 
-            # Always use the table without the 'Travel Details' column
+            # Detect if all expenses are travel
+            all_travel = all(
+                (expense.get('travel_type') or '').strip().lower() in ['local', 'domestic', 'international']
+                for expense in data.get('expenses', [])
+            )
+
+            # Build the Expense Details table
             expense_data = [['#', 'Date', 'Expense Head', 'Description', 'Amount (Rs.)']]
 
-            for i, expense in enumerate(data.get('expenses', [])):
-                # Format the invoice date to dd-mm-yyyy if it's in yyyy-mm-dd format
-                invoice_date = expense.get('invoice_date', '')
-                try:
-                    # Handle datetime objects
-                    if isinstance(invoice_date, datetime):
-                        invoice_date = invoice_date.strftime('%d-%m-%Y')
-                    # Handle string dates
-                    elif isinstance(invoice_date, str) and invoice_date and '-' in invoice_date:
-                        # Check if it's in yyyy-mm-dd format
-                        if len(invoice_date.split('-')[0]) == 4:
-                            date_obj = datetime.strptime(invoice_date, '%Y-%m-%d')
-                            invoice_date = date_obj.strftime('%d-%m-%Y')
-                except Exception as e:
-                    print(f"Error formatting date: {e}")
-
-                # Create Paragraph objects for text wrapping with explicit width constraints
-                # Use a smaller font and tighter leading for better fitting
-                wrap_style = ParagraphStyle(
-                    'WrapStyle',
-                    parent=normal_style,
-                    fontSize=8,
-                    leading=10,
-                    wordWrap='LTR',
-                    allowWidows=1,
-                    allowOrphans=1
-                )
-
-                expense_head_para = Paragraph(expense.get('expense_head', ''), wrap_style)
-                description_para = Paragraph(expense.get('description', ''), wrap_style)
-
+            if all_travel and data.get('expenses'):
+                # Use the actual expense head from the first expense
+                actual_head = data['expenses'][0].get('expense_head', '') if data.get('expenses') else ''
                 expense_data.append([
-                    str(i+1),
-                    invoice_date,
-                    expense_head_para,
-                    description_para,
-                    expense.get('amount', '')
-                ])  # type: ignore
+                    '1',
+                    '',  # Or from_date - to_date
+                    actual_head,
+                    'Travel Expenses',
+                    data.get('total_amount', '')
+                ])
+            else:
+                for i, expense in enumerate(data.get('expenses', [])):
+                    # Format the invoice date to dd-mm-yyyy if it's in yyyy-mm-dd format
+                    invoice_date = expense.get('invoice_date', '')
+                    try:
+                        # Handle datetime objects
+                        if isinstance(invoice_date, datetime):
+                            invoice_date = invoice_date.strftime('%d-%m-%Y')
+                        # Handle string dates
+                        elif isinstance(invoice_date, str) and invoice_date and '-' in invoice_date:
+                            # Check if it's in yyyy-mm-dd format
+                            if len(invoice_date.split('-')[0]) == 4:
+                                date_obj = datetime.strptime(invoice_date, '%Y-%m-%d')
+                                invoice_date = date_obj.strftime('%d-%m-%Y')
+                    except Exception as e:
+                        print(f"Error formatting date: {e}")
+
+                    # Create Paragraph objects for text wrapping with explicit width constraints
+                    # Use a smaller font and tighter leading for better fitting
+                    wrap_style = ParagraphStyle(
+                        'WrapStyle',
+                        parent=normal_style,
+                        fontSize=8,
+                        leading=10,
+                        wordWrap='LTR',
+                        allowWidows=1,
+                        allowOrphans=1
+                    )
+
+                    expense_head_para = Paragraph(expense.get('expense_head', ''), wrap_style)
+                    description_para = Paragraph(expense.get('description', ''), wrap_style)
+
+                    expense_data.append([
+                        str(i+1),
+                        invoice_date,
+                        expense_head_para,
+                        description_para,
+                        expense.get('amount', '')
+                    ])
 
             # Add total row
             expense_data.append(['', '', '', 'Total:', data.get('total_amount', '')])
@@ -451,7 +468,7 @@ def generate_expense_document(expense_data):
                 elements.append(Paragraph("Travel Details", subtitle_style))
                 elements.append(Spacer(1, 0.15*inch))
 
-                travel_data = [['#', 'Type', 'Mode', 'From', 'To', 'Date', 'KM']]
+                travel_data = [['#', 'Type', 'Mode', 'From', 'To', 'Date', 'KM', 'Amount (Rs.)']]
                 for i, expense in enumerate(travel_expenses):
                     travel_date = expense.get('travel_date', '')
                     try:
@@ -471,14 +488,15 @@ def generate_expense_document(expense_data):
                         str(expense.get('travel_from', '') or ''),
                         str(expense.get('travel_to', '') or ''),
                         str(travel_date or ''),
-                        str(expense.get('travel_km', '') or '')
+                        str(expense.get('travel_km', '') or ''),
+                        str(expense.get('amount', '') or '')
                     ]
                     row = [str(x) if not isinstance(x, str) else x for x in row]
                     travel_data.append(row)
 
                 travel_table = Table(
                     travel_data,
-                    colWidths=[0.4*inch, 1*inch, 1*inch, 1.2*inch, 1.2*inch, 1*inch, 0.7*inch],
+                    colWidths=[0.4*inch, 1*inch, 1*inch, 1.2*inch, 1.2*inch, 1*inch, 0.7*inch, 1*inch],
                     rowHeights=[0.4*inch] + [0.3*inch] * (len(travel_data) - 1),
                     repeatRows=1
                 )
