@@ -4082,9 +4082,9 @@
     // ... existing code ...
     // Call updateExpenseHeadOptionsForAll() whenever the first expense head changes or a new row is added
     function updateExpenseHeadOptionsForAll() {
-            const firstHead = $('#expenseHead-1').val();
-            const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
-            $("select[name='expense_head[]']").each(function(idx) {
+        const firstHead = $('#expenseHead-1').val();
+        const restrict = ['local conveyance', 'domestic travel', 'international travel'].includes((firstHead || '').trim().toLowerCase());
+        $("select[name='expense_head[]']").each(function(idx) {
                 if (idx === 0) {
                     $(this).prop('disabled', false); // Always enable the first
                     // Remove the hidden input if present
@@ -4095,9 +4095,9 @@
                     travelTypeSelect.siblings('input[type="hidden"].travel-type-hidden').remove();
                     return;
                 }
-                if (restrict) {
+            if (restrict) {
                     // Only allow the selected head, set value, and disable
-                    $(this).empty();
+                $(this).empty();
                     if (firstHead) {
                         $(this).append(`<option value="${firstHead}">${firstHead}</option>`);
                         $(this).val(firstHead);
@@ -4125,11 +4125,11 @@
                         travelTypeSelect.siblings('input[type="hidden"].travel-type-hidden').remove();
                         // Add a hidden input with the same name and value
                         travelTypeSelect.after(`<input type="hidden" class="travel-type-hidden" name="travel_type[]" value="${travelTypeValue}">`);
-                    }
-                } else {
+                }
+            } else {
                     // Restore all options from the first dropdown and enable
-                    const allOptions = $('#expenseHead-1 option').clone();
-                    $(this).empty().append(allOptions);
+                const allOptions = $('#expenseHead-1 option').clone();
+                $(this).empty().append(allOptions);
                     $(this).prop('disabled', false);
                     // Remove the hidden input if present
                     $(this).siblings('input[type="hidden"].expense-head-hidden').remove();
@@ -4137,9 +4137,9 @@
                     const travelTypeSelect = $(`#travelType-${idx + 1}`);
                     travelTypeSelect.prop('disabled', false);
                     travelTypeSelect.siblings('input[type="hidden"].travel-type-hidden').remove();
-                }
-            });
-        }
+            }
+        });
+    }
     $(document).on('change', '#expenseHead-1', updateExpenseHeadOptionsForAll);
     $('#addExpenseBtn').on('click', function() {
         setTimeout(updateExpenseHeadOptionsForAll, 150);
@@ -4315,9 +4315,9 @@
 
         // Receipt logic for Local
         if (travelType === 'local') {
-            if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
-                receiptInput.prop('disabled', false).prop('required', true);
-            } else {
+        if (['ola_uber', 'train', 'bus'].includes(travelMode)) {
+            receiptInput.prop('disabled', false).prop('required', true);
+        } else {
                 receiptInput.prop('disabled', true).prop('required', false).val('');
             }
         }
