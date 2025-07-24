@@ -510,7 +510,7 @@ if flask_env == 'development':
     print(f"Using DEVELOPMENT OAuth redirect URI: {oauth_redirect_uri}")
     logger.info(f"Development mode - OAuth redirect: {oauth_redirect_uri}")
 else:
-    oauth_redirect_uri = 'https://finance.akanksha.org/login/google/authorized'
+    oauth_redirect_uri = 'https://webapporbit.com/login/google/authorized'
     print(f"Using PRODUCTION OAuth redirect URI: {oauth_redirect_uri}")
     logger.info(f"Production mode - OAuth redirect: {oauth_redirect_uri}")
 
