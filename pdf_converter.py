@@ -1121,21 +1121,34 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
         # Use only valid PDFs for merging
         pdf_files = valid_pdfs
         print(f"DEBUG: Using {len(pdf_files)} valid PDFs for merging")
+        print(f"DEBUG: PDFs to be merged: {pdf_files}")  # <-- Add this line
 
         # No need to generate expense document here anymore
         # It's now handled in the app.py route
 
-        # Merge PDFs if there are any
+        # Always merge, even if only one PDF
         merged_pdf = None
         merge_error = None
+        final_page_count = None
         if pdf_files:
             try:
                 merged_pdf = merge_pdfs(pdf_files)
-                if not merged_pdf:
+                if merged_pdf:
+                    # Calculate page count of merged PDF
+                    try:
+                        from PyPDF2 import PdfReader
+                        reader = PdfReader(merged_pdf)
+                        final_page_count = len(reader.pages)
+                        print(f"DEBUG: Final merged PDF has {final_page_count} pages")
+                    except Exception as e:
+                        print(f"Error reading merged PDF page count: {e}")
+                else:
                     merge_error = "Failed to merge PDF files"
             except Exception as e:
                 merge_error = f"Error merging PDFs: {str(e)}"
                 print(merge_error)
+        else:
+            print("DEBUG: No valid PDFs to merge!")
 
         # Upload to Google Drive if a folder ID is provided and the merged PDF exists
         drive_file_id = None
@@ -1223,13 +1236,14 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
 
         # Remove duplicates and clean up
         cleanup_files = list(set(cleanup_files))
-        for temp_file in cleanup_files:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                    print(f"🗑️ Cleaned up temporary file: {temp_file}")
-            except Exception as e:
-                print(f"⚠️ Could not clean up {temp_file}: {e}")
+        # COMMENTED OUT: Do not clean up here, cleanup should be done after final merge in main route
+        # for temp_file in cleanup_files:
+        #     try:
+        #         if os.path.exists(temp_file):
+        #             os.remove(temp_file)
+        #             print(f"🗑️ Cleaned up temporary file: {temp_file}")
+        #     except Exception as e:
+        #         print(f"⚠️ Could not clean up {temp_file}: {e}")
 
         # Return the results (return the merged PDF path)
         result = {
@@ -1238,7 +1252,9 @@ def process_files(files, drive_folder_id=None, employee_name=None, cost_center_n
             'pdf_files': [],    # Don't return local paths since files are deleted
             'merged_pdf': merged_pdf, # Return the merged PDF path
             'processing_results': processing_results,
-            'drive_upload_attempted': drive_upload_attempted
+            'drive_upload_attempted': drive_upload_attempted,
+            'invalid_pdfs': invalid_pdfs,  # <-- Add this line
+            'merged_pdf_page_count': final_page_count  # <-- And this line
         }
 
         # Add Drive information if available
