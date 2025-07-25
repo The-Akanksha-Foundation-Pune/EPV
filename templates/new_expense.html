@@ -2823,7 +2823,12 @@
                     
                     // Validate travel fields if this is a travel expense
                     const expenseHead = $(`#expenseHead-${expenseId}`).val();
-                    if (expenseHead && expenseHead.toLowerCase().includes('travel')) {
+                    const travelHeads = ['local conveyance', 'domestic travel', 'international travel'];
+                    const isTravel = expenseHead && (
+                        expenseHead.toLowerCase().includes('travel') ||
+                        travelHeads.includes(expenseHead.trim().toLowerCase())
+                    );
+                    if (isTravel) {
                         // Validate travel type
                         const travelType = $(`#travelType-${expenseId}`).val();
                         if (!travelType) {
@@ -2832,16 +2837,14 @@
                             if (!firstErrorField) firstErrorField = $(`#travelType-${expenseId}`);
                             itemValid = false;
                         }
-                        
                         // Validate travel mode
                         const travelMode = $(`#travelMode-${expenseId}`).val();
                         if (!travelMode) {
-                            validationErrors.push(`Expense #${expenseId}: Mode of Travel is required`);
+                            validationErrors.push(`Expense #${expenseId}: Travel Mode is required`);
                             addFieldError(`travelMode-${expenseId}`, "Please select mode of travel");
                             if (!firstErrorField) firstErrorField = $(`#travelMode-${expenseId}`);
                             itemValid = false;
                         }
-                        
                         // Validate travel date
                         const travelDate = $(`#travelDate-${expenseId}`).val();
                         if (!travelDate) {
@@ -2850,7 +2853,6 @@
                             if (!firstErrorField) firstErrorField = $(`#travelDate-${expenseId}`);
                             itemValid = false;
                         }
-                        
                         // Validate from and to locations
                         const travelFrom = $(`#travelFrom-${expenseId}`).val();
                         if (!travelFrom || travelFrom.trim() === "") {
@@ -2859,7 +2861,6 @@
                             if (!firstErrorField) firstErrorField = $(`#travelFrom-${expenseId}`);
                             itemValid = false;
                         }
-                        
                         const travelTo = $(`#travelTo-${expenseId}`).val();
                         if (!travelTo || travelTo.trim() === "") {
                             validationErrors.push(`Expense #${expenseId}: To location is required`);
@@ -2867,15 +2868,18 @@
                             if (!firstErrorField) firstErrorField = $(`#travelTo-${expenseId}`);
                             itemValid = false;
                         }
-                        
-                        // Validate KM for local travel
-                        if (travelType === 'local') {
-                            const travelKm = $(`#travelKm-${expenseId}`).val();
-                            if (!travelKm || parseFloat(travelKm) <= 0) {
-                                validationErrors.push(`Expense #${expenseId}: Distance (KM) is required for local travel`);
-                                addFieldError(`travelKm-${expenseId}`, "Please enter distance in KM");
-                                if (!firstErrorField) firstErrorField = $(`#travelKm-${expenseId}`);
-                                itemValid = false;
+                        // Validate KM for local or domestic travel
+                        if (["local", "domestic"].includes(travelType)) {
+                            const kmInput = $(`#travelKm-${expenseId}`);
+                            // Only validate if the field is visible
+                            if (kmInput.is(":visible")) {
+                                const travelKm = kmInput.val();
+                                if (!travelKm || parseFloat(travelKm) <= 0) {
+                                    validationErrors.push(`Expense #${expenseId}: Distance (KM) is required`);
+                                    addFieldError(`travelKm-${expenseId}`, "Please enter distance in KM");
+                                    if (!firstErrorField) firstErrorField = kmInput;
+                                    itemValid = false;
+                                }
                             }
                         }
                     }
