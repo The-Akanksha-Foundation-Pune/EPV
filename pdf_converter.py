@@ -90,7 +90,8 @@ for directory in [STATIC_DIR]:
 
 def allowed_file(filename):
     """Check if the file has an allowed extension"""
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
+    # Allow all common image formats and PDF
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'webp', 'heic', 'heif', 'bmp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def generate_expense_document(expense_data):
@@ -417,7 +418,7 @@ def generate_expense_document(expense_data):
                 2.8*inch,   # Description column - widest for descriptions
                 1.1*inch    # Amount column - adequate for numbers
             ]
-            print(f"DEBUG: Using column widths: {[f'{w/inch:.1f}\"' for w in col_widths]}")
+            # print(f"DEBUG: Using column widths: {[f'{w/inch:.1f}\"' for w in col_widths]}")  # Removed for compatibility
 
             # Increased row height to accommodate wrapped text
             row_height = 0.6*inch  # Increased to 0.6 for better text wrapping
@@ -669,10 +670,8 @@ def generate_expense_document(expense_data):
 def convert_to_pdf(file_path):
     """
     Convert a file to PDF
-
     Args:
         file_path: Path to the file to convert
-
     Returns:
         Path to the converted PDF file, or None if conversion failed
     """
@@ -683,8 +682,6 @@ def convert_to_pdf(file_path):
     # If the file is already a PDF, validate it first
     if file_path.lower().endswith('.pdf'):
         print(f"File is already a PDF: {file_path}")
-        
-        # Validate that it's a real PDF
         try:
             from PyPDF2 import PdfReader
             with open(file_path, 'rb') as f:
@@ -694,16 +691,51 @@ def convert_to_pdf(file_path):
                 return file_path
         except Exception as e:
             print(f"❌ Invalid PDF file: {file_path} - {str(e)}")
-            # Try to convert it using other methods
             print(f"Attempting to convert invalid PDF using alternative methods...")
 
-    # Get the file extension
     file_ext = os.path.splitext(file_path)[1].lower()
-
-    # Create a PDF filename
     pdf_path = os.path.splitext(file_path)[0] + '.pdf'
 
     try:
+        # Try to open any image file with Pillow
+        if PIL_AVAILABLE and file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.heic', '.heif']:
+            try:
+                print(f"Converting {file_path} to PDF using PIL (universal image support)")
+                # Import pillow_heif for HEIC/HEIF support
+                try:
+                    import pillow_heif
+                    pillow_heif.register_heif_opener()
+                except ImportError:
+                    print("pillow-heif not installed, HEIC/HEIF images may not be supported.")
+                from PIL import Image, ExifTags
+                image = Image.open(file_path)
+
+                # --- EXIF orientation fix ---
+                try:
+                    exif = getattr(image, '_getexif', lambda: None)()
+                    if exif is not None:
+                        for orientation in ExifTags.TAGS.keys():
+                            if ExifTags.TAGS[orientation] == 'Orientation':
+                                break
+                        exif_orientation = exif.get(orientation, None)
+                        if exif_orientation == 3:
+                            image = image.rotate(180, expand=True)
+                        elif exif_orientation == 6:
+                            image = image.rotate(270, expand=True)
+                        elif exif_orientation == 8:
+                            image = image.rotate(90, expand=True)
+                except Exception as e:
+                    print(f"EXIF orientation handling error: {e}")
+
+                # Convert to RGB if needed
+                if image.mode in ('RGBA', 'P', 'LA'):
+                    image = image.convert('RGB')
+                image.save(pdf_path, "PDF", resolution=100.0)
+                if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0:
+                    print(f"Successfully converted to PDF: {pdf_path}")
+                    return pdf_path
+            except Exception as e:
+                print(f"Error converting with PIL: {str(e)}")
         # Method 1: Use img2pdf for image conversion (best quality)
         if IMG2PDF_AVAILABLE and file_ext in ['.jpg', '.jpeg', '.png']:
             try:

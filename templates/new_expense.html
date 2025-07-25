@@ -643,13 +643,13 @@
                                                 <label for="receipt-1" class="form-label required-field">Upload Receipt</label>
                                                 <div id="expense-files-1" class="expense-files mb-2">
                                                     <div class="input-group mb-2">
-                                                        <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept=".pdf,.jpg,.jpeg,.png" >
+                                                        <input type="file" class="form-control" id="receipt-1" name="receipt[1][]" accept="image/*,.pdf" >
                                                         <label class="input-group-text" for="receipt-1"><i class="fas fa-upload"></i></label>
                                                     </div>
                                                 </div>
                                                 <button type="button" class="btn btn-secondary btn-sm mb-2" id="addPageBtn-1" onclick="addPageInput(1)">Add Page</button>
                                                 <span id="file-limit-msg-1" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
-                                                <div class="form-text" id="receipt-help-1">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
+                                                <div class="form-text" id="receipt-help-1">Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)</div>
                                             </div>
                                         </div>
                                         <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-1" style="display: none;">
@@ -1188,7 +1188,7 @@
                     
                     // Make receipt required for domestic travel
                     newExpense.find('#receipt-' + expenseCount).prop('required', true);
-                    newExpense.find('#receipt-help-' + expenseCount).text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                    newExpense.find('#receipt-help-' + expenseCount).text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 }
             }
 
@@ -1284,7 +1284,7 @@
                 // Make travel fields required
                 travelFields.find('select, input').prop('required', true);
                 // Update receipt help text for travel
-                $(`#receipt-help-${expenseId}`).text('Receipt upload is mandatory for travel expenses. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                $(`#receipt-help-${expenseId}`).text('Receipt upload is mandatory for travel expenses. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 // If Local Conveyance or Domestic Travel, set and disable Travel Type
                 const travelTypeSelect = $(`#travelType-${expenseId}`);
                 // Always remove any existing hidden travel_type input for this row
@@ -1317,7 +1317,7 @@
                     $(`#travelType-${expenseId}`).prop('disabled', false).val('');
                 }, 300);
                 // Reset receipt help text
-                $(`#receipt-help-${expenseId}`).text('Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                $(`#receipt-help-${expenseId}`).text('Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
             }
         });
 
@@ -1343,10 +1343,10 @@
                 domesticAmountInput.prop('required', false).prop('disabled', true);
                 if (travelMode === 'car' || travelMode === 'bike') {
                     receiptInput.prop('disabled', true).prop('required', false);
-                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 } else {
                     receiptInput.prop('disabled', false).prop('required', true);
-                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 }
             } else if (travelType === 'domestic') {
                 kmContainer.hide();
@@ -1357,7 +1357,7 @@
                 standardAmountInput.prop('required', true).prop('disabled', false);
                 domesticAmountInput.prop('required', false).prop('disabled', true);
                 receiptInput.prop('disabled', false).prop('required', true);
-                receiptHelp.text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                receiptHelp.text('Receipt upload is mandatory for domestic travel. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
             } else {
                 kmContainer.hide();
                 kmInput.prop('required', false);
@@ -1366,7 +1366,7 @@
                 standardAmountInput.prop('required', true).prop('disabled', false);
                 domesticAmountInput.prop('required', false).prop('disabled', true);
                 receiptInput.prop('disabled', false).prop('required', true);
-                receiptHelp.text('Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                receiptHelp.text('Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
             }
         });
 
@@ -1380,10 +1380,10 @@
             if (travelType === 'local') {
                 if (travelMode === 'car' || travelMode === 'bike') {
                     receiptInput.prop('disabled', true).prop('required', false).val('');
-                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                    receiptHelp.text('Receipt upload is optional for car/bike travel. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 } else {
                     receiptInput.prop('disabled', false).prop('required', true);
-                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, JPG, JPEG (Max size: 25MB)');
+                    receiptHelp.text('Receipt upload is mandatory for this travel mode. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
                 }
             } else {
                 receiptInput.prop('disabled', false).prop('required', true);
@@ -1409,7 +1409,6 @@
             console.log('File:', file ? file.name : 'No file');
 
             // Clear ALL validation messages for this specific input across all expense items
-            // This prevents messages from appearing in multiple places
             $(`.file-validation-error, .file-validation-success, .file-validation-loading`).each(function() {
                 const msgInput = $(this).data('input');
                 if (msgInput === inputId) {
@@ -1442,30 +1441,20 @@
                 return;
             }
 
-            // Check file type
-            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-            const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
-            const fileName = file.name.toLowerCase();
-            const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
-
-            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-                showFileError(fileInput, 'Invalid file type. Please upload PDF, JPG, JPEG, or PNG files only.');
-                $(fileInput).val(''); // Clear the input
+            // If it's an image, skip strict validation and let backend handle it
+            if (file.type.startsWith('image/')) {
+                hideFileLoading(fileInput);
+                showFileSuccess(fileInput, 'Image file accepted. Will be validated on server.');
                 return;
             }
 
-            // Show loading indicator
-            showFileLoading(fileInput, 'Validating file...');
-
-            // Check for file corruption with strict validation
-            if (file.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+            // Only strict validation for PDFs
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                showFileLoading(fileInput, 'Validating file...');
                 validatePDFFileStrict(file, fileInput);
-            } else if (file.type.startsWith('image/') || ['.jpg', '.jpeg', '.png'].includes(fileExtension)) {
-                validateImageFileStrict(file, fileInput);
             } else {
-                // For other file types, do basic validation
                 hideFileLoading(fileInput);
-                showFileError(fileInput, 'Unsupported file type. Please upload PDF, JPG, JPEG, or PNG files only.');
+                showFileError(fileInput, 'Unsupported file type. Please upload a PDF or an image file.');
                 $(fileInput).val('');
             }
         }
@@ -1515,7 +1504,7 @@
                     // Check each character of the PDF header individually
                     if (headerBytes[0] !== 0x25 || // %
                         headerBytes[1] !== 0x50 || // P
-                        headerBytes[2] !== 0x44 || // D
+                        headerBytes[2] !== 0x44 || // 
                         headerBytes[3] !== 0x46 || // F
                         headerBytes[4] !== 0x2D) { // -
                         console.log('FAILED: Invalid PDF header - not a PDF file');
@@ -1907,9 +1896,15 @@
                         return;
                     }
 
-                    // If binary validation passes, try to load the image
-                    loadImageForStrictValidation(file, fileInput);
-
+                    // If it's a known type (jpg/png), try to load in browser
+                    const fileNameLower = file.name.toLowerCase();
+                    if (fileNameLower.endsWith('.jpg') || fileNameLower.endsWith('.jpeg') || fileNameLower.endsWith('.png')) {
+                        loadImageForStrictValidation(file, fileInput);
+                    } else {
+                        // For unknown types (webp, heic, etc.), skip browser load and let backend validate
+                        hideFileLoading(fileInput);
+                        showFileSuccess(fileInput, 'Image file accepted. Will be validated on server.');
+                    }
                 } catch (error) {
                     console.error('Image binary validation error:', error);
                     hideFileLoading(fileInput);
@@ -2003,8 +1998,9 @@
                 return true;
             }
 
-            console.log('Unknown image type - rejecting for safety');
-            return false; // Reject unknown types for strict validation
+            // For all other image types (webp, heic, bmp, gif, etc.), allow and let backend validate
+            console.log('Unknown image type - allowing for backend validation');
+            return true;
         }
 
         // STRICT image loading validation
@@ -3857,13 +3853,13 @@
                         <label for="receipt-${expenseId}" class="form-label required-field">Upload Receipt</label>
                         <div id="expense-files-${expenseId}" class="expense-files mb-2">
                             <div class="input-group mb-2">
-                                <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[${expenseId}][]" accept=".pdf,.jpg,.jpeg,.png">
+                                <input type="file" class="form-control" id="receipt-${expenseId}" name="receipt[${expenseId}][]" accept="image/*,.pdf">
                                 <label class="input-group-text" for="receipt-${expenseId}"><i class="fas fa-upload"></i></label>
                             </div>
                         </div>
                         <button type="button" class="btn btn-secondary btn-sm mb-2" id="addPageBtn-${expenseId}" onclick="addPageInput(${expenseId})">Add Page</button>
                         <span id="file-limit-msg-${expenseId}" class="text-danger" style="display:none;">Maximum 30 files allowed.</span>
-                        <div class="form-text" id="receipt-help-${expenseId}">Accepted formats: PDF, JPG, JPEG (Max size: 25MB)</div>
+                        <div class="form-text" id="receipt-help-${expenseId}">Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)</div>
                     </div>
                 </div>
                 <div class="row mt-3 split-invoice-row" id="splitInvoiceRow-${expenseId}" style="display: none;">
@@ -4048,7 +4044,7 @@
             // Always use receipt[<expenseId>][] for all expense sections
             input.name = `receipt[${expenseId}][]`;
             input.className = 'form-control';
-            input.accept = '.pdf,.jpg,.jpeg,.png';
+            input.accept = 'image/*,.pdf';
 
             const label = document.createElement('label');
             label.className = 'input-group-text';
