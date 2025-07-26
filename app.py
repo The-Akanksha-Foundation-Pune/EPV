@@ -6149,17 +6149,23 @@ def finance_dashboard():
             rejected_epvs_filtered = rejected_invoices
             pending_payment_epvs_filtered = pending_payment_invoices
 
-        # Get ALL master invoices that are approved and have pending/null finance status
-        # For master invoices, we don't filter by city - show all of them
+        # Get master invoices that are approved and have pending/null finance status
+        # Filter by assigned cities for Finance users
         master_invoices_query = EPV.query.filter(
             EPV.invoice_type == 'master',
             EPV.status == 'approved',
             (EPV.finance_status == None) | (EPV.finance_status == 'pending')
         )
 
-        master_epvs = master_invoices_query.all()
+        # Apply city filter for master invoices
+        if city_names:
+            master_invoices_query = master_invoices_query.filter(EPV.city.in_(city_names))
+            print(f"DEBUG: Filtering master invoices by assigned cities: {city_names}")
 
-        # Get ALL split invoices that are partially approved and have pending/null finance status
+        master_epvs = master_invoices_query.all()
+        print(f"DEBUG: Found {len(master_epvs)} master invoices after city filtering")
+
+        # Get split invoices that are partially approved and have pending/null finance status
         # Split invoices with partially_approved status should be processed by finance
         split_invoices_query = EPV.query.filter(
             EPV.invoice_type == 'split',
@@ -6167,18 +6173,16 @@ def finance_dashboard():
             (EPV.finance_status == None) | (EPV.finance_status == 'pending')
         )
 
-        split_epvs = split_invoices_query.all()
-
-        # Filter split invoices by city if the user has assigned cities
-        split_epvs_filtered = []
+        # Apply city filter for split invoices
         if city_names:
-            for invoice in split_epvs:
-                # Only show EPVs where the city field matches the finance person's assigned cities
-                if invoice.city and invoice.city in city_names:
-                    split_epvs_filtered.append(invoice)
-        else:
-            # If the user has no assigned cities, show all split invoices
-            split_epvs_filtered = split_epvs
+            split_invoices_query = split_invoices_query.filter(EPV.city.in_(city_names))
+            print(f"DEBUG: Filtering split invoices by assigned cities: {city_names}")
+
+        split_epvs = split_invoices_query.all()
+        print(f"DEBUG: Found {len(split_epvs)} split invoices after city filtering")
+
+        # No need for additional filtering since we're already filtering in the query
+        split_epvs_filtered = split_epvs
 
         # Combine the results - include standard, master, and split invoices
         pending_epvs = standard_epvs + master_epvs + split_epvs_filtered

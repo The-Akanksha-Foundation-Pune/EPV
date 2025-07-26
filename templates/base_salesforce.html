@@ -644,97 +644,162 @@
         });
 
         // Mobile Menu functionality
-        const mobileMoreMenu = document.getElementById('mobileMoreMenu');
-        const mobileMorePanel = document.getElementById('mobileMorePanel');
-        const mobileMoreClose = document.getElementById('mobileMoreClose');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for DOM to be fully loaded before initializing mobile menu
+            setTimeout(function() {
+                const mobileMoreMenu = document.getElementById('mobileMoreMenu');
+                const mobileMorePanel = document.getElementById('mobileMorePanel');
+                const mobileMoreClose = document.getElementById('mobileMoreClose');
 
-        const mobileAdminMenu = document.getElementById('mobileAdminMenu');
-        const mobileAdminPanel = document.getElementById('mobileAdminPanel');
-        const mobileAdminClose = document.getElementById('mobileAdminClose');
+                const mobileAdminMenu = document.getElementById('mobileAdminMenu');
+                const mobileAdminPanel = document.getElementById('mobileAdminPanel');
+                const mobileAdminClose = document.getElementById('mobileAdminClose');
 
-        // Create overlay element
-        const overlay = document.createElement('div');
-        overlay.className = 'mobile-overlay';
-        document.body.appendChild(overlay);
+                // Create overlay element only if it doesn't exist
+                let overlay = document.querySelector('.mobile-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.className = 'mobile-overlay';
+                    document.body.appendChild(overlay);
+                }
 
-        // Function to close all mobile panels
-        function closeAllMobilePanels() {
-            if (mobileMorePanel) mobileMorePanel.classList.remove('show');
-            if (mobileAdminPanel) mobileAdminPanel.classList.remove('show');
-            overlay.classList.remove('show');
-            document.body.style.overflow = ''; // Re-enable scrolling
-        }
+                // Function to close all mobile panels
+                function closeAllMobilePanels() {
+                    if (mobileMorePanel) mobileMorePanel.classList.remove('show');
+                    if (mobileAdminPanel) mobileAdminPanel.classList.remove('show');
+                    if (overlay) overlay.classList.remove('show');
+                    document.body.style.overflow = ''; // Re-enable scrolling
+                }
 
-        // More Menu functionality
-        if (mobileMoreMenu && mobileMorePanel) {
-            // Open more menu
-            mobileMoreMenu.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeAllMobilePanels(); // Close any open panels first
-                mobileMorePanel.classList.add('show');
-                overlay.classList.add('show');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling
-            });
+                // More Menu functionality
+                if (mobileMoreMenu && mobileMorePanel) {
+                    console.log('Initializing mobile More menu...');
+                    
+                    // Open more menu
+                    mobileMoreMenu.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('More menu clicked');
+                        closeAllMobilePanels(); // Close any open panels first
+                        mobileMorePanel.classList.add('show');
+                        if (overlay) overlay.classList.add('show');
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling
+                    });
 
-            // Close more menu
-            if (mobileMoreClose) {
-                mobileMoreClose.addEventListener('click', function() {
-                    closeAllMobilePanels();
-                });
-            }
+                    // Close more menu
+                    if (mobileMoreClose) {
+                        mobileMoreClose.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('More menu close clicked');
+                            closeAllMobilePanels();
+                        });
+                    }
 
-            // Close when clicking a menu item
-            const moreMenuItems = mobileMorePanel.querySelectorAll('.more-menu-item');
-            moreMenuItems.forEach(function(item) {
-                // Skip items with onclick handlers
-                if (!item.hasAttribute('onclick')) {
-                    item.addEventListener('click', function() {
-                        // Only show loading screen for links that navigate
-                        if (typeof LoadingScreen !== 'undefined') {
-                            LoadingScreen.show(3);
+                    // Close when clicking a menu item
+                    const moreMenuItems = mobileMorePanel.querySelectorAll('.more-menu-item');
+                    moreMenuItems.forEach(function(item) {
+                        // Skip items with onclick handlers
+                        if (!item.hasAttribute('onclick')) {
+                            item.addEventListener('click', function(e) {
+                                console.log('More menu item clicked:', this.textContent.trim());
+                                // Only show loading screen for links that navigate
+                                if (typeof LoadingScreen !== 'undefined') {
+                                    LoadingScreen.show(3);
+                                }
+                                // Close the panel after a short delay to allow navigation
+                                setTimeout(function() {
+                                    closeAllMobilePanels();
+                                }, 100);
+                            });
                         }
                     });
+                } else {
+                    console.log('Mobile More menu elements not found:', {
+                        mobileMoreMenu: !!mobileMoreMenu,
+                        mobileMorePanel: !!mobileMorePanel
+                    });
                 }
-            });
-        }
 
-        // Admin Menu functionality
-        if (mobileAdminMenu && mobileAdminPanel) {
-            // Open admin menu
-            mobileAdminMenu.addEventListener('click', function(e) {
-                e.preventDefault();
-                closeAllMobilePanels(); // Close any open panels first
-                mobileAdminPanel.classList.add('show');
-                overlay.classList.add('show');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling
-            });
+                // Admin Menu functionality
+                if (mobileAdminMenu && mobileAdminPanel) {
+                    console.log('Initializing mobile Admin menu...');
+                    
+                    // Open admin menu
+                    mobileAdminMenu.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Admin menu clicked');
+                        closeAllMobilePanels(); // Close any open panels first
+                        mobileAdminPanel.classList.add('show');
+                        if (overlay) overlay.classList.add('show');
+                        document.body.style.overflow = 'hidden'; // Prevent scrolling
+                    });
 
-            // Close admin menu
-            if (mobileAdminClose) {
-                mobileAdminClose.addEventListener('click', function() {
-                    closeAllMobilePanels();
-                });
-            }
+                    // Close admin menu
+                    if (mobileAdminClose) {
+                        mobileAdminClose.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Admin menu close clicked');
+                            closeAllMobilePanels();
+                        });
+                    }
 
-            // Close when clicking a menu item
-            const adminMenuItems = mobileAdminPanel.querySelectorAll('.more-menu-item');
-            adminMenuItems.forEach(function(item) {
-                item.addEventListener('click', function() {
-                    // Only show loading screen for links that navigate
-                    if (typeof LoadingScreen !== 'undefined') {
-                        LoadingScreen.show(3);
+                    // Close when clicking a menu item
+                    const adminMenuItems = mobileAdminPanel.querySelectorAll('.more-menu-item');
+                    adminMenuItems.forEach(function(item) {
+                        item.addEventListener('click', function(e) {
+                            console.log('Admin menu item clicked:', this.textContent.trim());
+                            // Only show loading screen for links that navigate
+                            if (typeof LoadingScreen !== 'undefined') {
+                                LoadingScreen.show(3);
+                            }
+                            // Close the panel after a short delay to allow navigation
+                            setTimeout(function() {
+                                closeAllMobilePanels();
+                            }, 100);
+                        });
+                    });
+                } else {
+                    console.log('Mobile Admin menu elements not found:', {
+                        mobileAdminMenu: !!mobileAdminMenu,
+                        mobileAdminPanel: !!mobileAdminPanel
+                    });
+                }
+
+                // Close when clicking overlay
+                if (overlay) {
+                    overlay.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Overlay clicked');
+                        closeAllMobilePanels();
+                    });
+                }
+
+                // Close panels when pressing escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeAllMobilePanels();
                     }
                 });
-            });
-        }
 
-        // Close when clicking overlay
-        overlay.addEventListener('click', function() {
-            closeAllMobilePanels();
+                // Debug: Log mobile menu status
+                console.log('Mobile menu initialization complete:', {
+                    moreMenuExists: !!mobileMoreMenu,
+                    morePanelExists: !!mobileMorePanel,
+                    adminMenuExists: !!mobileAdminMenu,
+                    adminPanelExists: !!mobileAdminPanel,
+                    overlayExists: !!overlay
+                });
+
+            }, 100); // Small delay to ensure DOM is ready
         });
     </script>
 
     <!-- Mobile Bottom Navigation -->
+    {% if session.get('email') %}
     <div class="mobile-bottom-nav">
         <a href="{{ url_for('dashboard') }}" class="nav-item nav-link {% if request.path == url_for('dashboard') %}active{% endif %}">
             <i class="fas fa-th-large"></i>
@@ -754,6 +819,10 @@
         <a href="{{ url_for('finance_dashboard') }}" class="nav-item nav-link {% if request.path == url_for('finance_dashboard') %}active{% endif %}">
             <i class="fas fa-money-bill-wave"></i>
             <span>Finance</span>
+        </a>
+        <a href="{{ url_for('epv_records', view='my_expenses') }}" class="nav-item nav-link {% if request.path == url_for('epv_records') and request.args.get('view') == 'my_expenses' %}active{% endif %}">
+            <i class="fas fa-receipt"></i>
+            <span>My Expenses</span>
         </a>
         <!-- Reports menu temporarily hidden
         {% if session.get('employee_role') == 'Finance Approver' %}
@@ -844,6 +913,7 @@
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <style>
         /* Mobile Bottom Navigation */
@@ -899,10 +969,13 @@
             border-top-right-radius: 16px;
             transform: translateY(100%);
             transition: transform 0.3s ease;
+            -webkit-transform: translateY(100%);
+            -webkit-transition: -webkit-transform 0.3s ease;
         }
 
         .mobile-more-panel.show {
             transform: translateY(0);
+            -webkit-transform: translateY(0);
             display: block;
         }
 
@@ -912,6 +985,10 @@
             align-items: center;
             padding: 16px;
             border-bottom: 1px solid var(--sf-neutral-medium);
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1;
         }
 
         .mobile-more-panel-header h5 {
@@ -919,10 +996,21 @@
             font-weight: 600;
         }
 
+        .mobile-more-panel-header .btn-close {
+            padding: 8px;
+            margin: 0;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--sf-text-light);
+        }
+
         .mobile-more-panel-body {
             padding: 16px;
             overflow-y: auto;
             max-height: calc(70vh - 60px);
+            -webkit-overflow-scrolling: touch;
         }
 
         .more-menu-item {
@@ -933,9 +1021,12 @@
             text-decoration: none;
             border-radius: 8px;
             margin-bottom: 8px;
+            transition: background-color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .more-menu-item:hover {
+        .more-menu-item:hover,
+        .more-menu-item:active {
             background-color: var(--sf-neutral-light);
         }
 
