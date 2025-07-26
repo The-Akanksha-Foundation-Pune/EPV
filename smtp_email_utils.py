@@ -154,8 +154,38 @@ def create_approval_email(epv_record, sender_email, base_url, token=None):
     expense_date_range = f"{epv_record.from_date.strftime('%d-%m-%Y') if hasattr(epv_record.from_date, 'strftime') else epv_record.from_date} to {epv_record.to_date.strftime('%d-%m-%Y') if hasattr(epv_record.to_date, 'strftime') else epv_record.to_date}" if epv_record.from_date and epv_record.to_date else "N/A"
     total_amount = f"Rs. {epv_record.total_amount:.2f}" if epv_record.total_amount else "N/A"
 
-    # Get expense items
-    expense_items = epv_record.items
+    # Get expense items - ensure they are properly loaded with all fields
+    from models import EPVItem
+    expense_items = EPVItem.query.filter_by(epv_id=epv_record.id).all()
+    
+    # Filter travel items - check for any travel-related data
+    travel_items = [item for item in expense_items if (
+        item.travel_type or 
+        item.travel_mode or 
+        item.travel_from or 
+        item.travel_to or 
+        item.travel_date or 
+        item.travel_km
+    )]
+    
+    # Debug logging
+    print(f"DEBUG: create_approval_email - EPV ID: {epv_record.epv_id}")
+    print(f"DEBUG: EPV record ID: {epv_record.id}")
+    print(f"DEBUG: Total expense items: {len(expense_items)}")
+    print(f"DEBUG: Travel items found: {len(travel_items)}")
+    for i, item in enumerate(expense_items):
+        print(f"DEBUG: Item {i+1} - Head: {item.expense_head}, Travel Type: {item.travel_type}, Travel Mode: {item.travel_mode}")
+        print(f"DEBUG:   Travel fields: type={item.travel_type}, mode={item.travel_mode}, from={item.travel_from}, to={item.travel_to}, date={item.travel_date}, km={item.travel_km}")
+        has_travel_data = bool(item.travel_type or item.travel_mode or item.travel_from or item.travel_to or item.travel_date or item.travel_km)
+        print(f"DEBUG:   Has travel data: {has_travel_data}")
+        if has_travel_data:
+            print(f"DEBUG:   -> This item has travel data: {item.travel_type}, {item.travel_mode}, {item.travel_from}, {item.travel_to}, {item.travel_date}, {item.travel_km}")
+    
+    print(f"DEBUG: Final travel_items count: {len(travel_items)}")
+    if travel_items:
+        print(f"DEBUG: Travel items will be included in email")
+    else:
+        print(f"DEBUG: No travel items found - travel details section will NOT be included")
 
     # Create HTML content with inline styles for better email client compatibility
     html_content = f"""<!DOCTYPE html>
@@ -211,8 +241,64 @@ def create_approval_email(epv_record, sender_email, base_url, token=None):
                     </tr>
                     {''.join([f"<tr><td style='border: 1px solid #ddd; padding: 8px; text-align: left;'>{item.expense_invoice_date.strftime('%d-%m-%Y') if hasattr(item.expense_invoice_date, 'strftime') else item.expense_invoice_date}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: left;'>{item.description}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: left;'>{item.expense_head}</td><td style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Rs. {item.amount:.2f}</td></tr>" for item in expense_items])}
                 </table>
-            </div>
+            </div>"""
 
+    # Add travel details section if there are travel items
+    if travel_items:
+        travel_details_html = """
+            <div style="margin-bottom: 20px;">
+                <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #555;">🚗 Travel Details</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Travel Date</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">From</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">To</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Type</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Mode</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Distance</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Amount</th>
+                    </tr>"""
+        
+        for item in travel_items:
+            travel_date = item.travel_date.strftime('%d-%m-%Y') if item.travel_date and hasattr(item.travel_date, 'strftime') else 'N/A'
+            travel_type_badge = ""
+            if item.travel_type == 'local':
+                travel_type_badge = '<span style="background-color: #17a2b8; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">Local</span>'
+            elif item.travel_type == 'domestic':
+                travel_type_badge = '<span style="background-color: #ffc107; color: black; padding: 2px 6px; border-radius: 3px; font-size: 11px;">Domestic</span>'
+            elif item.travel_type == 'international':
+                travel_type_badge = '<span style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">International</span>'
+            else:
+                travel_type_badge = f'<span style="background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">{item.travel_type.title() if item.travel_type else "N/A"}</span>'
+            
+            travel_mode_badge = f'<span style="background-color: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">{item.travel_mode.title() if item.travel_mode else "N/A"}</span>'
+            distance = f"{item.travel_km:.1f} km" if item.travel_km else "N/A"
+            
+            travel_details_html += f"""
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{travel_date}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{item.travel_from or 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{item.travel_to or 'N/A'}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{travel_type_badge}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{travel_mode_badge}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{distance}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;"><strong>Rs. {item.amount:.2f}</strong></td>
+                    </tr>"""
+        
+        # Calculate total travel amount
+        total_travel_amount = sum(item.amount for item in travel_items)
+        travel_details_html += f"""
+                    <tr style="background-color: #f8f9fa;">
+                        <td colspan="6" style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">Total Travel Amount:</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: bold;">Rs. {total_travel_amount:.2f}</td>
+                    </tr>
+                </table>
+            </div>"""
+        
+        html_content += travel_details_html
+
+    # Complete the HTML content
+    html_content += f"""
             <p>To view the complete expense details and attached receipts, please click the button below:</p>
 
             <div style="margin-top: 20px; text-align: center;">

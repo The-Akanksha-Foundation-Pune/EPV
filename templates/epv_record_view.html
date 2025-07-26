@@ -618,6 +618,74 @@
                     {% endif %}
                 </div>
 
+                <!-- Travel Details Section -->
+                {% set travel_items = epv_items|selectattr('travel_type')|list %}
+                {% if travel_items %}
+                <div class="travel-details mt-4">
+                    <h4><i class="fas fa-plane me-2"></i>Travel Details</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Travel Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Travel Type</th>
+                                    <th>Mode</th>
+                                    <th>Distance (KM)</th>
+                                    <th>Purpose</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in travel_items %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ item.travel_date.strftime('%d-%m-%Y') if item.travel_date else 'N/A' }}</td>
+                                        <td>{{ item.travel_from or 'N/A' }}</td>
+                                        <td>{{ item.travel_to or 'N/A' }}</td>
+                                        <td>
+                                            {% if item.travel_type == 'local' %}
+                                                <span class="badge bg-info">Local</span>
+                                            {% elif item.travel_type == 'domestic' %}
+                                                <span class="badge bg-warning">Domestic</span>
+                                            {% elif item.travel_type == 'international' %}
+                                                <span class="badge bg-danger">International</span>
+                                            {% else %}
+                                                <span class="text-muted">{{ item.travel_type|title if item.travel_type else 'N/A' }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.travel_mode %}
+                                                <span class="badge bg-secondary">{{ item.travel_mode|title }}</span>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.travel_km %}
+                                                {{ item.travel_km|float|round(1) }} km
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.description or 'N/A' }}</td>
+                                        <td><strong>₹{{ item.amount|float|round(2) }}</strong></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="8" class="text-end"><strong>Total Travel Amount:</strong></td>
+                                    <td><strong>₹{{ travel_items|sum(attribute='amount')|float|round(2) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Approvals Section -->
                 {% if epv.invoice_type == 'split' and epv.allocations %}
                 <!-- Split Invoice Approval Status -->
