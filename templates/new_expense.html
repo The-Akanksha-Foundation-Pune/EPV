@@ -134,6 +134,27 @@
         cursor: pointer;
     }
 
+    /* Mobile-specific date input styling */
+    @media (max-width: 768px) {
+        input[type="date"] {
+            font-size: 16px; /* Prevents zoom on iOS */
+            min-height: 44px; /* Minimum touch target size */
+            padding: 8px 12px;
+        }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        
+        /* Ensure date inputs are easily tappable on mobile */
+        .input-group input[type="date"] {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
     .alert-info .alert-link {
         color: var(--sf-blue);
     }
@@ -909,6 +930,154 @@
         // Also prevent paste events
         $(document).on('paste', '.datepicker-only', function(e) {
             e.preventDefault();
+        });
+
+        // Enhanced date input validation for mobile compatibility
+        $(document).on('input change blur', 'input[type="date"]', function() {
+            const dateInput = $(this);
+            const dateValue = dateInput.val();
+            const inputId = dateInput.attr('id');
+            
+            // Clear any existing validation errors for this field
+            clearFieldError(inputId);
+            
+            // Validate date range for from date
+            if (inputId === 'fromDate' && dateValue) {
+                const fromDate = new Date(dateValue);
+                const today = new Date();
+                const maxDaysPast = 30; // Default value, should match the value from settings
+                const minDate = new Date();
+                minDate.setDate(today.getDate() - maxDaysPast);
+                
+                if (fromDate < minDate) {
+                    addFieldError(inputId, `Date cannot be more than ${maxDaysPast} days in the past`);
+                } else if (fromDate > today) {
+                    addFieldError(inputId, "Date cannot be in the future");
+                }
+            }
+            
+            // Validate date range for to date
+            if (inputId === 'toDate' && dateValue) {
+                const toDate = new Date(dateValue);
+                const fromDate = new Date($('#fromDate').val());
+                const today = new Date();
+                
+                if ($('#fromDate').val() && toDate < fromDate) {
+                    addFieldError(inputId, "To date cannot be before from date");
+                } else if (toDate > today) {
+                    addFieldError(inputId, "Date cannot be in the future");
+                }
+            }
+            
+            // Validate invoice dates
+            if (inputId && inputId.startsWith('invoiceDate-') && dateValue) {
+                validateInvoiceDate(dateInput);
+            }
+            
+            // Validate travel dates
+            if (inputId && inputId.startsWith('travelDate-') && dateValue) {
+                const travelDate = new Date(dateValue);
+                const today = new Date();
+                
+                if (travelDate > today) {
+                    addFieldError(inputId, "Travel date cannot be in the future");
+                }
+            }
+        });
+
+        // Additional mobile-specific date validation
+        $(document).on('touchend', 'input[type="date"]', function() {
+            // Trigger validation after mobile date picker closes
+            setTimeout(() => {
+                $(this).trigger('change');
+            }, 100);
+        });
+
+        // Enhanced mobile date input handling - prevent invalid date selection
+        $(document).on('input', 'input[type="date"]', function() {
+            const dateInput = $(this);
+            const dateValue = dateInput.val();
+            const inputId = dateInput.attr('id');
+            
+            if (!dateValue) return; // Skip if no value
+            
+            const selectedDate = new Date(dateValue);
+            const today = new Date();
+            const maxDaysPast = 30;
+            const minAllowedDate = new Date();
+            minAllowedDate.setDate(today.getDate() - maxDaysPast);
+            
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Check if date is in the future
+            if (selectedDate > today) {
+                isValid = false;
+                errorMessage = "Date cannot be in the future";
+            }
+            
+            // Check from date specific rules
+            if (inputId === 'fromDate') {
+                if (selectedDate < minAllowedDate) {
+                    isValid = false;
+                    errorMessage = `Date cannot be more than ${maxDaysPast} days in the past`;
+                }
+            }
+            
+            // Check to date specific rules
+            if (inputId === 'toDate') {
+                const fromDate = $('#fromDate').val();
+                if (fromDate && selectedDate < new Date(fromDate)) {
+                    isValid = false;
+                    errorMessage = "To date cannot be before from date";
+                }
+            }
+            
+            // Check invoice date specific rules
+            if (inputId && inputId.startsWith('invoiceDate-')) {
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+                
+                if (fromDate && selectedDate < new Date(fromDate)) {
+                    isValid = false;
+                    errorMessage = "Invoice date is before the from date";
+                } else if (toDate && selectedDate > new Date(toDate)) {
+                    isValid = false;
+                    errorMessage = "Invoice date is after the to date";
+                }
+            }
+            
+            // Check travel date specific rules
+            if (inputId && inputId.startsWith('travelDate-')) {
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+                
+                if (fromDate && selectedDate < new Date(fromDate)) {
+                    isValid = false;
+                    errorMessage = "Travel date is before the from date";
+                } else if (toDate && selectedDate > new Date(toDate)) {
+                    isValid = false;
+                    errorMessage = "Travel date is after the to date";
+                }
+            }
+            
+            // If invalid, clear the field and show error
+            if (!isValid) {
+                dateInput.val('');
+                addFieldError(inputId, errorMessage);
+                
+                // Show mobile-friendly error message
+                Swal.fire({
+                    title: 'Invalid Date',
+                    text: errorMessage,
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
         });
 
         // The first expense item should never be a split invoice
@@ -3495,6 +3664,29 @@
                     validateInvoiceDate($(this));
                 });
             }
+
+            // Add validation for travel date inputs
+            if ($(this).attr('id').startsWith('travelDate-')) {
+                // Set max date to today for travel dates
+                $(this).attr('max', maxDate);
+                
+                // Set min/max dates based on from/to dates if they exist
+                const fromDate = $('#fromDate').val();
+                const toDate = $('#toDate').val();
+
+                if (fromDate) {
+                    $(this).attr('min', fromDate);
+                }
+
+                if (toDate) {
+                    $(this).attr('max', toDate);
+                }
+
+                // Add change event handler for new invoice date inputs
+                $('input[id^="invoiceDate-"]').off('change.validation').on('change.validation', function() {
+                    validateInvoiceDate($(this));
+                });
+            }
         });
 
         // Add event listener to set max date for new date inputs
@@ -3517,10 +3709,17 @@
                     $('input[id^="invoiceDate-"]').attr('max', toDate);
                 }
 
-                // Add change event handler for new invoice date inputs
-                $('input[id^="invoiceDate-"]').off('change.validation').on('change.validation', function() {
-                    validateInvoiceDate($(this));
-                });
+                // Set max date for travel dates
+                $('input[id^="travelDate-"]').attr('max', maxDate);
+
+                // Set min and max dates for travel dates based on from and to dates
+                if (fromDate) {
+                    $('input[id^="travelDate-"]').attr('min', fromDate);
+                }
+
+                if (toDate) {
+                    $('input[id^="travelDate-"]').attr('max', toDate);
+                }
             }, 100);
         });
 
@@ -3547,24 +3746,89 @@
 
         // When the form is submitted, validate all dates and prevent submission if invalid
         $('#expenseForm').on('submit', function(e) {
-            // The native date input already stores dates in yyyy-mm-dd format
-
-            // Validate all invoice dates against from/to dates
+            // Enhanced date validation for mobile compatibility
+            let hasInvalidDates = false;
             const fromDate = $('#fromDate').val();
             const toDate = $('#toDate').val();
-            let hasInvalidDates = false;
+            const today = new Date();
+            const maxDaysPast = 30; // Default value, should match the value from settings
+            const minDate = new Date();
+            minDate.setDate(today.getDate() - maxDaysPast);
 
-            // Check all invoice dates
+            // Validate from date
+            if (fromDate) {
+                const fromDateObj = new Date(fromDate);
+                if (fromDateObj < minDate) {
+                    hasInvalidDates = true;
+                    addFieldError('fromDate', `Date cannot be more than ${maxDaysPast} days in the past`);
+                } else if (fromDateObj > today) {
+                    hasInvalidDates = true;
+                    addFieldError('fromDate', "Date cannot be in the future");
+                }
+            }
+
+            // Validate to date
+            if (toDate) {
+                const toDateObj = new Date(toDate);
+                if (fromDate && toDateObj < new Date(fromDate)) {
+                    hasInvalidDates = true;
+                    addFieldError('toDate', "To date cannot be before from date");
+                } else if (toDateObj > today) {
+                    hasInvalidDates = true;
+                    addFieldError('toDate', "Date cannot be in the future");
+                }
+            }
+
+            // Validate all invoice dates
             $('input[id^="invoiceDate-"]').each(function() {
                 const invoiceDate = $(this).val();
+                const inputId = $(this).attr('id');
+                
                 if (invoiceDate) {
-                    // Check if invoice date is outside the range
+                    const invoiceDateObj = new Date(invoiceDate);
+                    
+                    // Check if invoice date is outside the from/to range
                     if (fromDate && invoiceDate < fromDate) {
                         hasInvalidDates = true;
-                        validateInvoiceDate($(this));
+                        addFieldError(inputId, "Invoice date is before the from date");
                     } else if (toDate && invoiceDate > toDate) {
                         hasInvalidDates = true;
-                        validateInvoiceDate($(this));
+                        addFieldError(inputId, "Invoice date is after the to date");
+                    } else if (invoiceDateObj > today) {
+                        hasInvalidDates = true;
+                        addFieldError(inputId, "Invoice date cannot be in the future");
+                    }
+                }
+            });
+
+            // Validate all travel dates
+            $('input[id^="travelDate-"]').each(function() {
+                const travelDate = $(this).val();
+                const inputId = $(this).attr('id');
+                
+                if (travelDate) {
+                    const travelDateObj = new Date(travelDate);
+                    
+                    if (travelDateObj > today) {
+                        hasInvalidDates = true;
+                        addFieldError(inputId, "Travel date cannot be in the future");
+                    }
+                }
+            });
+
+            // Additional travel date validation for from/to range
+            $('input[id^="travelDate-"]').each(function() {
+                const travelDate = $(this).val();
+                const inputId = $(this).attr('id');
+                
+                if (travelDate) {
+                    // Check if travel date is outside the from/to range
+                    if (fromDate && travelDate < fromDate) {
+                        hasInvalidDates = true;
+                        addFieldError(inputId, "Travel date is before the from date");
+                    } else if (toDate && travelDate > toDate) {
+                        hasInvalidDates = true;
+                        addFieldError(inputId, "Travel date is after the to date");
                     }
                 }
             });
@@ -3576,35 +3840,25 @@
                 // Show error message
                 Swal.fire({
                     title: 'Invalid Dates',
-                    text: 'One or more invoice dates are outside the from/to date range. Please correct them before submitting.',
+                    text: 'One or more dates are invalid. Please correct them before submitting.',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
 
-                // Scroll to the first invalid date
-                const firstInvalidDate = $('div[id^="invoiceDateWarning-"]').first();
-                if (firstInvalidDate.length) {
+                // Scroll to the first error field
+                const firstErrorField = $('.is-invalid').first();
+                if (firstErrorField.length) {
                     $('html, body').animate({
-                        scrollTop: firstInvalidDate.offset().top - 100
+                        scrollTop: firstErrorField.offset().top - 100
                     }, 500);
+                    firstErrorField.focus();
                 }
 
                 return false;
             }
-            // which is what we need for the server
+
+            // Continue with existing validation logic
             console.log('Form submitted with dates in yyyy-mm-dd format');
-
-            // For debugging, log all date values
-            $('input[type="date"]').each(function() {
-                const dateValue = $(this).val();
-                if (dateValue) {
-                    console.log(`Date field ${$(this).attr('id')}: ${dateValue} (displayed as ${formatDateForDisplay(dateValue)})`);
-                }
-            });
-
-            // Split invoice functionality is now handled by the dedicated Split Invoice button
-
-            return true; // Allow form submission to proceed
         });
 
         // Invoice type change handler
