@@ -1454,6 +1454,17 @@
                 travelFields.find('select, input').prop('required', true);
                 // Update receipt help text for travel
                 $(`#receipt-help-${expenseId}`).text('Receipt upload is mandatory for travel expenses. Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
+                
+                // Move Invoice Date field below Upload Receipt for travel expenses
+                const invoiceDateCol = $(`#expense-${expenseId} .col-md-6:has(#invoiceDate-${expenseId})`);
+                const uploadReceiptRow = $(`#expense-${expenseId} .row:has(#receipt-${expenseId})`);
+                if (invoiceDateCol.length && uploadReceiptRow.length) {
+                    // Create a new row for the invoice date field
+                    const newRow = $('<div class="row mb-3"></div>');
+                    invoiceDateCol.appendTo(newRow);
+                    newRow.insertAfter(uploadReceiptRow);
+                }
+                
                 // If Local Conveyance or Domestic Travel, set and disable Travel Type
                 const travelTypeSelect = $(`#travelType-${expenseId}`);
                 // Always remove any existing hidden travel_type input for this row
@@ -1487,6 +1498,14 @@
                 }, 300);
                 // Reset receipt help text
                 $(`#receipt-help-${expenseId}`).text('Accepted formats: PDF, Image (JPG, PNG, HEIC, WebP, etc.) (Max size: 25MB)');
+                
+                // Move Invoice Date field back to original position (next to Expense Head) for non-travel expenses
+                const invoiceDateCol = $(`#expense-${expenseId} .col-md-6:has(#invoiceDate-${expenseId})`);
+                const expenseHeadRow = $(`#expense-${expenseId} .row:has(#expenseHead-${expenseId})`);
+                if (invoiceDateCol.length && expenseHeadRow.length) {
+                    // Move the invoice date column back to the expense head row
+                    invoiceDateCol.appendTo(expenseHeadRow);
+                }
             }
         });
 
@@ -1503,6 +1522,19 @@
             const standardAmountInput = $(`#amount-${expenseId}`);
             const domesticAmountInput = $(`#domestic-amount-${expenseId}`);
             const travelMode = $(`#travelMode-${expenseId}`).val();
+            
+            // Move Invoice Date field below Upload Receipt for any travel type
+            if (travelType) {
+                const invoiceDateCol = $(`#expense-${expenseId} .col-md-6:has(#invoiceDate-${expenseId})`);
+                const uploadReceiptRow = $(`#expense-${expenseId} .row:has(#receipt-${expenseId})`);
+                if (invoiceDateCol.length && uploadReceiptRow.length) {
+                    // Create a new row for the invoice date field
+                    const newRow = $('<div class="row mb-3"></div>');
+                    invoiceDateCol.appendTo(newRow);
+                    newRow.insertAfter(uploadReceiptRow);
+                }
+            }
+            
             if (travelType === 'local') {
                 kmContainer.show();
                 kmInput.prop('required', true);
@@ -4687,5 +4719,20 @@
         });
     });
     // ... existing code ...
+
+    // Handle travel date change to auto-set invoice date
+    $(document).on("change", "input[name='travel_date[]']", function() {
+        const expenseId = $(this).attr('id').split('-')[1];
+        const travelDate = $(this).val();
+        const invoiceDateInput = $(`#invoiceDate-${expenseId}`);
+        const invoiceDateCol = $(`#expense-${expenseId} .col-md-6:has(#invoiceDate-${expenseId})`);
+        
+        // Auto-set invoice date to travel date for travel expenses
+        if (travelDate && invoiceDateInput.length) {
+            invoiceDateInput.val(travelDate);
+            // Hide the invoice date field after setting it
+            invoiceDateCol.hide();
+        }
+    });
 </script>
 {% endblock %}
