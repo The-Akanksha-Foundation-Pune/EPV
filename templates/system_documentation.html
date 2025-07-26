@@ -85,6 +85,23 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="expense-heads-tab" data-bs-toggle="tab" data-bs-target="#expense-heads" type="button" role="tab" aria-controls="expense-heads" aria-selected="false">
+                <i class="fas fa-tags me-2"></i>Expense Heads
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="travel-tab" data-bs-toggle="tab" data-bs-target="#travel" type="button" role="tab" aria-controls="travel" aria-selected="false">
+                <i class="fas fa-plane me-2"></i>Travel
+            </button>
+        </li>
+        {% if session.get('employee_role') == 'Super Admin' %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="code-tab" data-bs-toggle="tab" data-bs-target="#code" type="button" role="tab" aria-controls="code" aria-selected="false">
+                <i class="fas fa-code me-2"></i>Code
+            </button>
+        </li>
+        {% endif %}
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="google-docs-tab" data-bs-toggle="tab" data-bs-target="#google-docs" type="button" role="tab" aria-controls="google-docs" aria-selected="false">
                 <i class="fas fa-file-alt me-2"></i>User Guide
             </button>
@@ -250,6 +267,729 @@
                         <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>Access system settings and configuration</li>
                         <li class="list-group-item"><i class="fas fa-check-circle text-success me-2"></i>View all cost centers in the dashboard filters</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Heads Tab -->
+        <div class="tab-pane fade" id="expense-heads" role="tabpanel" aria-labelledby="expense-heads-tab">
+            <div class="doc-section">
+                <h2><i class="fas fa-tags me-2"></i>Expense Heads Reference Guide</h2>
+                <p>This comprehensive guide provides details about all available expense heads, their keywords, and usage guidelines to help you select the appropriate category for your expenses.</p>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Expense Head</th>
+                                <th>Key Words</th>
+                                <th>Guideline/Examples</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Education Material</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Stationery, photocopies, chart paper, educational toys and books for kids which are supposed to be used for educational purpose.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Art Material</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Colors, brushes, chart paper or any other color paper which are supposed to be used for Art/Art classes purpose.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Teachers' reference books</strong></td>
+                                <td>Education Expenses</td>
+                                <td>This is only for teacher's reference book. Yearly subscription for kids</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Science Lab kits and other equipment</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Expenses for lab kits</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Students' External Evaluation fees & expenses</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Expenses of evaluation for charges paid</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Field Trips</strong></td>
+                                <td>Education Expenses</td>
+                                <td>All the expenses of Field Trip which is organised by school for students. This includes all the expenses like, Bus, food, ticket, material etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Educational Software Subscriptions</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Educational Software Subscriptions which provides direct benefit to kids</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SDR Expenses</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Expenses related to SDR expenses like stationery, food, etc.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Exam Fees</strong></td>
+                                <td>Education Expenses</td>
+                                <td>Fees paid to the government for LD, grace marks, subject change fees,etc.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mid-Day Meal Contingency</strong></td>
+                                <td>Child Welfare</td>
+                                <td>Mid day meal for Kids.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Medical Welfare Expenses</strong></td>
+                                <td>Child Welfare</td>
+                                <td>Medical help to kids, medical camp charges, food. Then travel for taking kids to Doctor.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>School clubs</strong></td>
+                                <td>Child Welfare</td>
+                                <td>Expenses towards external opportunites after school sessions or extra curricular activities</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Annual day</strong></td>
+                                <td>School Events</td>
+                                <td>All type of expenses related to annual day which inculdes material, venue, food, transport, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Fairs and Festival Celebrations</strong></td>
+                                <td>School Events</td>
+                                <td>All type of expenses related to festival celebrations like childrens day, diwali/christmas, showcase etc.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sports Material and Equipment</strong></td>
+                                <td>Sports Expenses</td>
+                                <td>Sport material purchase for students like football, basketball etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Akanksha Sports Event</strong></td>
+                                <td>Sports Expenses</td>
+                                <td>All type of expenses for the Sports event which is organised by Akanskha like Food, ground booking, ground marking, travel, referee fees etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>External Sports event</strong></td>
+                                <td>Sports Expenses</td>
+                                <td>External Sports event which is orgainsed by external authorities which includes State competition like football, DSO, Rugby or any event by Municipal Corporations. Expenses - Travel, food, stay, registration fees etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SSC farewell</strong></td>
+                                <td>School Events</td>
+                                <td>Expenses towards Graduation/SSC celebration venue cost, food, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Events</strong></td>
+                                <td>School Events</td>
+                                <td>Event which is host by Donors, Counselling team, Community Engagement team, ASE team for school children. This is not for the schools.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alumni Event</strong></td>
+                                <td>School Events</td>
+                                <td>All type of expenses related to Alumni which inculdes material, venue, food, transport, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>External Visit</strong></td>
+                                <td>Community Engagement</td>
+                                <td>Expenses related to the exposure visit to other NGOs, other city for exploring the knowledge of SW, counsellors, helpers etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Local Community Events</strong></td>
+                                <td>Community Engagement</td>
+                                <td>SMC members expenses, PD session, Community visit or any other events which is host by Akanksha for the community</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Training Events - Edventure</strong></td>
+                                <td>Training & Capacity Building expenses</td>
+                                <td>All type of expenses related to Edventures which inculdes material, venue, food, transport, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Training Events - Internal</strong></td>
+                                <td>Training & Capacity Building expenses</td>
+                                <td>Training which are host within the Akanksha like practical week, teacher internal training, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Training Events - External</strong></td>
+                                <td>Training & Capacity Building expenses</td>
+                                <td>Training/sessions which is arranged by external party and our staff attended that. So, all the expenses related to that like registration fees, travel, food etc for external training</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Resource person fee</strong></td>
+                                <td>Training & Capacity Building expenses</td>
+                                <td>Fees paid to any outside party/person or vendor for Internal/external training</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Local Conveyance</strong></td>
+                                <td>Travel Expenses</td>
+                                <td>All the travel within city like school/office visits or any other purpose should go under this head. This excludes the travel cost for training/retreat/medical welfare, annual day etc as they will go into the particular ledger heads based on their last intentions</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Domestic Travel</strong></td>
+                                <td>Travel Expenses</td>
+                                <td>All travel outside of the city should go under this head. Like Mumbai to Pune/Nagpur or vice of versa</td>
+                            </tr>
+                            <tr>
+                                <td><strong>International travel</strong></td>
+                                <td>Travel Expenses</td>
+                                <td>All travel and accomodation charges (outside of the country) should go under this head.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Postage & Courier</strong></td>
+                                <td>Communication</td>
+                                <td>All courier and postal services comes under this head.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Telephone & Internet</strong></td>
+                                <td>Communication</td>
+                                <td>Telephone, Internet and Mobile prepaid/postpaid charges (if applicable) go under this head</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Stationery, photocopying, printing & computer accessories</strong></td>
+                                <td>Stationery, photocopying, printing & computer accessories</td>
+                                <td>Stationery, register books, photocopies which are going to be used for staff and not for use of classroom/kids, refilling of cartridges etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rent</strong></td>
+                                <td>Rent, Electricity And Other Utilities</td>
+                                <td>Rent for office space (Office purpose), Laptop rent, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Electricity</strong></td>
+                                <td>Rent, Electricity And Other Utilities</td>
+                                <td>Electricity charges (office purpose)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Utility & Water Charges</strong></td>
+                                <td>Rent, Electricity And Other Utilities</td>
+                                <td>Utility and water charges (Office purpose). Water charges for the schools should go in Staff refreshments</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staff tea and refreshments</strong></td>
+                                <td>Staff Welfare</td>
+                                <td>Monthly Tea expenses, refreshment for staff meetings</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staff annual lunch</strong></td>
+                                <td>Staff Welfare</td>
+                                <td>Annual staff lunch</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staff retreat</strong></td>
+                                <td>Staff Welfare</td>
+                                <td>All type of expenses towards the retreat like stay, transport, food and other material should go in this head.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staff momentos</strong></td>
+                                <td>Staff Welfare</td>
+                                <td>Gift for staff</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Repair costs</strong></td>
+                                <td>Repairs & Maintenance</td>
+                                <td>These are costs incurred to fix damaged or non-functioning assets and bring them back to usable condition. Example: Replacing a faulty printer part, fixing a leaking pipe, or repairing a broken office chair, repair of any asset</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Maintenance expenses</strong></td>
+                                <td>Repairs & Maintenance</td>
+                                <td>These are costs related to regular upkeep and servicing of assets to ensure smooth functioning and avoid breakdowns.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>AMC</strong></td>
+                                <td>Repairs & Maintenance</td>
+                                <td>Contract for AC, water filter, refrigerator, water cooler, pest control</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Cleaning & cleaning Supplies</strong></td>
+                                <td>Repairs & Maintenance</td>
+                                <td>Cleaning material purchase like handwash, lizol, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Video Creation Expenses</strong></td>
+                                <td>Communication/Fund Raising Expenses</td>
+                                <td>Expenses towards video creation (Expense ledger for Marketing team only)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Events</strong></td>
+                                <td>Communication/Fund Raising Expenses</td>
+                                <td>Expenses towards AGM related which includes travel, venue, materials</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Billdesk Charges</strong></td>
+                                <td>Communication/Fund Raising Expenses</td>
+                                <td>Billdesk charges - Finance purpose only</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Communication Expense</strong></td>
+                                <td>Communication/Fund Raising Expenses</td>
+                                <td>Expenses towards donor events like HNI, material for donors</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Website Maintenance</strong></td>
+                                <td>Communication/Fund Raising Expenses</td>
+                                <td>Charges for maintaining website</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Bank Charges</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Bank Charges - Finance purpose only</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Administrative Expenses</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Any expenses those are not fit into the any ledger above</td>
+                            </tr>
+                            <tr>
+                                <td><strong>D & O Insurance</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Policy D & O Insurance (Finance/Procurement purpose only)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>E & O Policy</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Policy D & O Insurance (Finance/Procurement purpose only)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Broadform Liability (CGL)</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Policy D & O Insurance (Finance/Procurement purpose only)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Membership & Subscriptions</strong></td>
+                                <td>Other Expenses</td>
+                                <td>Membership & Subscriptions - Not for the schools</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Legal Fees</strong></td>
+                                <td>Legal and Professional Charges</td>
+                                <td>Expenses towards to Legal fees paid to the professionals</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Other Legal Expenses</strong></td>
+                                <td>Legal and Professional Charges</td>
+                                <td>Any legal charges</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Professional Fees</strong></td>
+                                <td>Legal and Professional Charges</td>
+                                <td>Expenses towards professional charges taken from the authorities or person</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Audit Fees</strong></td>
+                                <td>Legal and Professional Charges</td>
+                                <td>Expenses towards Internal audit, statutory and other audits (Finance purpose only)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Software Expenses</strong></td>
+                                <td>Software and Computer consumable expenses</td>
+                                <td>Antivirus and any other computer software.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Computer & Computer Accessories</strong></td>
+                                <td>Fixed Assets</td>
+                                <td>Laptop, iPad, Mac book, Tablet, Servers, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Furniture & Fixture</strong></td>
+                                <td>Fixed Assets</td>
+                                <td>Black board, Soft board, Fan, Table, Cupboard, TV stand, Speaker Stand, etc</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Electrical Installation</strong></td>
+                                <td>Fixed Assets</td>
+                                <td>Electrical installation and related equipment</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Music Equipments</strong></td>
+                                <td>Fixed Assets</td>
+                                <td>CD player, Speaker, Mike</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Office Equipments</strong></td>
+                                <td>Fixed Assets</td>
+                                <td>CCTV camera, Chair, CCTV 6u, 4u, 2u rack, Projectors, Telephones, UPS, Fax machines, Air purifiers, Water filter, TV, Refrigerator, AC, printer, Microwave oven, etc</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fas fa-info-circle me-2"></i>How to Use This Guide</h5>
+                    <ul class="mb-0">
+                        <li><strong>Expense Head:</strong> The main category for your expense</li>
+                        <li><strong>Key Words:</strong> The broader category this expense head belongs to</li>
+                        <li><strong>Guideline/Examples:</strong> Specific examples and rules for when to use this expense head</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+                    <ul class="mb-0">
+                        <li>Choose the most specific expense head that matches your expense</li>
+                        <li>If you're unsure, refer to the guidelines and examples provided</li>
+                        <li>Some expense heads are restricted to specific teams or purposes (e.g., Finance purpose only)</li>
+                        <li>For travel expenses, consider the purpose and destination to choose the appropriate category</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Travel Tab -->
+        <div class="tab-pane fade" id="travel" role="tabpanel" aria-labelledby="travel-tab">
+            <div class="doc-section">
+                <h2><i class="fas fa-plane me-2"></i>Travel Expense Guidelines</h2>
+                <p>This guide explains how to properly submit travel expenses in the EPV system, including validation rules, required fields, and best practices.</p>
+
+                <!-- Travel Types Overview -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0"><i class="fas fa-route me-2"></i>Travel Types</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-car fa-3x text-primary mb-3"></i>
+                                        <h5>Local Conveyance</h5>
+                                        <p class="text-muted">Travel within the same city</p>
+                                        <ul class="list-unstyled text-start">
+                                            <li><i class="fas fa-check text-success me-2"></i>School/office visits</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Local meetings</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>City transportation</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-train fa-3x text-warning mb-3"></i>
+                                        <h5>Domestic Travel</h5>
+                                        <p class="text-muted">Travel between cities in India</p>
+                                        <ul class="list-unstyled text-start">
+                                            <li><i class="fas fa-check text-success me-2"></i>Mumbai to Pune</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Mumbai to Nagpur</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Inter-city meetings</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Training sessions</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Validation Rules -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Travel Validation Rules</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-check me-2"></i>Date Validation</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-info-circle text-info me-2"></i>
+                                        <strong>Travel Date:</strong> Must be within the expense period (From Date to To Date)
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                        <strong>Future Dates:</strong> Cannot select dates in the future
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-clock text-secondary me-2"></i>
+                                        <strong>Past Limit:</strong> Cannot be more than 30 days in the past
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-map-marker-alt me-2"></i>Location Validation</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>From Location:</strong> Required for all travel types
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <strong>To Location:</strong> Required for all travel types
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-ruler text-primary me-2"></i>
+                                        <strong>Distance (KM):</strong> Required for Local and Domestic travel
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Mode Guidelines -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="mb-0"><i class="fas fa-bus me-2"></i>Travel Mode Guidelines</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Travel Mode</th>
+                                        <th>When to Use</th>
+                                        <th>Documentation Required</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Bus</strong></td>
+                                        <td>Local and inter-city travel</td>
+                                        <td>Bus ticket/receipt</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Train</strong></td>
+                                        <td>Domestic travel</td>
+                                        <td>Train ticket/receipt</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Flight</strong></td>
+                                        <td>Domestic travel</td>
+                                        <td>Flight ticket/receipt</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Taxi/Cab</strong></td>
+                                        <td>Local conveyance, airport transfers</td>
+                                        <td>Taxi receipt/bill</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Auto Rickshaw</strong></td>
+                                        <td>Local conveyance</td>
+                                        <td>Auto receipt (if available)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Personal Vehicle</strong></td>
+                                        <td>Local conveyance</td>
+                                        <td>Fuel receipt or mileage log</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Metro</strong></td>
+                                        <td>Local conveyance in metro cities</td>
+                                        <td>Metro card/ticket</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Two Wheeler</strong></td>
+                                        <td>Local conveyance</td>
+                                        <td>Fuel receipt or mileage log</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Car Pooling</strong></td>
+                                        <td>Local and domestic travel</td>
+                                        <td>Payment receipt or app screenshot</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Travel Submission -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="mb-0"><i class="fas fa-list-ol me-2"></i>How to Submit Travel Expenses</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-play-circle me-2"></i>Step-by-Step Process</h5>
+                                <ol class="list-group list-group-numbered">
+                                    <li class="list-group-item">Select an expense head that includes travel (e.g., Local Conveyance, Domestic Travel)</li>
+                                    <li class="list-group-item">Fill in the basic expense details (amount, description)</li>
+                                    <li class="list-group-item">Select the appropriate <strong>Travel Type</strong> (Local or Domestic)</li>
+                                    <li class="list-group-item">Choose the <strong>Travel Mode</strong> from the dropdown</li>
+                                    <li class="list-group-item">Enter the <strong>From Location</strong> (starting point)</li>
+                                    <li class="list-group-item">Enter the <strong>To Location</strong> (destination)</li>
+                                    <li class="list-group-item">Select the <strong>Travel Date</strong> (must be within expense period)</li>
+                                    <li class="list-group-item">For Local/Domestic travel, enter the <strong>Distance in KM</strong></li>
+                                    <li class="list-group-item">Upload supporting documents (tickets, receipts, etc.)</li>
+                                    <li class="list-group-item">Review and submit the expense</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-lightbulb me-2"></i>Travel Type Selection</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Local:</strong> Same city travel</li>
+                                        <li><strong>Domestic:</strong> Different cities in India (Mumbai, Pune, Nagpur, etc.)</li>
+                                    </ul>
+                                </div>
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-calendar me-2"></i>Date Requirements</h6>
+                                    <ul class="mb-0">
+                                        <li>Travel date must be within the expense period</li>
+                                        <li>Cannot be a future date</li>
+                                        <li>Cannot be more than 30 days in the past</li>
+                                    </ul>
+                                </div>
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-file-upload me-2"></i>Documentation</h6>
+                                    <ul class="mb-0">
+                                        <li>Always upload travel tickets/receipts</li>
+                                        <li>For personal vehicle, upload fuel receipts</li>
+                                        <li>Keep mileage logs for personal vehicle use</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Examples -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Travel Expense Examples</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-car me-2"></i>Local Conveyance Example</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Scenario:</strong> Travel from office to school for a meeting</p>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Travel Type:</strong> Local</li>
+                                            <li><strong>Mode:</strong> Taxi</li>
+                                            <li><strong>From:</strong> Akanksha Office, Mumbai</li>
+                                            <li><strong>To:</strong> Akanksha School, Mumbai</li>
+                                            <li><strong>Distance:</strong> 15 KM</li>
+                                            <li><strong>Amount:</strong> ₹300</li>
+                                            <li><strong>Document:</strong> Taxi receipt</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0"><i class="fas fa-train me-2"></i>Domestic Travel Example</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Scenario:</strong> Training session in Pune</p>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Travel Type:</strong> Domestic</li>
+                                            <li><strong>Mode:</strong> Train</li>
+                                            <li><strong>From:</strong> Mumbai</li>
+                                            <li><strong>To:</strong> Pune</li>
+                                            <li><strong>Distance:</strong> 150 KM</li>
+                                            <li><strong>Amount:</strong> ₹500</li>
+                                            <li><strong>Document:</strong> Train ticket</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Common Mistakes to Avoid -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h3 class="mb-0"><i class="fas fa-times-circle me-2"></i>Common Mistakes to Avoid</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-exclamation-triangle me-2"></i>Validation Errors</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item text-danger">
+                                        <i class="fas fa-times me-2"></i>
+                                        <strong>Missing Travel Fields:</strong> Forgetting to fill travel mode, from/to locations, or travel date
+                                    </li>
+                                    <li class="list-group-item text-danger">
+                                        <i class="fas fa-times me-2"></i>
+                                        <strong>Invalid Date:</strong> Selecting a future date or date outside the expense period
+                                    </li>
+                                    <li class="list-group-item text-danger">
+                                        <i class="fas fa-times me-2"></i>
+                                        <strong>Missing Distance:</strong> Not entering distance for Local/Domestic travel
+                                    </li>
+                                    <li class="list-group-item text-danger">
+                                        <i class="fas fa-times me-2"></i>
+                                        <strong>Wrong Travel Type:</strong> Selecting Domestic for same-city travel
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-lightbulb me-2"></i>Best Practices</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item text-success">
+                                        <i class="fas fa-check me-2"></i>
+                                        <strong>Be Specific:</strong> Use exact locations (e.g., "Akanksha School, Mumbai" not just "Mumbai")
+                                    </li>
+                                    <li class="list-group-item text-success">
+                                        <i class="fas fa-check me-2"></i>
+                                        <strong>Upload Documents:</strong> Always attach tickets, receipts, or fuel bills
+                                    </li>
+                                    <li class="list-group-item text-success">
+                                        <i class="fas fa-check me-2"></i>
+                                        <strong>Accurate Distance:</strong> Use Google Maps or similar to get exact distances
+                                    </li>
+                                    <li class="list-group-item text-success">
+                                        <i class="fas fa-check me-2"></i>
+                                        <strong>Clear Description:</strong> Explain the purpose of travel in the description field
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Expense Head Mapping -->
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="mb-0"><i class="fas fa-sitemap me-2"></i>Travel Expense Head Mapping</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>When submitting travel expenses, use these specific expense heads based on your travel type:</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Travel Type</th>
+                                        <th>Use This Expense Head</th>
+                                        <th>When to Use</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Local Conveyance</strong></td>
+                                        <td>Local Conveyance</td>
+                                        <td>All travel within the same city for work purposes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Domestic Travel</strong></td>
+                                        <td>Domestic Travel</td>
+                                        <td>All travel between different cities in India (Mumbai, Pune, Nagpur, etc.)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Training Travel</strong></td>
+                                        <td>Other Training Events - Internal/External</td>
+                                        <td>Travel specifically for training purposes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Medical Travel</strong></td>
+                                        <td>Medical Welfare Expenses</td>
+                                        <td>Travel for medical camps or taking kids to doctor</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Event Travel</strong></td>
+                                        <td>Annual day, Sports Event, etc.</td>
+                                        <td>Travel specifically for events (use the event's expense head)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -784,9 +1524,539 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Question 8 - Travel FAQ -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeading8">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse8" aria-expanded="false" aria-controls="faqCollapse8">
+                                How do I submit travel expenses correctly?
+                            </button>
+                        </h2>
+                        <div id="faqCollapse8" class="accordion-collapse collapse" aria-labelledby="faqHeading8" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>To submit travel expenses correctly, follow these steps:</p>
+                                <ol>
+                                    <li><strong>Select the right expense head:</strong> Choose "Local Conveyance" for same-city travel or "Domestic Travel" for inter-city travel</li>
+                                    <li><strong>Fill travel details:</strong> Select travel type (Local/Domestic), travel mode, from/to locations, and travel date</li>
+                                    <li><strong>Enter distance:</strong> For Local and Domestic travel, enter the distance in kilometers</li>
+                                    <li><strong>Upload documents:</strong> Attach tickets, receipts, or fuel bills as proof</li>
+                                    <li><strong>Check dates:</strong> Ensure travel date is within your expense period and not in the future</li>
+                                </ol>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>Remember: Travel date must be within the expense period (From Date to To Date) and cannot be more than 30 days in the past.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 9 - Travel FAQ -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeading9">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse9" aria-expanded="false" aria-controls="faqCollapse9">
+                                What documents do I need for travel expenses?
+                            </button>
+                        </h2>
+                        <div id="faqCollapse9" class="accordion-collapse collapse" aria-labelledby="faqHeading9" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>The required documents depend on your travel mode:</p>
+                                <ul>
+                                    <li><strong>Public Transport:</strong> Bus tickets, train tickets, flight tickets, metro cards</li>
+                                    <li><strong>Taxi/Cab:</strong> Taxi receipts or bills</li>
+                                    <li><strong>Auto Rickshaw:</strong> Auto receipts (if available)</li>
+                                    <li><strong>Personal Vehicle:</strong> Fuel receipts or mileage logs</li>
+                                    <li><strong>Car Pooling:</strong> Payment receipts or app screenshots</li>
+                                </ul>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Always upload supporting documents. Expenses without proper documentation may be rejected.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 10 - Travel FAQ -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeading10">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse10" aria-expanded="false" aria-controls="faqCollapse10">
+                                What's the difference between Local and Domestic travel?
+                            </button>
+                        </h2>
+                        <div id="faqCollapse10" class="accordion-collapse collapse" aria-labelledby="faqHeading10" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-car text-primary me-2"></i>Local Conveyance</h6>
+                                        <ul>
+                                            <li>Travel within the same city</li>
+                                            <li>Examples: Office to school, local meetings</li>
+                                            <li>Use "Local Conveyance" expense head</li>
+                                            <li>Distance field is required</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-train text-warning me-2"></i>Domestic Travel</h6>
+                                        <ul>
+                                            <li>Travel between different cities in India</li>
+                                            <li>Examples: Mumbai to Pune, Mumbai to Nagpur</li>
+                                            <li>Use "Domestic Travel" expense head</li>
+                                            <li>Distance field is required</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-lightbulb me-2"></i>Tip: If you're traveling within the same city, always select "Local" regardless of the distance.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 11 - Travel FAQ -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeading11">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse11" aria-expanded="false" aria-controls="faqCollapse11">
+                                Why is my travel expense being rejected?
+                            </button>
+                        </h2>
+                        <div id="faqCollapse11" class="accordion-collapse collapse" aria-labelledby="faqHeading11" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Common reasons for travel expense rejection:</p>
+                                <ul>
+                                    <li><strong>Missing travel fields:</strong> Forgot to fill travel mode, from/to locations, or travel date</li>
+                                    <li><strong>Invalid travel date:</strong> Date is in the future or outside the expense period</li>
+                                    <li><strong>Missing distance:</strong> Distance not entered for Local/Domestic travel</li>
+                                    <li><strong>Wrong travel type:</strong> Selected Domestic for same-city travel</li>
+                                    <li><strong>Missing documents:</strong> No tickets, receipts, or fuel bills uploaded</li>
+                                    <li><strong>Incomplete locations:</strong> Vague location names (e.g., "Mumbai" instead of "Akanksha School, Mumbai")</li>
+                                </ul>
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle me-2"></i>To avoid rejection: Double-check all travel fields, ensure dates are valid, upload proper documentation, and use specific location names.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 12 - Travel FAQ -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeading12">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse12" aria-expanded="false" aria-controls="faqCollapse12">
+                                Can I submit multiple travel expenses in one EPV?
+                            </button>
+                        </h2>
+                        <div id="faqCollapse12" class="accordion-collapse collapse" aria-labelledby="faqHeading12" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p>Yes, you can submit multiple travel expenses in one EPV, but there are some guidelines:</p>
+                                <ul>
+                                    <li><strong>Same expense period:</strong> All travel must be within the same From Date to To Date range</li>
+                                    <li><strong>Separate expense items:</strong> Each travel journey should be a separate expense item</li>
+                                    <li><strong>Individual documentation:</strong> Upload documents for each travel expense separately</li>
+                                    <li><strong>Clear descriptions:</strong> Describe the purpose of each travel journey</li>
+                                </ul>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>Example: If you traveled to Pune for training and made local trips within Pune, you can include both the train journey and local conveyance in the same EPV.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Code Tab (Super Admin Only) -->
+        {% if session.get('employee_role') == 'Super Admin' %}
+        <div class="tab-pane fade" id="code" role="tabpanel" aria-labelledby="code-tab">
+            <div class="doc-section">
+                <h2><i class="fas fa-code me-2"></i>Technical Documentation</h2>
+                <p>This section contains technical documentation for developers and system administrators. Only Super Admin users can access this information.</p>
+
+                <!-- System Architecture -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0"><i class="fas fa-sitemap me-2"></i>System Architecture</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-server me-2"></i>Backend Technology Stack</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <strong>Framework:</strong> Flask (Python)
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Database:</strong> SQLite with SQLAlchemy ORM
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Authentication:</strong> Google OAuth 2.0
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>File Storage:</strong> Google Drive API
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Email:</strong> SMTP with Gmail
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-desktop me-2"></i>Frontend Technology Stack</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <strong>Framework:</strong> Bootstrap 5
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>JavaScript:</strong> jQuery, SweetAlert2
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Templating:</strong> Jinja2
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Charts:</strong> Mermaid.js
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Icons:</strong> Font Awesome
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Schema -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0"><i class="fas fa-database me-2"></i>Database Schema</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-table me-2"></i>Core Tables</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Table Name</th>
+                                        <th>Purpose</th>
+                                        <th>Key Fields</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>EPV</code></td>
+                                        <td>Main expense voucher records</td>
+                                        <td>id, epv_id, email_id, status, total_amount, submission_date</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>EPVItem</code></td>
+                                        <td>Individual expense items within EPV</td>
+                                        <td>id, epv_id, expense_head, amount, description</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>EmployeeDetails</code></td>
+                                        <td>Employee information and roles</td>
+                                        <td>id, email, name, role, is_active</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>CostCenter</code></td>
+                                        <td>Cost center definitions</td>
+                                        <td>id, name, city, approver_email, is_active</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>ExpenseHead</code></td>
+                                        <td>Expense head categories</td>
+                                        <td>id, name, is_active</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>FinanceEntry</code></td>
+                                        <td>Finance processing records</td>
+                                        <td>id, epv_id, finance_user_id, status, transaction_id</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>CityAssignment</code></td>
+                                        <td>Finance user city assignments</td>
+                                        <td>id, employee_id, city, is_active</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Endpoints -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="mb-0"><i class="fas fa-plug me-2"></i>API Endpoints</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-list me-2"></i>Key API Routes</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Endpoint</th>
+                                        <th>Purpose</th>
+                                        <th>Access</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-primary">GET</span></td>
+                                        <td><code>/api/notifications</code></td>
+                                        <td>Get user notifications</td>
+                                        <td>Authenticated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary">GET</span></td>
+                                        <td><code>/api/employees</code></td>
+                                        <td>Search employees</td>
+                                        <td>Authenticated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary">GET</span></td>
+                                        <td><code>/api/cost-centers</code></td>
+                                        <td>Search cost centers</td>
+                                        <td>Authenticated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary">GET</span></td>
+                                        <td><code>/api/expense-heads</code></td>
+                                        <td>Get expense heads</td>
+                                        <td>Authenticated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">POST</span></td>
+                                        <td><code>/send-for-approval</code></td>
+                                        <td>Submit EPV for approval</td>
+                                        <td>Authenticated</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">POST</span></td>
+                                        <td><code>/approve-expense/&lt;epv_id&gt;</code></td>
+                                        <td>Approve expense</td>
+                                        <td>Approvers</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-success">POST</span></td>
+                                        <td><code>/reject-expense/&lt;epv_id&gt;</code></td>
+                                        <td>Reject expense</td>
+                                        <td>Approvers</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Features -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Features</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-lock me-2"></i>Authentication & Authorization</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Google OAuth 2.0:</strong> Secure authentication via Google
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Role-based Access:</strong> Different permissions per user role
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Session Management:</strong> Secure session handling
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>City-based Filtering:</strong> Finance users see only assigned cities
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-file-shield me-2"></i>Data Protection</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>Input Validation:</strong> Server-side validation for all inputs
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>SQL Injection Protection:</strong> SQLAlchemy ORM prevents injection
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>File Upload Security:</strong> Restricted file types and sizes
+                                    </li>
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <strong>CSRF Protection:</strong> Built-in CSRF token validation
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="mb-0"><i class="fas fa-cogs me-2"></i>Configuration</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-file-code me-2"></i>Environment Variables</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Variable</th>
+                                        <th>Purpose</th>
+                                        <th>Required</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>GOOGLE_CLIENT_ID</code></td>
+                                        <td>Google OAuth client ID</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>GOOGLE_CLIENT_SECRET</code></td>
+                                        <td>Google OAuth client secret</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SECRET_KEY</code></td>
+                                        <td>Flask secret key for sessions</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>GOOGLE_DRIVE_FOLDER_ID</code></td>
+                                        <td>Google Drive folder for file storage</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SMTP_SERVER</code></td>
+                                        <td>SMTP server for email notifications</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SMTP_PORT</code></td>
+                                        <td>SMTP port number</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SMTP_USERNAME</code></td>
+                                        <td>SMTP username</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>SMTP_PASSWORD</code></td>
+                                        <td>SMTP password</td>
+                                        <td><span class="badge bg-success">Yes</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deployment -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="mb-0"><i class="fas fa-rocket me-2"></i>Deployment</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-server me-2"></i>Deployment Steps</h5>
+                        <ol class="list-group list-group-numbered">
+                            <li class="list-group-item">
+                                <strong>Environment Setup:</strong> Install Python 3.8+ and required packages
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Database Initialization:</strong> Run database migration scripts
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Configuration:</strong> Set up environment variables
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Google API Setup:</strong> Configure Google OAuth and Drive API
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Web Server:</strong> Deploy using Gunicorn or similar WSGI server
+                            </li>
+                            <li class="list-group-item">
+                                <strong>SSL Certificate:</strong> Configure HTTPS for production
+                            </li>
+                        </ol>
+                        
+                        <h5 class="mt-4"><i class="fas fa-terminal me-2"></i>Key Commands</h5>
+                        <div class="bg-dark text-light p-3 rounded">
+                            <code>pip install -r requirements.txt</code><br>
+                            <code>python app.py</code><br>
+                            <code>gunicorn -w 4 -b 0.0.0.0:5000 app:app</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3 class="mb-0"><i class="fas fa-tools me-2"></i>Troubleshooting</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Common Issues</h5>
+                        <div class="accordion" id="troubleshootingAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleHeading1">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleCollapse1">
+                                        Google OAuth Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleCollapse1" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Check Google OAuth credentials in environment variables</li>
+                                            <li>Verify redirect URIs in Google Console</li>
+                                            <li>Ensure HTTPS is configured for production</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleHeading2">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleCollapse2">
+                                        Database Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleCollapse2" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Check database file permissions</li>
+                                            <li>Verify SQLite database path</li>
+                                            <li>Run database migration if needed</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="troubleHeading3">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleCollapse3">
+                                        File Upload Issues
+                                    </button>
+                                </h2>
+                                <div id="troubleCollapse3" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li>Check Google Drive API credentials</li>
+                                            <li>Verify folder permissions in Google Drive</li>
+                                            <li>Check file size limits</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -876,8 +2146,8 @@
             G --> I[Submit for Finance Approval]
             H1 --> J1[Provide Document Request Details]
             H2 --> J2[Provide Rejection Reason]
-            J1 --> K1[Set Status to 'Documents Requested']
-            J2 --> K2[Set Status to 'Rejected']
+            J1 --> K1[Set Status: Documents Requested]
+            J2 --> K2[Set Status: Rejected]
             K1 --> L1[Notify Submitter]
             K2 --> L2[Notify Submitter]
             L1 --> M1[Submitter Uploads Documents]
