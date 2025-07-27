@@ -75,28 +75,26 @@
                         <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="pendingCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="pendingCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="pendingDateFilter" class="form-label">Date Range (Approved Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="pendingDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="pendingDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="pendingDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="pendingDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="pendingSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="pendingSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
@@ -104,6 +102,7 @@
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
                                     <button class="btn btn-primary reset-filters" data-target="pending">Reset Filters</button>
+                                    <button class="btn btn-secondary ms-2" onclick="testTableVisibility()">Test Visibility</button>
                                 </div>
                             </div>
 
@@ -161,6 +160,7 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                                <div class="search-results-info" style="display: none;"></div>
                             </div>
                         </div>
 
@@ -168,28 +168,26 @@
                         <div class="tab-pane fade" id="resubmitted" role="tabpanel" aria-labelledby="resubmitted-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="resubmittedCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="resubmittedCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="resubmittedDateFilter" class="form-label">Date Range (Resubmitted Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="resubmittedDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="resubmittedDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="resubmittedDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="resubmittedDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="resubmittedSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="resubmittedSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
@@ -256,28 +254,26 @@
                         <div class="tab-pane fade" id="pending-payment" role="tabpanel" aria-labelledby="pending-payment-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="pendingPaymentCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="pendingPaymentCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="pendingPaymentDateFilter" class="form-label">Date Range (Approved Date)</label>
+                                <div class="col-md-4">
+                                    <label for="pendingPaymentDateFilter" class="form-label">Date Range (Finance Approver's Approved Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="pendingPaymentDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="pendingPaymentDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="pendingPaymentDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="pendingPaymentDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="pendingPaymentSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="pendingPaymentSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
@@ -338,28 +334,26 @@
                         <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="rejectedCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="rejectedCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label for="rejectedDateFilter" class="form-label">Date Range (Rejected Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="rejectedDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="rejectedDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="rejectedDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="rejectedDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="rejectedSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="rejectedSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
@@ -415,7 +409,7 @@
                         <div class="tab-pane fade" id="processed" role="tabpanel" aria-labelledby="processed-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="processedCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="processedCityFilter">
                                         <option value="">All Cities</option>
@@ -425,14 +419,12 @@
                                 <div class="col-md-3">
                                     <label for="processedDateFilter" class="form-label">Date Range (Processed Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="processedDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="processedDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="processedDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="processedDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="processedStatusFilter" class="form-label">Status</label>
                                     <select class="form-select status-filter" id="processedStatusFilter">
                                         <option value="">All Statuses</option>
@@ -445,13 +437,13 @@
                                     <label for="processedSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="processedSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
                                     </div>
                                 </div>
-                                <div class="col-md-3 d-flex align-items-end">
+                                <div class="col-md-2 d-flex align-items-end">
                                     <button class="btn btn-primary reset-filters" data-target="processed">Reset Filters</button>
                                 </div>
                             </div>
@@ -516,28 +508,26 @@
                         <div class="tab-pane fade show active" id="pending-approval" role="tabpanel" aria-labelledby="pending-approval-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="approvalCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="approvalCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="approvalDateFilter" class="form-label">Date Range</label>
+                                <div class="col-md-4">
+                                    <label for="approvalDateFilter" class="form-label">Date Range (EPV Submission Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="approvalDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="approvalDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="approvalDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="approvalDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="approvalSearchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control search-input" id="approvalSearchInput"
-                                               placeholder="Search EPV ID, Employee, Cost Center...">
+                                               placeholder="Search by EPV ID...">
                                         <span class="input-group-text">
                                             <i class="fas fa-search"></i>
                                         </span>
@@ -599,7 +589,7 @@
                         <div class="tab-pane fade" id="approved-rejected" role="tabpanel" aria-labelledby="approved-rejected-tab">
                             <!-- Filters -->
                             <div class="row mb-4">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="historyStatusFilter" class="form-label">Status</label>
                                     <select class="form-select status-filter" id="historyStatusFilter">
                                         <option value="">All Statuses</option>
@@ -607,24 +597,22 @@
                                         <option value="rejected">Rejected</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label for="historyCityFilter" class="form-label">City</label>
                                     <select class="form-select city-filter" id="historyCityFilter">
                                         <option value="">All Cities</option>
                                         <!-- Add city options dynamically -->
                                     </select>
                                 </div>
-                                <div class="col-md-3">
-                                    <label for="historyDateFilter" class="form-label">Date Range</label>
+                                <div class="col-md-4">
+                                    <label for="historyDateFilter" class="form-label">Date Range (Decision Date)</label>
                                     <div class="input-group">
-                                        <input type="date" class="form-control date-start" id="historyDateStart"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-start" id="historyDateStart" max="{{ today.strftime('%Y-%m-%d') }}">
                                         <span class="input-group-text">to</span>
-                                        <input type="date" class="form-control date-end" id="historyDateEnd"
-                                               value="{{ today.strftime('%Y-%m-%d') }}">
+                                        <input type="date" class="form-control date-end" id="historyDateEnd" max="{{ today.strftime('%Y-%m-%d') }}">
                                     </div>
                                 </div>
-                                <div class="col-md-3 d-flex align-items-end">
+                                <div class="col-md-4 d-flex align-items-end">
                                     <button class="btn btn-primary reset-filters" data-target="approved-rejected">Reset Filters</button>
                                 </div>
                             </div>
@@ -698,14 +686,287 @@
         white-space: nowrap;
     }
 
-    /* Make date input fields wider */
+    /* Enhanced date input field styling - Larger for all devices */
     .date-start, .date-end {
-        min-width: 140px;
+        min-width: 200px; /* Increased from 160px for better visibility */
+        font-size: 14px;
+    }
+
+    /* Input group styling for date ranges */
+    .input-group .date-start,
+    .input-group .date-end {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        color: #6c757d;
+        font-size: 14px;
+        white-space: nowrap;
+        padding: 8px 12px;
     }
 
     /* Ensure table is responsive but shows full content */
     .table-responsive {
         overflow-x: auto;
+    }
+
+    /* Mobile responsive improvements */
+    @media (max-width: 768px) {
+        /* Make date inputs larger on mobile */
+        .date-start, .date-end {
+            min-width: 160px; /* Increased from 140px */
+            font-size: 16px; /* Prevents zoom on iOS */
+            min-height: 44px; /* Minimum touch target size */
+            padding: 8px 12px;
+        }
+
+        /* Adjust input group on mobile */
+        .input-group {
+            flex-wrap: wrap;
+        }
+
+        .input-group .date-start,
+        .input-group .date-end {
+            flex: 1 1 calc(50% - 20px);
+            min-width: 160px; /* Increased from 140px */
+            margin-bottom: 8px;
+        }
+
+        .input-group-text {
+            flex: 0 0 auto;
+            font-size: 12px;
+            padding: 8px 6px;
+            min-height: 44px;
+        }
+
+        /* Stack date inputs vertically on very small screens */
+        @media (max-width: 480px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group .date-start,
+            .input-group .date-end {
+                flex: 1 1 100%;
+                margin-bottom: 8px;
+            }
+
+            .input-group-text {
+                flex: 0 0 auto;
+                text-align: center;
+                margin: 4px 0;
+            }
+        }
+
+        /* Improve filter row layout on mobile - updated for new column classes */
+        .row.mb-4 .col-md-2,
+        .row.mb-4 .col-md-3,
+        .row.mb-4 .col-md-4 {
+            margin-bottom: 1rem;
+            width: 100% !important; /* Force full width on mobile */
+        }
+
+        /* Make filter labels more visible on mobile */
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 14px;
+        }
+
+        /* Ensure date range fields are properly sized on mobile */
+        .col-md-4 .input-group {
+            width: 100%;
+        }
+
+        /* Better spacing for mobile filter rows */
+        .row.mb-4 {
+            gap: 0.5rem;
+        }
+
+        /* Make buttons full width on mobile for better touch targets */
+        .btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Ensure search inputs are properly sized */
+        .search-input {
+            font-size: 16px; /* Prevents zoom on iOS */
+            min-height: 44px;
+        }
+    }
+
+    /* Tablet improvements */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .date-start, .date-end {
+            min-width: 180px; /* Increased from 150px */
+            font-size: 14px;
+        }
+
+        .input-group .date-start,
+        .input-group .date-end {
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
+    /* Desktop and laptop improvements */
+    @media (min-width: 1025px) {
+        .date-start, .date-end {
+            min-width: 250px; /* Significantly increased from 180px for full date visibility */
+            font-size: 14px;
+        }
+
+        .input-group .date-start,
+        .input-group .date-end {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Make input groups more spacious on desktop */
+        .input-group {
+            gap: 4px;
+        }
+
+        .input-group-text {
+            padding: 10px 14px;
+            font-size: 14px;
+        }
+    }
+
+    /* Enhanced date picker styling */
+    input[type="date"] {
+        position: relative;
+        color: #212529;
+        background-color: white;
+        font-family: inherit;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        padding: 8px 12px;
+    }
+
+    input[type="date"]:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Style the date picker indicator */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.15s ease-in-out;
+        width: 20px;
+        height: 20px;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+
+    /* Mobile date picker improvements */
+    @media (max-width: 768px) {
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        /* Enhanced mobile date input styling */
+        input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: white;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            padding: 12px 16px; /* Larger padding for mobile */
+            font-size: 16px;
+            min-height: 48px; /* Larger touch target */
+            width: 100%;
+        }
+
+        /* Better focus states for mobile */
+        input[type="date"]:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+        /* Improve input group spacing on mobile */
+        .input-group > * {
+            margin-bottom: 8px;
+        }
+
+        /* Better handling of the "to" separator on mobile */
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 12px 16px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    /* Extra small mobile devices */
+    @media (max-width: 375px) {
+        .date-start, .date-end {
+            min-width: 140px;
+            font-size: 14px;
+            padding: 10px 12px;
+        }
+
+        .input-group-text {
+            font-size: 11px;
+            padding: 10px 12px;
+        }
+    }
+
+    /* Improve filter row spacing and layout */
+    .row.mb-4 {
+        gap: 1rem;
+    }
+
+    .row.mb-4 .col-md-3 {
+        margin-bottom: 0;
+    }
+
+    /* Make date range labels more prominent */
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+
+    /* Better spacing for input groups */
+    .input-group {
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ensure table rows are visible when they should be */
+    .table tbody tr {
+        display: table-row !important;
+    }
+
+    .table tbody tr[style*="display: none"] {
+        display: none !important;
+    }
+
+    /* Search result indicator */
+    .search-results-info {
+        margin-top: 10px;
+        padding: 8px 12px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #6c757d;
     }
 </style>
 {% endblock %}
@@ -713,6 +974,13 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Set max date to today for all date inputs to prevent future date selection
+        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(input => {
+            input.setAttribute('max', today);
+        });
+
         // Get all tabs
         const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
         let activeTabId = document.querySelector('.tab-pane.active').id;
@@ -778,6 +1046,11 @@
                 const searchInput = tabPane.querySelector('.search-input');
                 const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
+                // Debug: Log the search value
+                if (searchValue) {
+                    console.log(`Processing search value: "${searchValue}"`);
+                }
+
                 // Parse date values
                 const startDate = dateStartInput && dateStartInput.value ? new Date(dateStartInput.value) : null;
                 const endDate = dateEndInput && dateEndInput.value ? new Date(dateEndInput.value) : null;
@@ -787,9 +1060,7 @@
                     endDate.setDate(endDate.getDate() + 1);
                 }
 
-                console.log(`Applying filters - City: ${cityValue}, Status: ${statusValue}, Search: ${searchValue}, Date Range: ${startDate} to ${endDate}`);
-
-                tableRows.forEach(row => {
+                tableRows.forEach((row, index) => {
                     // Get cell values for filters
                     const cityCell = row.querySelector('td:nth-child(4)');
                     const dateCell = row.querySelector('td:nth-child(5)'); // Date is usually in the 5th column
@@ -809,42 +1080,61 @@
                     // Apply city filter
                     if (cityFilter && cityValue && city !== cityValue) {
                         showRow = false;
+                        console.log(`Row ${index}: Hidden by city filter`);
                     }
 
                     // Apply date range filter
                     if (startDate && endDate) {
+                        // Only apply date filter if both dates are actually set by user
                         if (rowDate < startDate || rowDate >= endDate) {
                             showRow = false;
+                            console.log(`Row ${index}: Hidden by date filter - Date: ${dateText}, Range: ${startDate} to ${endDate}`);
                         }
                     }
 
                     // Apply status filter
                     if (statusFilter && statusValue && status && !status.includes(statusValue)) {
                         showRow = false;
+                        console.log(`Row ${index}: Hidden by status filter`);
                     }
 
                     // Apply search filter
                     if (searchValue) {
-                        // Get all text content from the row, excluding action buttons
-                        const cells = row.querySelectorAll('td:not(:last-child)'); // Exclude last column (actions)
-                        let rowText = '';
-                        cells.forEach(cell => {
-                            // Get text content, excluding badge text for cleaner search
-                            const cellText = cell.textContent || cell.innerText || '';
-                            rowText += cellText.toLowerCase() + ' ';
-                        });
-
-                        // Check if search value is found in the row text
-                        if (rowText.indexOf(searchValue) === -1) {
+                        // Get EPV ID from the first column (index 0)
+                        const epvIdCell = row.querySelector('td:nth-child(1)');
+                        const epvId = epvIdCell ? epvIdCell.textContent.trim() : '';
+                        
+                        // Debug: Log the search comparison
+                        console.log(`Row ${index}: Comparing: "${searchValue.toLowerCase()}" with "${epvId.toLowerCase()}" - Match: ${epvId.toLowerCase().includes(searchValue.toLowerCase())}`);
+                        
+                        // Check if search value matches EPV ID (case insensitive)
+                        if (!epvId.toLowerCase().includes(searchValue.toLowerCase())) {
                             showRow = false;
+                            console.log(`Row ${index}: Hidden by search filter`);
                         }
                     }
 
-                    // Apply the visibility
-                    row.style.display = showRow ? '' : 'none';
+                    console.log(`Row ${index}: Final showRow = ${showRow}`);
+
+                    // Apply the visibility - simplified approach
+                    if (showRow) {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
 
-
+                // Update search results counter
+                const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+                const searchResultsInfo = tabPane.querySelector('.search-results-info');
+                
+                if (searchValue && searchResultsInfo) {
+                    searchResultsInfo.textContent = `Showing ${visibleRows.length} of ${tableRows.length} results for "${searchValue}"`;
+                    searchResultsInfo.style.display = 'block';
+                    console.log(`Search results: ${visibleRows.length} of ${tableRows.length} rows visible for "${searchValue}"`);
+                } else if (searchResultsInfo) {
+                    searchResultsInfo.style.display = 'none';
+                }
             }
 
             // Add event listeners
@@ -863,6 +1153,12 @@
             if (searchInput) {
                 // Apply filters immediately as user types (no minimum character requirement)
                 searchInput.addEventListener('input', function() {
+                    // If user is searching, clear the date filter to show all records
+                    if (this.value.trim()) {
+                        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+                        if (dateStartInput) dateStartInput.value = today;
+                        if (dateEndInput) dateEndInput.value = today;
+                    }
                     applyFilters();
                 });
             }
@@ -874,10 +1170,9 @@
                     if (statusFilter) statusFilter.value = '';
                     if (searchInput) searchInput.value = '';
 
-                    // Reset date inputs to today
-                    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-                    if (dateStartInput) dateStartInput.value = today;
-                    if (dateEndInput) dateEndInput.value = today;
+                    // Clear date inputs (don't set to today)
+                    if (dateStartInput) dateStartInput.value = '';
+                    if (dateEndInput) dateEndInput.value = '';
 
                     // Apply filters to show all rows
                     applyFilters();
@@ -961,5 +1256,20 @@
         // Auto-refresh disabled as requested
         // To manually refresh, reload the page
     });
+
+    // Test function to check table visibility
+    function testTableVisibility() {
+        const activeTab = document.querySelector('.tab-pane.active');
+        if (activeTab) {
+            const tableRows = activeTab.querySelectorAll('tbody tr');
+            console.log(`Total table rows found: ${tableRows.length}`);
+            
+            tableRows.forEach((row, index) => {
+                const display = window.getComputedStyle(row).display;
+                const epvId = row.querySelector('td:nth-child(1)')?.textContent.trim();
+                console.log(`Row ${index}: EPV ID = "${epvId}", Display = "${display}"`);
+            });
+        }
+    }
 </script>
 {% endblock %}
