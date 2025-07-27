@@ -2,27 +2,47 @@
 import os
 import sys
 from datetime import datetime, timedelta, date
+from dotenv import load_dotenv
 
-# Set up Flask app context
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from app import app
-from models import db, EPV, EPVApproval, SettingsFinance
-from smtp_email_utils import send_approval_email
+# Load environment variables from .env file
+load_dotenv()
 
-# Database configuration - only set the URI since db is already initialized
+# Database configuration
 db_user = os.environ.get('DB_USER')
 db_password = os.environ.get('DB_PASSWORD')
 db_host = os.environ.get('DB_HOST')
 db_port = os.environ.get('DB_PORT', '3306')
 db_name = os.environ.get('DB_NAME')
 
+# Debug: Print database configuration
+print(f"Database configuration:")
+print(f"  Host: '{db_host}'")
+print(f"  User: '{db_user}'")
+print(f"  Database: '{db_name}'")
+print(f"  Port: '{db_port}'")
+
 # URL encode the password to handle special characters
 import urllib.parse
 encoded_password = urllib.parse.quote_plus(db_password) if db_password else ''
 
-# Set the database URI without re-initializing
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{encoded_password}@{db_host}:{db_port}/{db_name}"
+# Create database URI
+database_uri = f"mysql+pymysql://{db_user}:{encoded_password}@{db_host}:{db_port}/{db_name}"
+print(f"Database URI: mysql+pymysql://{db_user}:***@{db_host}:{db_port}/{db_name}")
+
+# Set up Flask app context
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from flask import Flask
+from models import db, EPV, EPVApproval, SettingsFinance
+from smtp_email_utils import send_approval_email
+
+# Create a minimal Flask app
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database
+db.init_app(app)
 
 
 def business_days_between(start_date, end_date):
@@ -50,13 +70,17 @@ def send_manager_approval_reminders():
         except Exception:
             max_reminder_days = 2
 
+        print(f"Using max_reminder_days: {max_reminder_days}")
+
         # Find all pending manager approvals for EPVs
         pending_approvals = EPVApproval.query.join(EPV).filter(
             EPVApproval.status == 'pending',
             EPV.status == 'pending_approval'
         ).all()
 
-        # Set the base URL for approval links (change as needed)
+        print(f"Found {len(pending_approvals)} pending approvals")
+
+        # Set the base URL for approval links
         base_url = "https://finance.akanksha.org"  # Production domain
 
         today = date.today()
